@@ -12,7 +12,7 @@ if (-not $hasExpandArchive -and -not $has7zip) {
 
 $TARGET = "sucata-win-amd64"
 
-$SUCATA_VERSION = "0.1.2"
+$SUCATA_VERSION = "0.1.3"
 $SUCATA_NAME = "sucata.exe"
 $SUCATA_URL = "https://codeberg.org/sucata/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
 $SUCATA_DIR = Join-Path $HOME "sucata"

@@ -39,7 +39,7 @@ else
   exit 1
 fi
 
-SUCATA_VERSION="0.1.2"
+SUCATA_VERSION="0.1.3"
 SUCATA_BIN="sucata"
 SUCATA_URL="https://codeberg.org/sucata/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
 SUCATA_DIR="$HOME/sucata"
