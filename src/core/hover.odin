@@ -32,9 +32,17 @@ add_hoverable :: proc(id: string, x, y, width, height: f32, z_index: i32, fixed:
 	append_elem(&hoverables, hoverable)
 }
 
+set_hoverable :: proc(id: string) {
+	hover = strings.clone(id)
+}
+
 process_hoverables :: proc() {
 	if len(hoverables) <= 0 {
 		return
+	}
+	if hover != "" {
+		delete(hover)
+		hover = ""
 	}
 
 	_hoverables := hoverables[:]
@@ -67,7 +75,7 @@ process_hoverables :: proc() {
 			   mouse_x <= hoverable.x + hoverable.width &&
 			   mouse_y >= hoverable.y &&
 			   mouse_y <= hoverable.y + hoverable.height {
-				hover = strings.clone(hoverable.id)
+				set_hoverable(hoverable.id)
 				break
 			}
 		} else {
@@ -75,7 +83,7 @@ process_hoverables :: proc() {
 			   world_mouse_x <= hoverable.x + hoverable.width &&
 			   world_mouse_y >= hoverable.y &&
 			   world_mouse_y <= hoverable.y + hoverable.height {
-				hover = strings.clone(hoverable.id)
+				set_hoverable(hoverable.id)
 				break
 			}
 		}
