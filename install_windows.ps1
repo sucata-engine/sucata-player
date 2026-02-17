@@ -14,7 +14,7 @@ $TARGET = "sucata-win-amd64"
 
 $SUCATA_VERSION = "0.1.2"
 $SUCATA_NAME = "sucata.exe"
-$SUCATA_URL = "https://github.com/gumpdev/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
+$SUCATA_URL = "https://codeberg.org/sucata/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
 $SUCATA_DIR = Join-Path $HOME "sucata"
 $TEMP_ZIP = Join-Path $SUCATA_DIR "temp.zip"
 $BIN_PATH = Join-Path $SUCATA_DIR $SUCATA_NAME

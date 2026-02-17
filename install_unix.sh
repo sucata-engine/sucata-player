@@ -41,7 +41,7 @@ fi
 
 SUCATA_VERSION="0.1.2"
 SUCATA_BIN="sucata"
-SUCATA_URL="https://github.com/gumpdev/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
+SUCATA_URL="https://codeberg.org/sucata/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
 SUCATA_DIR="$HOME/sucata"
 SUCATA_TEMP_ZIP="$SUCATA_DIR/temp.zip"
 SUCATA_BIN="$SUCATA_DIR/$SUCATA_BIN"
