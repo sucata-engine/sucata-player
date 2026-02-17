@@ -54,12 +54,12 @@ The goal is to make a create game experience similar good and smooth using only 
 
 ### MacOS/Linux
 ```sh
-curl -fsSL https://raw.githubusercontent.com/gumpdev/sucata/refs/heads/main/install_unix.sh | sh
+curl -fsSL https://codeberg.org/sucata/sucata/raw/branch/main/install_unix.sh | sh
 ```
 
 ### Windows
 ```sh
-irm https://raw.githubusercontent.com/gumpdev/sucata/refs/heads/main/install_windows.ps1 | iex
+irm https://codeberg.org/sucata/sucata/raw/branch/main/install_windows.ps1 | iex
 ```
 
 ### Installing the Sucata Addon
