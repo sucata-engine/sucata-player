@@ -67,7 +67,7 @@ process_hoverables :: proc() {
 			   mouse_x <= hoverable.x + hoverable.width &&
 			   mouse_y >= hoverable.y &&
 			   mouse_y <= hoverable.y + hoverable.height {
-				hover = hoverable.id
+				hover = strings.clone(hoverable.id)
 				break
 			}
 		} else {
@@ -75,11 +75,13 @@ process_hoverables :: proc() {
 			   world_mouse_x <= hoverable.x + hoverable.width &&
 			   world_mouse_y >= hoverable.y &&
 			   world_mouse_y <= hoverable.y + hoverable.height {
-				hover = hoverable.id
+				hover = strings.clone(hoverable.id)
 				break
 			}
 		}
 	}
+
+	clear_hoverables()
 }
 
 clear_hoverables :: proc() {
