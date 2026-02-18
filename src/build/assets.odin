@@ -85,6 +85,7 @@ generate_assets :: proc(src_path: string, main_file: string, output_path: string
 	archive_data := compressed_buffer[:compressed_size]
 
 	output_file_path := filepath.join({output_path, DEFAULT_ASSETS_PATH})
+	defer delete(output_file_path)
 	output_handle, open_err := os.open(
 		output_file_path,
 		os.O_WRONLY | os.O_CREATE | os.O_TRUNC,

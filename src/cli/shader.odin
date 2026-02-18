@@ -31,6 +31,8 @@ SHADER_BUILD_COMMAND :: Command {
 		} else {
 			common.print_error("Failed to build shader: %s", path.location.file)
 		}
+
+		path.uninit_paths()
 	},
 }
 

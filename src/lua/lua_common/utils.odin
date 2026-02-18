@@ -50,7 +50,6 @@ get_table_number_nil :: proc(L: ^lua.State, table_index: c.int, field: cstring) 
 	return nil
 }
 
-//Memory Leak
 get_table_string :: proc(
 	L: ^lua.State,
 	table_index: c.int,

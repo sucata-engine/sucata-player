@@ -13,8 +13,8 @@ RUN_COMMAND :: Command {
 	error_msg = "Error: 'run' command requires a <file> argument.",
 	handler = proc(args: []string) {
 		file_path := args[0]
-		// Memory Leak
 		file_path = filepath.join({os.get_current_directory(), file_path})
+		defer delete(file_path)
 		sucata_path := path.get_sucata_player_path()
 
 		process_desc := os2.Process_Desc {

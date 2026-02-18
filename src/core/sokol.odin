@@ -8,8 +8,8 @@ import st "../../sokol/time"
 import "../common"
 import "../fs"
 import "../graphics"
+import "../path"
 import "base:runtime"
-import "core:fmt"
 import "core:strings"
 import lua "vendor:lua/5.4"
 
@@ -133,6 +133,7 @@ cleanup_callback :: proc "c" () {
 		LUA_GLOBAL_STATE = nil
 	}
 	cleanup_temp_arena()
+	path.uninit_paths()
 }
 
 elapsed_time := 0.0

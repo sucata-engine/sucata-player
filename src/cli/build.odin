@@ -36,5 +36,7 @@ BUILD_COMMAND :: Command {
 		build.clone_engine(build_path, assets_hash, icon_path)
 
 		common.print_success("Sucateado! Game builded on %s", build_path)
+
+		path.uninit_paths()
 	},
 }

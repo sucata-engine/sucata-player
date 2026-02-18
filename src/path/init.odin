@@ -6,12 +6,12 @@ import "core:path/filepath"
 import "core:strings"
 
 init_run_paths :: proc(file: string, default_file: string = "main.lua") {
-	// Memory Leak
 	file_absolute, ok_file_absolute := filepath.abs(file)
 
 	if os.is_file(file) {
 		location.file = file_absolute
 	} else {
+		defer delete(file_absolute)
 		location.file = filepath.join({file_absolute, default_file})
 	}
 
@@ -29,6 +29,13 @@ init_run_paths :: proc(file: string, default_file: string = "main.lua") {
 		location.data = get_config_dir("linux")
 		location.system = "linux"
 	}
+}
+
+uninit_paths :: proc() {
+	delete(location.build)
+	delete(location.data)
+	delete(location.file)
+	delete(location.src)
 }
 
 init_build_paths :: proc(assets_file: string) {
@@ -51,7 +58,6 @@ init_build_paths :: proc(assets_file: string) {
 
 get_config_dir :: proc(system: string) -> string {
 	if system == "windows" {
-		//Memory Leak
 		appdata := os.get_env("APPDATA")
 		if appdata != "" {
 			return appdata
@@ -59,16 +65,16 @@ get_config_dir :: proc(system: string) -> string {
 	}
 
 	if system == "linux" {
-		//Memory Leak
 		home := os.get_env("HOME")
+		defer delete(home)
 		if home != "" {
 			return filepath.join({home, ".local", "share"})
 		}
 	}
 
 	if system == "darwin" {
-		//Memory Leak
 		home := os.get_env("HOME")
+		defer delete(home)
 		if home != "" {
 			return filepath.join({home, "Library", "Application Support"})
 		}
@@ -80,6 +86,7 @@ get_config_dir :: proc(system: string) -> string {
 get_sucata_player_path :: proc() -> string {
 	executable_path := get_executable_path()
 	executable_dir := filepath.dir(executable_path)
+	defer delete(executable_path)
 	player_path := ""
 	when ODIN_OS == .Windows {
 		player_path = filepath.join({executable_dir, "sucata-player.exe"})
@@ -97,6 +104,7 @@ get_executable_path :: proc() -> string {
 	}
 
 	abs_path, ok := filepath.abs(arg0)
+	defer delete(abs_path)
 	if ok && os.exists(abs_path) {
 		return abs_path
 	}
