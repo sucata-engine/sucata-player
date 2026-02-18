@@ -12,10 +12,13 @@ import "core:strings"
 
 run :: proc(assets_hash: string) {
 	file_path, _ := filepath.abs(os.args[0])
+	defer delete(file_path)
 	dir_path := filepath.dir(file_path)
+	defer delete(dir_path)
 	assets_path := filepath.join({dir_path, DEFAULT_ASSETS_PATH})
 
 	actual_assets_hash := get_assets_hash(assets_path)
+	defer delete(actual_assets_hash)
 
 	if !strings.equal_fold(assets_hash, actual_assets_hash) {
 		fmt.panicf(
@@ -30,7 +33,6 @@ run :: proc(assets_hash: string) {
 	fs.load_assets(assets_path)
 	common.print_info("Running Sucata script: %s", path.location.file)
 
-	main_path := filepath.join({dir_path, "main.lua"})
 	lua.init_lua(path.location.file)
 	core.main()
 }

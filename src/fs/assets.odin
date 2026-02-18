@@ -137,6 +137,7 @@ unload_assets :: proc() {
 			delete(entry.path)
 			delete(entry.cache)
 		}
+		delete(assets.path)
 		delete(assets.entries)
 		free(assets)
 		assets = nil
