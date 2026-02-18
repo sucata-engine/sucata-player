@@ -50,14 +50,14 @@ SHADER_CREATE_COMMAND :: Command {
 	info_msg = "sucata shader create <file> [--post-procesing] [--font] - Create a base .glsl shader file",
 	error_msg = "Error: 'create' command requires a <file> argument.",
 	handler = proc(args: []string) {
-		file_path := args[0]
-		if !strings.has_suffix(file_path, ".glsl") {
-			file_path = fmt.aprintf("%s.glsl", file_path)
-			defer delete(file_path)
+		file_path_args := args[0]
+		if !strings.has_suffix(file_path_args, ".glsl") {
+			file_path_args = fmt.aprintf("%s.glsl", file_path_args)
+			defer delete(file_path_args)
 		}
 		current_directory := os.get_current_directory()
 		defer delete(current_directory)
-		file_path = filepath.join({current_directory, file_path})
+		file_path := filepath.join({current_directory, file_path_args})
 		defer delete(file_path)
 
 		aditional_flags := args[1:]
