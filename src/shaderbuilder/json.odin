@@ -3,8 +3,9 @@ package shader_builder
 import "../common"
 import "core:encoding/json"
 import "core:os"
+import "core:strings"
 
-inject_shader_data :: proc(yaml_data: YamlValue) -> YamlValue {
+inject_shader_data :: proc(yaml_data: ^YamlValue) -> ^YamlValue {
 	shaders := yaml_data.(map[string]YamlValue)["shaders"].([]YamlValue)
 
 	for shader in shaders {
@@ -24,8 +25,8 @@ inject_shader_data :: proc(yaml_data: YamlValue) -> YamlValue {
 			continue
 		}
 
-		vertex_func["data"] = vertex_data
-		fragment_func["data"] = fragment_data
+		vertex_func[strings.clone("data")] = vertex_data
+		fragment_func[strings.clone("data")] = fragment_data
 		delete_key(&vertex_func, "path")
 		delete_key(&fragment_func, "path")
 	}
@@ -42,9 +43,12 @@ generate_json :: proc(yaml_path: string, output_path: string) -> (string, bool) 
 	}
 
 	data_string := string(data)
-	yaml_data := inject_shader_data(parse_yaml(data_string))
+	yaml_data := parse_yaml(data_string)
+	yaml_data_with_shader := inject_shader_data(&yaml_data)
+	defer free_yaml_value(&yaml_data)
 
 	json_data, json_ok := json.marshal(yaml_data)
+	defer delete(json_data)
 
 	if json_ok != json.Marshal_Data_Error.None {
 		common.print_error("Failed to convert YAML to JSON for shader: %s", yaml_path)

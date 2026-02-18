@@ -13,6 +13,29 @@ YamlValue :: union {
 	map[string]YamlValue,
 }
 
+free_yaml_value :: proc(value: ^YamlValue) {
+	#partial switch v in value {
+	case string:
+		delete(v)
+
+	case []byte:
+		delete(v)
+
+	case []YamlValue:
+		for _, i in v {
+			free_yaml_value(&v[i])
+		}
+		delete(v)
+
+	case map[string]YamlValue:
+		for k, _ in v {
+			delete(k)
+			free_yaml_value(&v[k])
+		}
+		delete(v)
+	}
+}
+
 parse_yaml :: proc(data: string) -> YamlValue {
 	lines := strings.split_lines(data)
 	line_index := 0
@@ -55,7 +78,7 @@ parse_yaml_recursive :: proc(lines: []string, line_index: ^int, base_indent: int
 				continue
 			}
 
-			key := strings.trim_space(parts[0])
+			key := strings.clone(strings.trim_space(parts[0]))
 			value_str := strings.trim_space(parts[1])
 
 			line_index^ += 1
@@ -178,7 +201,7 @@ parse_primitive_value :: proc(value: string) -> YamlValue {
 		return f32_value
 	}
 
-	return value
+	return strings.clone(value)
 }
 
 parse_yaml_value :: proc(line: string) -> YamlValue {

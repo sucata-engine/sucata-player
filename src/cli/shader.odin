@@ -3,8 +3,10 @@ package cli
 import "../common"
 import path "../path"
 import "../shaderbuilder"
+import "core:fmt"
 import "core:os"
 import "core:path/filepath"
+import "core:strings"
 
 SHADER_COMMAND :: Command {
 	command     = "shader",
@@ -19,7 +21,10 @@ SHADER_BUILD_COMMAND :: Command {
 	error_msg = "Error: 'build' command requires a <file> argument.",
 	handler = proc(args: []string) {
 		file_path := args[0]
-		file_path = filepath.join({os.get_current_directory(), file_path})
+		current_directory := os.get_current_directory()
+		defer delete(current_directory)
+
+		file_path = filepath.join({current_directory, file_path})
 
 		path.init_run_paths(file_path, "shader.glsl")
 
@@ -43,7 +48,13 @@ SHADER_CREATE_COMMAND :: Command {
 	error_msg = "Error: 'create' command requires a <file> argument.",
 	handler = proc(args: []string) {
 		file_path := args[0]
-		file_path = filepath.join({os.get_current_directory(), file_path})
+		if !strings.has_suffix(file_path, ".glsl") {
+			file_path = fmt.aprintf("%s.glsl", file_path)
+			defer delete(file_path)
+		}
+		current_directory := os.get_current_directory()
+		defer delete(current_directory)
+		file_path = filepath.join({current_directory, file_path})
 
 		aditional_flags := args[1:]
 		is_post_processing := false
