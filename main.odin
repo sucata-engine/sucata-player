@@ -12,6 +12,3 @@ main :: proc() {
 
 	cli.main()
 }
-
-// Investigar todos filepath, provavelmente estao com memory leak
-// Arrumar shader para ser um i32 inves de um texto
