@@ -14,6 +14,7 @@ SDL_DLL_FILE_NAME :: "SDL3.dll"
 
 clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string = "") {
 	player_path := path.get_sucata_player_path()
+	defer delete(player_path)
 	common.print_info("Cloning engine from: %s", player_path)
 
 	engine_data, read_ok := os.read_entire_file(player_path)
@@ -24,6 +25,7 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 		engine_name = fmt.tprintf("{0}.exe", engine_name)
 	}
 	output_path := filepath.join({output_dir, engine_name})
+	defer delete(output_path)
 
 	if path.location.system == "darwin" {
 		create_macos_app_bundle(output_dir, engine_name, engine_data, assets_hash, icon_path)

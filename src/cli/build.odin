@@ -34,6 +34,7 @@ BUILD_COMMAND :: Command {
 		}
 
 		build_path := filepath.join({path.location.build, "build"})
+		defer delete(build_path)
 		os.make_directory(build_path)
 		assets_hash := build.generate_assets(path.location.src, path.location.file, build_path)
 		defer delete(assets_hash)
