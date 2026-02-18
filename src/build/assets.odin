@@ -27,8 +27,12 @@ generate_assets :: proc(src_path: string, main_file: string, output_path: string
 	common.print_info("Found %d files to package. src: %s", len(files), src_path)
 
 	entries := make([dynamic]common.Asset_Entry)
-	defer delete(entries)
-
+	defer {
+		for entry in entries {
+			delete(entry.path)
+		}
+		delete(entries)
+	}
 	buf: bytes.Buffer
 	bytes.buffer_init_allocator(&buf, 0, 0, context.allocator)
 	defer bytes.buffer_destroy(&buf)
@@ -51,7 +55,7 @@ generate_assets :: proc(src_path: string, main_file: string, output_path: string
 		}
 		if main_file == file {
 			delete(rel_path)
-			rel_path = "main.lua"
+			rel_path = strings.clone("main.lua")
 		}
 
 		normalized_path, was_allocated := strings.replace_all(rel_path, "\\", "/")
