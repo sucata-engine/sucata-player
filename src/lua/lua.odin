@@ -71,7 +71,12 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 
 	module_str := strings.clone_from_cstring(module_name)
 	module_path, ok := strings.replace_all(module_str, ".", "/")
-	defer delete(module_path)
+	defer {
+		if module_str != module_path {
+			delete(module_str)
+		}
+		delete(module_path)
+	}
 
 	asset_patterns := []string {
 		fmt.aprintf("src://%s.lua", module_path),

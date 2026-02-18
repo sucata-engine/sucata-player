@@ -88,11 +88,10 @@ destroy_images :: proc() {
 		sg.destroy_view(value.view)
 		delete_key(&images_loaded, file_path)
 		delete_key(&images_used, file_path)
+		delete(file_path)
 	}
 	delete(images_loaded)
 	delete(images_used)
-	images_loaded = {}
-	images_used = {}
 }
 
 destroy_image :: proc(file_path: string) {
