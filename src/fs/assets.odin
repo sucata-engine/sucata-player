@@ -131,9 +131,12 @@ load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byt
 	return entry_data, true
 }
 
-unload_assets :: proc(allocator := context.allocator) {
-	context.allocator = allocator
+unload_assets :: proc() {
 	if assets != nil {
+		for entry in assets.entries {
+			delete(entry.path)
+			delete(entry.cache)
+		}
 		delete(assets.entries)
 		free(assets)
 		assets = nil
