@@ -46,9 +46,11 @@ generate_assets :: proc(src_path: string, main_file: string, output_path: string
 
 		rel_path, rel_err := filepath.rel(src_path, file)
 		if rel_err != nil {
+			delete(rel_path)
 			rel_path = file
 		}
 		if main_file == file {
+			delete(rel_path)
 			rel_path = "main.lua"
 		}
 
@@ -105,7 +107,7 @@ generate_assets :: proc(src_path: string, main_file: string, output_path: string
 
 	hash_string := get_assets_hash(output_file_path)
 
-	return string(hash_string)
+	return hash_string
 }
 
 get_assets_hash :: proc(assets_path: string) -> string {
@@ -116,6 +118,7 @@ get_assets_hash :: proc(assets_path: string) -> string {
 	hash.hash(hash.Algorithm.SHA256, file_data, hash_bytes[:])
 
 	hash_string := hex.encode(hash_bytes[:])
+	hash_bytes = {}
 
 	return string(hash_string)
 }
