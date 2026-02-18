@@ -123,6 +123,11 @@ get_assets_hash :: proc(assets_path: string) -> string {
 lua_path_to_dir_path :: proc(req: string) -> string {
 	base_dir := ph.location.src
 	path, ok := strings.replace_all(req, ".", "/")
+	defer {
+		if path != req {
+			delete(path)
+		}
+	}
 
 	init_lua := fmt.tprintf("%s/%s/init.lua", base_dir, path)
 	if os.exists(init_lua) {
@@ -143,6 +148,7 @@ contains_file :: proc(path: string, files: ^[dynamic]string) -> bool {
 
 collect_paths :: proc(file_path: string, files: ^[dynamic]string) -> os.Errno {
 	file_content, ok := os.read_entire_file(file_path)
+	defer delete(file_content)
 	if !ok {
 		return os.ERROR_NONE
 	}
@@ -154,6 +160,7 @@ collect_paths :: proc(file_path: string, files: ^[dynamic]string) -> os.Errno {
 	content := string(file_content)
 
 	interator_files, err := regex.create_iterator(content, FILES_REGEX)
+	defer regex.destroy_iterator(interator_files)
 	if err == nil {
 		for match in regex.match_iterator(&interator_files) {
 			match_path := ph.get_path(match.groups[1])
@@ -164,6 +171,7 @@ collect_paths :: proc(file_path: string, files: ^[dynamic]string) -> os.Errno {
 	}
 
 	interator_lua, err_lua := regex.create_iterator(content, LUA_REQUIRE_REGEX)
+	defer regex.destroy_iterator(interator_lua)
 	if err_lua == nil {
 		for match in regex.match_iterator(&interator_lua) {
 			match_path := lua_path_to_dir_path(match.groups[1])
