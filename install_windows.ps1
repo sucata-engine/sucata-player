@@ -48,3 +48,4 @@ if ($CURRENT_PATH -notlike "*$SUCATA_DIR*") {
 Remove-Item $TEMP_ZIP
 
 Write-Host "Done! Restart your terminal to use sucata."
+Write-Host "Sucata installed on $SUCATA_DIR"

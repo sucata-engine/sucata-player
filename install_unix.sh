@@ -96,3 +96,6 @@ case "$SHELL_NAME" in
         echo "Please add manually to PATH."
         ;;
 esac
+
+echo "Done! Restart your terminal to use sucata."
+echo "Sucata installed on $SUCATA_DIR"

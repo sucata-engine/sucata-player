@@ -17,3 +17,5 @@ teste.*
 __MACOSX/*
 temp.zip
 build/*
+dev.cmd
+release/*
