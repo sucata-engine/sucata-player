@@ -187,28 +187,19 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	code: cstring
 	ok: bool
 
-	if entity_file != "" {
-		lua_code := fmt.tprintf(
-			"local Entity = require('%s')\nsucata.scene.load_scene({{Entity()}})\n",
-			entity_file,
-		)
-		ok = true
-		code = strings.clone_to_cstring(lua_code)
-		delete(lua_code)
-	} else if asset_data, found := fs.get_asset(path); found && len(asset_data) > 0 {
+	if asset_data, found := fs.get_asset(path); found && len(asset_data) > 0 {
 		code = strings.clone_to_cstring(string(asset_data))
 		ok = true
 	} else {
-		//Memory leak
 		code, ok = load_file_as_cstring(path)
 	}
 
 	if !ok {
-		setup_garbage_collector(L, default_gc_config)
 		return
 	}
+	defer delete(code)
 
-	code_str := string(code)
+	code_str := strings.clone_from_cstring(code)
 	chunk_name := strings.clone_to_cstring(path)
 	defer delete_cstring(chunk_name)
 

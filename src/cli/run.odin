@@ -12,10 +12,12 @@ RUN_COMMAND :: Command {
 	info_msg = "sucata run <file> - Run a Sucata Lua script file",
 	error_msg = "Error: 'run' command requires a <file> argument.",
 	handler = proc(args: []string) {
-		file_path := args[0]
-		file_path = filepath.join({os.get_current_directory(), file_path})
+		file_path_args := args[0]
+		file_path := filepath.join({os.get_current_directory(), file_path_args})
 		defer delete(file_path)
+
 		sucata_path := path.get_sucata_player_path()
+		defer delete(sucata_path)
 
 		process_desc := os2.Process_Desc {
 			command = {sucata_path, file_path},

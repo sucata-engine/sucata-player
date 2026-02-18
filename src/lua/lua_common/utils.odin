@@ -59,14 +59,14 @@ get_table_string :: proc(
 	lua.pushstring(L, field)
 	lua.gettable(L, table_index)
 
-	result := strings.clone(default_value)
 	if lua.isstring(L, -1) {
 		lua_str := lua.tostring(L, -1)
-		result = strings.clone_from_cstring(lua_str)
+		lua.pop(L, 1)
+		return strings.clone_from_cstring(lua_str)
+	} else {
+		lua.pop(L, 1)
+		return strings.clone(default_value)
 	}
-
-	lua.pop(L, 1)
-	return result
 }
 
 get_table_boolean :: proc(
