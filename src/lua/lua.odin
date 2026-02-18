@@ -200,6 +200,7 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	defer delete(code)
 
 	code_str := strings.clone_from_cstring(code)
+	defer delete(code_str)
 	chunk_name := strings.clone_to_cstring(path)
 	defer delete_cstring(chunk_name)
 
