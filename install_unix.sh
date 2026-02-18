@@ -40,11 +40,13 @@ else
 fi
 
 SUCATA_VERSION="0.1.3"
-SUCATA_BIN="sucata"
+SUCATA="sucata"
+SUCATA_PLAYER="sucata-player"
 SUCATA_URL="https://codeberg.org/sucata/sucata/releases/download/$SUCATA_VERSION/$TARGET.zip"
 SUCATA_DIR="$HOME/sucata"
 SUCATA_TEMP_ZIP="$SUCATA_DIR/temp.zip"
-SUCATA_BIN="$SUCATA_DIR/$SUCATA_BIN"
+SUCATA_BIN="$SUCATA_DIR/$SUCATA"
+SUCATA_PLAYER_BIN="$SUCATA_DIR/$SUCATA_PLAYER"
 SUCATA_BIN_LINK="$HOME/.local/bin/sucata"
 
 mkdir -p "$SUCATA_DIR"
@@ -57,6 +59,8 @@ else
 fi
 
 chmod +x "$SUCATA_BIN"
+chmod +x "$SUCATA_PLAYER_BIN"
+
 ln -sf "$SUCATA_BIN" "$SUCATA_BIN_LINK"
 echo "Sucata installed on $SUCATA_BIN"
 

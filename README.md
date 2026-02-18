@@ -54,7 +54,7 @@ The goal is to make a create game experience similar good and smooth using only 
 
 ### MacOS/Linux
 ```sh
-curl -fsSL https://codeberg.org/sucata/sucata/raw/branch/main/install_unix.sh | sh
+curl -fsSL https://codeberg.org/sucata/sucata/raw/branch/main/install_unix.sh | bash
 ```
 
 ### Windows
