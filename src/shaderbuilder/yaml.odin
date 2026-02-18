@@ -38,6 +38,11 @@ free_yaml_value :: proc(value: ^YamlValue) {
 
 parse_yaml :: proc(data: string) -> YamlValue {
 	lines := strings.split_lines(data)
+	defer {
+		for line in lines {
+			delete(line)
+		}
+	}
 	line_index := 0
 	result := parse_yaml_recursive(lines, &line_index, 0)
 	return result
@@ -73,6 +78,11 @@ parse_yaml_recursive :: proc(lines: []string, line_index: ^int, base_indent: int
 
 		if strings.contains(trimmed, ":") {
 			parts := strings.split_n(trimmed, ":", 2)
+			defer {
+				for part in parts {
+					delete(part)
+				}
+			}
 			if len(parts) != 2 {
 				line_index^ += 1
 				continue

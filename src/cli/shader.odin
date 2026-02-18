@@ -21,6 +21,10 @@ SHADER_BUILD_COMMAND :: Command {
 	error_msg = "Error: 'build' command requires a <file> argument.",
 	handler = proc(args: []string) {
 		file_path := args[0]
+		if !strings.has_suffix(file_path, ".glsl") {
+			file_path = fmt.aprintf("%s.glsl", file_path)
+			defer delete(file_path)
+		}
 		current_directory := os.get_current_directory()
 		defer delete(current_directory)
 
@@ -55,6 +59,7 @@ SHADER_CREATE_COMMAND :: Command {
 		current_directory := os.get_current_directory()
 		defer delete(current_directory)
 		file_path = filepath.join({current_directory, file_path})
+		defer delete(file_path)
 
 		aditional_flags := args[1:]
 		is_post_processing := false
