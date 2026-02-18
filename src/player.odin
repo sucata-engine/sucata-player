@@ -14,6 +14,7 @@ main :: proc() {
 	core.init_temp_arena()
 
 	build_hash, is_build := build.get_build()
+	defer delete(build_hash)
 	core.is_build_mode = is_build
 
 	if core.is_build_mode {
