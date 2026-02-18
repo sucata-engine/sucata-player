@@ -59,7 +59,6 @@ SHADER_CREATE_COMMAND :: Command {
 		current_directory := os.get_current_directory()
 		defer delete(current_directory)
 		file_path = filepath.join({current_directory, file_path})
-		defer delete(file_path)
 
 		aditional_flags := args[1:]
 		is_post_processing := false
