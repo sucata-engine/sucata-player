@@ -5,6 +5,7 @@ import "../camera"
 import "../common"
 import shader_text "../shaders/text"
 import "core:c"
+import "core:strings"
 
 text_ib: sg.Buffer
 text_shader: sg.Shader
@@ -197,7 +198,8 @@ wrap_text :: proc(text: string, font: ^Font, scale: [2]f32, max_width: f32) -> [
 text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
 
-	font_path := props.font
+	font_path := strings.clone(props.font)
+	defer delete(font_path)
 	font_size := props.size
 	font := load_font(font_path, font_size)
 	position := props.position
@@ -211,6 +213,8 @@ text :: proc(props: common.TextObjectProps) {
 	max_width := props.maxWidth
 	shader_name := props.shader
 	shader_args := props.shader_args
+	text := strings.clone(props.text)
+	defer delete(text)
 
 	position[1] += font_size / 2
 
@@ -238,7 +242,7 @@ text :: proc(props: common.TextObjectProps) {
 		sg.apply_pipeline(text_pipeline)
 	}
 
-	lines := wrap_text(props.text, font, scale, max_width)
+	lines := wrap_text(text, font, scale, max_width)
 	defer delete(lines)
 
 	line_height := font_size * scale[1]

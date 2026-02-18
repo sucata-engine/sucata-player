@@ -6,6 +6,7 @@ import "core:path/filepath"
 import "core:strings"
 
 init_run_paths :: proc(file: string, default_file: string = "main.lua") {
+	// Memory Leak
 	file_absolute, ok_file_absolute := filepath.abs(file)
 
 	if os.is_file(file) {
@@ -50,6 +51,7 @@ init_build_paths :: proc(assets_file: string) {
 
 get_config_dir :: proc(system: string) -> string {
 	if system == "windows" {
+		//Memory Leak
 		appdata := os.get_env("APPDATA")
 		if appdata != "" {
 			return appdata
@@ -57,6 +59,7 @@ get_config_dir :: proc(system: string) -> string {
 	}
 
 	if system == "linux" {
+		//Memory Leak
 		home := os.get_env("HOME")
 		if home != "" {
 			return filepath.join({home, ".local", "share"})
@@ -64,6 +67,7 @@ get_config_dir :: proc(system: string) -> string {
 	}
 
 	if system == "darwin" {
+		//Memory Leak
 		home := os.get_env("HOME")
 		if home != "" {
 			return filepath.join({home, "Library", "Application Support"})

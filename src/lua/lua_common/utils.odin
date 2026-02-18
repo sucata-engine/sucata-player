@@ -50,6 +50,7 @@ get_table_number_nil :: proc(L: ^lua.State, table_index: c.int, field: cstring) 
 	return nil
 }
 
+//Memory Leak
 get_table_string :: proc(
 	L: ^lua.State,
 	table_index: c.int,
@@ -59,7 +60,7 @@ get_table_string :: proc(
 	lua.pushstring(L, field)
 	lua.gettable(L, table_index)
 
-	result := default_value
+	result := strings.clone(default_value)
 	if lua.isstring(L, -1) {
 		lua_str := lua.tostring(L, -1)
 		result = strings.clone_from_cstring(lua_str)

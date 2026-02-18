@@ -35,9 +35,11 @@ load_default_image :: proc() {
 	}
 }
 
-load_image :: proc(file_path: string) -> Image {
+load_image :: proc(_path: string) -> Image {
+	file_path := strings.clone(_path)
 	if value, ok := images_loaded[file_path]; ok {
 		images_used[file_path] = true
+		delete(file_path)
 		return value
 	}
 

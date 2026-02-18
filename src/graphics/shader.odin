@@ -157,10 +157,11 @@ init_shader :: proc(name: string, schd_path: string) -> bool {
 }
 
 destroy_shaders :: proc() {
-	for _, shader in custom_shaders {
+	for key, shader in custom_shaders {
 		sg.destroy_buffer(shader.ib)
 		sg.destroy_pipeline(shader.pipeline)
 		sg.destroy_shader(shader.shader)
+		delete_key(&custom_shaders, key)
 	}
-	custom_shaders = map[string]CustomShader{}
+	clear(&custom_shaders)
 }

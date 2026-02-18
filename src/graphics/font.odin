@@ -57,6 +57,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	if font_path == "" {
 		font_path = get_default_system_font()
 	}
+	//Memory Leak
 	font_name := fmt.aprintf("%s_%f", font_path, font_size, allocator = context.allocator)
 
 	if font, exists := loaded_fonts[font_name]; exists {

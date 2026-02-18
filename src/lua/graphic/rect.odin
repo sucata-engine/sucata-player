@@ -57,11 +57,12 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		}
 
 		color_rgba := hex_to_rgba(color)
+		defer delete(color)
 
 		props := common.QuadObjectProps {
 			position = [2]f32{x, y},
 			size = [2]f32{width, height},
-			color = hex_to_rgba(color),
+			color = color_rgba,
 			zIndex = i32(zIndex),
 			texture = texture_path,
 			scale = [2]f32{scale_x, scale_y},

@@ -54,6 +54,7 @@ load_file_as_cstring :: proc(path: string) -> (cstring, bool) {
 		return "", false
 	}
 	temp := string(data)
+	// Memory Leak
 	s := strings.clone_to_cstring(temp)
 	delete(data)
 	return s, true
@@ -68,6 +69,7 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 		return 1
 	}
 
+	//Memory Leak
 	module_str := strings.clone_from_cstring(module_name)
 	module_path, ok := strings.replace_all(module_str, ".", "/")
 	defer delete(module_path)
@@ -197,6 +199,7 @@ init_lua :: proc(path: string, entity_file: string = "") {
 		code = strings.clone_to_cstring(string(asset_data))
 		ok = true
 	} else {
+		//Memory leak
 		code, ok = load_file_as_cstring(path)
 	}
 

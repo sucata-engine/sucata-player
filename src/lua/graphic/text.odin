@@ -46,6 +46,7 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 		}
 
 		text_align := common.TextAlign.Left
+		defer delete(align)
 		switch align {
 		case "center":
 			text_align = .Center
@@ -55,9 +56,12 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 			text_align = .Left
 		}
 
+		color_rgba := hex_to_rgba(color)
+		defer delete(color)
+
 		props := common.TextObjectProps {
 			position    = [2]f32{x, y},
-			color       = hex_to_rgba(color),
+			color       = color_rgba,
 			zIndex      = i32(zIndex),
 			font        = font,
 			size        = font_size,

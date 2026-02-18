@@ -4,6 +4,7 @@ import sapp "../../sokol/app"
 import "../common"
 import "../graphics"
 import "base:runtime"
+import "core:fmt"
 import "core:sort"
 import lua "vendor:lua/5.4"
 
@@ -224,6 +225,29 @@ process_destroy_queue :: proc() {
 }
 
 clear_render_queue :: proc() {
+	for v in renderQueue {
+		switch obj in v {
+		case common.QuadObjectProps:
+			delete(obj.shader)
+			delete(obj.texture)
+			for _, shader in obj.shader_args {
+				#partial switch v in shader {
+				case string:
+					delete(v)
+				}
+			}
+		case common.TextObjectProps:
+			delete(obj.font)
+			delete(obj.shader)
+			delete(obj.text)
+			for _, shader in obj.shader_args {
+				#partial switch v in shader {
+				case string:
+					delete(v)
+				}
+			}
+		}
+	}
 	clear(&renderQueue)
 }
 
