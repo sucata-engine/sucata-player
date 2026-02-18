@@ -4,7 +4,6 @@ import sapp "../../sokol/app"
 import "../common"
 import "../graphics"
 import "base:runtime"
-import "core:fmt"
 import "core:sort"
 import lua "vendor:lua/5.4"
 

@@ -69,7 +69,6 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 		return 1
 	}
 
-	//Memory Leak
 	module_str := strings.clone_from_cstring(module_name)
 	module_path, ok := strings.replace_all(module_str, ".", "/")
 	defer delete(module_path)

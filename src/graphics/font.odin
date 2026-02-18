@@ -143,6 +143,7 @@ unload_fonts :: proc() {
 		delete(font.char_data)
 		free(font)
 		delete_key(&loaded_fonts, font_name)
+		delete(font_name)
 	}
 	delete(loaded_fonts)
 	loaded_fonts = {}
