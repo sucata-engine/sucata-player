@@ -134,6 +134,7 @@ cleanup_callback :: proc "c" () {
 	}
 	cleanup_temp_arena()
 	path.uninit_paths()
+	fs.unload_assets()
 }
 
 elapsed_time := 0.0
