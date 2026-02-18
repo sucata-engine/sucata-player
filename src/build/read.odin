@@ -7,8 +7,8 @@ import "core:strings"
 get_build :: proc(allocator := context.allocator) -> (hash: string, ok: bool) {
 	context.allocator = allocator
 
-	//Memory Leak
 	exe_path, _ := filepath.abs(os.args[0])
+	defer delete(exe_path)
 
 	file_data, read_ok := os.read_entire_file(exe_path)
 	if !read_ok {
