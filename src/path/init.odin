@@ -104,7 +104,6 @@ get_executable_path :: proc() -> string {
 	}
 
 	abs_path, ok := filepath.abs(arg0)
-	defer delete(abs_path)
 	if ok && os.exists(abs_path) {
 		return abs_path
 	}
