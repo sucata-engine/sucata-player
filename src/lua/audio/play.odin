@@ -26,6 +26,7 @@ PLAY_FUNCTION :: lua_common.LuaFunction {
 		}
 
 		audio_id, ok := core.load_sound(audio_path, group)
+		defer delete(audio_path)
 
 		if ok {
 			core.play_sound(audio_id, volume, pitch, b32(loop))
