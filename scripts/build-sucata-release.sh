@@ -4,11 +4,11 @@ set -e
 
 echo "Building Sucata for Unix..."
 
-echo "Building sucata.exe..."
+echo "Building sucata..."
 odin build .
 
-echo "Building sucata-player.exe..."
-odin build ./src/player.odin -file -out:sucata-player.exe
+echo "Building sucata-player..."
+odin build ./src/player.odin -file -out:sucata-player
 
 mkdir -p release/unix
 
