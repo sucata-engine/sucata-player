@@ -164,7 +164,7 @@ load_sound :: proc(sound_path: string, group: string = "default") -> (u32, bool)
 			return 0, false
 		}
 	}
-	//delete(sound_path)
+	defer delete(sound_path)
 
 	slot.id = mixer.next_id
 	slot.is_valid = true
