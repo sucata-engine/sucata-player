@@ -49,7 +49,6 @@ init_text_indices :: proc() {
 			},
 		},
 	)
-	indices := []u16{0, 1, 2, 0, 2, 3}
 	text_ib = sg.make_buffer(
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
@@ -195,6 +194,14 @@ wrap_text :: proc(text: string, font: ^Font, scale: [2]f32, max_width: f32) -> [
 	return lines
 }
 
+repeat_slice :: proc(base: []f32, total: int) -> []f32 {
+	result := make([]f32, total)
+	for i in 0 ..< total {
+		result[i] = base[i % len(base)]
+	}
+	return result
+}
+
 text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
 
@@ -218,18 +225,31 @@ text :: proc(props: common.TextObjectProps) {
 
 	position[1] += font_size / 2
 
+	mvp: matrix[4, 4]f32
+	if props.fixed {
+		mvp = get_fixed_mvp()
+	} else {
+		mvp = camera.get_view_projection_matrix(game_width, game_height)
+	}
+
+	text_batch_vertices := [dynamic]Vertex_Data{}
 	vertex_buffers := [8]sg.Buffer{}
 	has_vertex_buffer2 := false
+
 	if shader_name == "" {
 		if shader, ok := custom_shaders[shader_name]; ok {
 			sg.apply_pipeline(shader.pipeline)
 
-			shader_params := get_custom_shader_vertex_data(shader, shader_args)
+			shader_params_base := get_custom_shader_vertex_data(shader, shader_args)
+			shader_params := repeat_slice(shader_params_base, len(shader_params_base) * len(text))
+			defer delete(shader_params)
+			defer delete(shader_params_base)
+
 			if len(shader_params) != 0 {
 				vertex_buffers[1] = sg.make_buffer(
 					{
 						usage = {vertex_buffer = true, immutable = true},
-						size = uint(4 * len(shader_params)),
+						size = uint(size_of(shader_params)),
 						data = sg_range(shader_params[:]),
 					},
 				)
@@ -293,62 +313,39 @@ text :: proc(props: common.TextObjectProps) {
 				f32(font.bitmap_height),
 			)
 
-			vertices: [4]Vertex_Data
-			vertices[0] = Vertex_Data {
-				position = points[0],
-				col      = text_color,
-				uv       = uv_pos[0],
-			}
-			vertices[1] = Vertex_Data {
-				position = points[1],
-				col      = text_color,
-				uv       = uv_pos[1],
-			}
-			vertices[2] = Vertex_Data {
-				position = points[2],
-				col      = text_color,
-				uv       = uv_pos[2],
-			}
-			vertices[3] = Vertex_Data {
-				position = points[3],
-				col      = text_color,
-				uv       = uv_pos[3],
-			}
-
-			mvp: matrix[4, 4]f32
-			if props.fixed {
-				mvp = get_fixed_mvp()
-			} else {
-				mvp = camera.get_view_projection_matrix(game_width, game_height)
-			}
-
-			vertex_buffers[0] = sg.make_buffer(
-				{
-					usage = {vertex_buffer = true, immutable = true},
-					size = uint(4 * size_of(Vertex_Data)),
-					data = sg_range(vertices[:]),
-				},
-			)
-			sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
-
-			bindings := sg.Bindings {
-				vertex_buffers = vertex_buffers,
-				index_buffer = text_ib,
-				views = {shader_text.VIEW_tex = font.image},
-				samplers = {shader_text.SMP_smp = text_sampler},
-			}
-
-			sg.apply_bindings(bindings)
-			sg.draw(0, 6, 1)
-
-			sg.destroy_buffer(vertex_buffers[0])
-			if has_vertex_buffer2 {
-				sg.destroy_buffer(vertex_buffers[1])
+			for i in 0 ..< 4 {
+				append(&text_batch_vertices, Vertex_Data{points[i], text_color, uv_pos[i]})
 			}
 
 			cursor_pos[0] += f32(baked_char.xadvance) * scale[0]
 		}
-
 		current_y += line_height
 	}
+
+	vertex_buffers[0] = sg.make_buffer(
+		{
+			usage = {vertex_buffer = true, immutable = true},
+			size = uint(len(text_batch_vertices) * size_of(Vertex_Data)),
+			data = sg_range(text_batch_vertices[:]),
+		},
+	)
+	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
+
+	bindings := sg.Bindings {
+		vertex_buffers = vertex_buffers,
+		index_buffer = text_ib,
+		views = {shader_text.VIEW_tex = font.image},
+		samplers = {shader_text.SMP_smp = text_sampler},
+	}
+	sg.apply_bindings(bindings)
+
+	quad_count := len(text_batch_vertices) / 4
+	index_count := quad_count * 6
+	sg.draw(0, index_count, 1)
+
+	sg.destroy_buffer(vertex_buffers[0])
+	if has_vertex_buffer2 {
+		sg.destroy_buffer(vertex_buffers[1])
+	}
+	delete(text_batch_vertices)
 }

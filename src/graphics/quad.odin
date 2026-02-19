@@ -48,7 +48,6 @@ init_quad_indices :: proc() {
 			},
 		},
 	)
-	indices := []u16{0, 1, 2, 0, 2, 3}
 	quad_ib = sg.make_buffer(
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
