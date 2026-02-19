@@ -37,7 +37,8 @@ audio_engine_init :: proc() -> bool {
 	return true
 }
 
-create_audio_group :: proc(audio_group: string) -> bool {
+create_audio_group :: proc(group: string) -> bool {
+	audio_group := strings.clone(group)
 	mixer.groups[audio_group] = new(ma.sound_group)
 
 	sound_group_config := ma.sound_group_config_init_2(&mixer.engine)

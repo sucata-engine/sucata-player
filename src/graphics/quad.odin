@@ -91,9 +91,6 @@ quad :: proc(props: common.QuadObjectProps) {
 	shader_name := props.shader
 	shader_args := props.shader_args
 
-	if texture == "" {
-		texture = "__default__"
-	}
 	image := load_image(texture)
 
 	points := to_world_space_2d(position, size, scale, origin, rotation)

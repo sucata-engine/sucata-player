@@ -36,6 +36,10 @@ load_default_image :: proc() {
 }
 
 load_image :: proc(_path: string) -> Image {
+	if _path == "" {
+		return images_loaded[DEFAULT_IMAGE_KEY]
+	}
+
 	file_path := strings.clone(_path)
 	if value, ok := images_loaded[file_path]; ok {
 		images_used[file_path] = true
