@@ -52,7 +52,7 @@ SHADER_CREATE_COMMAND :: Command {
 	handler = proc(args: []string) {
 		file_path_args := args[0]
 		if !strings.has_suffix(file_path_args, ".glsl") {
-			file_path_args = fmt.aprintf("%s.glsl", file_path_args)
+			file_path_args = fmt.tprintf("%s.glsl", file_path_args)
 		}
 		current_directory := os.get_current_directory()
 		defer delete(current_directory)
