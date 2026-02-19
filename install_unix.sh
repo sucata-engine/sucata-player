@@ -15,6 +15,7 @@ ARCH=$(uname -m)
 if [[ "$OS" == "Darwin" ]]; then
   if [[ "$ARCH" == "arm64" ]]; then
     TARGET="sucata-osx-arm64"
+    SOKOLSHDC="sokol-shdc-osx-arm"
   elif [[ "$ARCH" == "x86_64" ]]; then
     # TARGET="sucata-osx-amd64"
     echo "ERROR: Unsupported macOS architecture: $ARCH"
@@ -26,6 +27,7 @@ if [[ "$OS" == "Darwin" ]]; then
 elif [[ "$OS" == "Linux" ]]; then
   if [[ "$ARCH" == "x86_64" ]]; then
     TARGET="sucata-linux-amd64"
+    SOKOLSHDC="sokol-shdc-linux"
   elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
     #TARGET="sucata-linux-arm64"
     echo "ERROR: Unsupported Linux architecture: $ARCH"
@@ -59,6 +61,7 @@ fi
 
 chmod +x "$SUCATA_BIN"
 chmod +x "$SUCATA_PLAYER_BIN"
+chmod +x "$SUCATA_DIR/sokol-shdc/$SOKOLSHDC"
 
 echo "Sucata installed on $SUCATA_BIN"
 
