@@ -86,6 +86,7 @@ get_config_dir :: proc(system: string) -> string {
 get_sucata_player_path :: proc() -> string {
 	executable_path := get_executable_path()
 	executable_dir := filepath.dir(executable_path)
+	defer delete(executable_dir)
 	defer delete(executable_path)
 	player_path := ""
 	when ODIN_OS == .Windows {
