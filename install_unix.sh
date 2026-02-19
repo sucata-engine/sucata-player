@@ -64,7 +64,7 @@ echo "Sucata installed on $SUCATA_BIN"
 
 rm -f $SUCATA_TEMP_ZIP
 
-LINE='export PATH="$SUCATA_DIR:$PATH"'
+LINE='export PATH="$HOME/sucata:$PATH"'
 SHELL_NAME="$(basename "$SHELL")"
 
 add_to_file() {
