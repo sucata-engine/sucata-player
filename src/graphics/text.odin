@@ -322,6 +322,10 @@ text :: proc(props: common.TextObjectProps) {
 		current_y += line_height
 	}
 
+	if len(text_batch_vertices) == 0 {
+		return
+	}
+
 	vertex_buffers[0] = sg.make_buffer(
 		{
 			usage = {vertex_buffer = true, immutable = true},

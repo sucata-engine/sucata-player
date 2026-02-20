@@ -131,6 +131,9 @@ quad_group :: proc(props: common.GroupObjectProps) {
 			}
 		}
 	}
+	if len(batch_vertices) == 0 {
+		return
+	}
 
 	vertex_buffers[0] = sg.make_buffer(
 		{
