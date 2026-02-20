@@ -279,6 +279,10 @@ string_to_keycode :: proc(s: string) -> sapp.Keycode {
 		return .LEFT_CONTROL
 	case "alt":
 		return .LEFT_ALT
+	case "apostrophe":
+		return .APOSTROPHE
+	case "tab":
+		return .TAB
 
 	case "up":
 		return .UP
