@@ -270,16 +270,20 @@ clear_render_queue :: proc() {
 		case common.GroupObjectProps:
 			delete(obj.shader)
 			delete(obj.texture)
-			for quad in obj.quads^ {
-				for _, shader in quad.shader_args {
-					#partial switch v in shader {
-					case string:
-						delete(v)
+
+			if obj.quads != nil {
+				for quad in obj.quads^ {
+					for _, shader in quad.shader_args {
+						#partial switch v in shader {
+						case string:
+							delete(v)
+						}
 					}
 				}
+
+				delete(obj.quads^)
+				free(obj.quads)
 			}
-			delete(obj.quads^)
-			free(obj.quads)
 		case common.TextObjectProps:
 			delete(obj.font)
 			delete(obj.shader)
