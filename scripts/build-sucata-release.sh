@@ -13,7 +13,7 @@ odin build ./src/player.odin -file -out:sucata-player
 mkdir -p release/unix
 
 echo "Copying files..."
-cp sucata.exe release/unix/
-cp sucata-player.exe release/unix/
+cp sucata release/unix/
+cp sucata-player release/unix/
 
 echo "Done!"
