@@ -270,7 +270,7 @@ clear_render_queue :: proc() {
 		case common.GroupObjectProps:
 			delete(obj.shader)
 			delete(obj.texture)
-			for quad in obj.quads {
+			for quad in obj.quads^ {
 				for _, shader in quad.shader_args {
 					#partial switch v in shader {
 					case string:
@@ -278,6 +278,7 @@ clear_render_queue :: proc() {
 					}
 				}
 			}
+			delete(obj.quads^)
 			free(obj.quads)
 		case common.TextObjectProps:
 			delete(obj.font)
