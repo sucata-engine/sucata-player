@@ -59,17 +59,14 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		color_rgba := hex_to_rgba(color)
 		defer delete(color)
 
-		props := common.QuadObjectProps {
+		props := common.ObjectProp {
 			position = [2]f32{x, y},
 			size = [2]f32{width, height},
 			color = color_rgba,
-			zIndex = i32(zIndex),
-			texture = texture_path,
 			scale = [2]f32{scale_x, scale_y},
 			origin = [2]f32{origin_x, origin_y},
 			rotation = rotation,
 			opacity = opacity,
-			shader = shader,
 			atlas = common.AtlasProps {
 				width = atlas_width,
 				height = atlas_height,
@@ -78,11 +75,10 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 				x = atlas_x,
 				y = atlas_y,
 			},
-			fixed = fixed,
 			shader_args = shader_args,
 		}
 
-		core.add_to_render_queue(props)
+		core.add_group_to_render_queue(i32(zIndex), texture_path, shader, fixed, props)
 
 		return 0
 	},

@@ -211,6 +211,38 @@ add_to_render_queue :: proc(props: common.GraphicObjectProps) {
 	append(&renderQueue, props)
 }
 
+add_group_to_render_queue :: proc(
+	z_index: i32,
+	texture: string,
+	shader: string,
+	fixed: bool,
+	prop: common.ObjectProp,
+) {
+	for i in 0 ..< len(renderQueue) {
+		#partial switch v in renderQueue[i] {
+		case common.GroupObjectProps:
+			if v.texture == texture &&
+			   v.z_index == z_index &&
+			   v.shader == shader &&
+			   v.fixed == fixed {
+
+				append(renderQueue[i].(common.GroupObjectProps).quads, prop)
+				return
+			}
+		}
+	}
+	quads := new([dynamic]common.ObjectProp)
+	append(quads, prop)
+	group_quads := common.GroupObjectProps {
+		texture = texture,
+		z_index = z_index,
+		shader  = shader,
+		fixed   = fixed,
+		quads   = quads,
+	}
+	append(&renderQueue, group_quads)
+}
+
 add_to_destroy_queue :: proc(entity: ^common.Entity) {
 	entity.destroyed = true
 	append(&destroyQueue, entity)
@@ -235,6 +267,18 @@ clear_render_queue :: proc() {
 					delete(v)
 				}
 			}
+		case common.GroupObjectProps:
+			delete(obj.shader)
+			delete(obj.texture)
+			for quad in obj.quads {
+				for _, shader in quad.shader_args {
+					#partial switch v in shader {
+					case string:
+						delete(v)
+					}
+				}
+			}
+			free(obj.quads)
 		case common.TextObjectProps:
 			delete(obj.font)
 			delete(obj.shader)
@@ -257,6 +301,8 @@ draw_render_queue :: proc() {
 			graphics.quad(obj)
 		case common.TextObjectProps:
 			graphics.text(obj)
+		case common.GroupObjectProps:
+			graphics.quad_group(obj)
 		}
 	}
 }
@@ -273,6 +319,8 @@ order_render_queue :: proc() {
 				a_z_index = v.zIndex
 			case common.TextObjectProps:
 				a_z_index = v.zIndex
+			case common.GroupObjectProps:
+				a_z_index = v.z_index
 			}
 
 			switch v in b {
@@ -280,6 +328,8 @@ order_render_queue :: proc() {
 				b_z_index = v.zIndex
 			case common.TextObjectProps:
 				b_z_index = v.zIndex
+			case common.GroupObjectProps:
+				b_z_index = v.z_index
 			}
 
 			if a_z_index < b_z_index {return -1}

@@ -5,6 +5,7 @@ import "../camera"
 import "../common"
 import shader_quad "../shaders/quad"
 import "core:c"
+import "core:fmt"
 
 quad_ib: sg.Buffer
 quad_buffers_inited: bool
@@ -72,6 +73,109 @@ shutdown_quad_buffers :: proc() {
 		sg.destroy_shader(quad_shader)
 		quad_buffers_inited = false
 	}
+}
+
+quad_group :: proc(props: common.GroupObjectProps) {
+	init_quad_indices()
+
+	z_index := props.z_index
+	texture := props.texture
+	shader_name := props.shader
+	fixed := props.fixed
+	quads := props.quads
+
+	if len(quads) == 0 {
+		return
+	}
+
+	custom_shader, has_custom_shader := custom_shaders[shader_name]
+	image := load_image(texture)
+
+	mvp: matrix[4, 4]f32
+	if props.fixed {
+		mvp = get_fixed_mvp()
+	} else {
+		mvp = camera.get_view_projection_matrix(game_width, game_height)
+	}
+
+	vertex_buffers := [8]sg.Buffer{}
+	batch_vertices := [dynamic]Vertex_Data{}
+	vert_shader_args := [dynamic]f32{}
+
+	for quad in quads {
+		position := quad.position
+		size := quad.size
+		color := quad.color
+		scale := quad.scale
+		origin := quad.origin
+		rotation := quad.rotation
+		atlas := quad.atlas
+		shader_args := quad.shader_args
+		opacity := quad.opacity.(f32) or_else color[3]
+
+		points := to_world_space_2d(position, size, scale, origin, rotation)
+		quad_color := Vec4{color[0], color[1], color[2], opacity}
+		uv_pos := calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
+
+		for i in 0 ..< 4 {
+			append(
+				&batch_vertices,
+				Vertex_Data{position = points[i], col = quad_color, uv = uv_pos[i]},
+			)
+		}
+
+		if has_custom_shader {
+			shader_params := get_custom_shader_vertex_data(custom_shader, shader_args)
+			for shader_param in shader_params {
+				append(&vert_shader_args, shader_param)
+			}
+		}
+	}
+
+	vertex_buffers[0] = sg.make_buffer(
+		{
+			usage = {vertex_buffer = true, immutable = true},
+			size = uint(len(batch_vertices) * size_of(Vertex_Data)),
+			data = sg_range(batch_vertices[:]),
+		},
+	)
+	if len(vert_shader_args) != 0 {
+		vertex_buffers[1] = sg.make_buffer(
+			{
+				usage = {vertex_buffer = true, immutable = true},
+				size = uint(size_of(f32) * len(vert_shader_args)),
+				data = sg_range(vert_shader_args[:]),
+			},
+		)
+	}
+
+	if has_custom_shader {
+		sg.apply_pipeline(custom_shader.pipeline)
+	} else {
+		sg.apply_pipeline(quad_pipeline)
+	}
+
+	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
+
+	quad_image := image.view
+	bindings := sg.Bindings {
+		vertex_buffers = vertex_buffers,
+		index_buffer = quad_ib,
+		views = {shader_quad.VIEW_tex = quad_image},
+		samplers = {shader_quad.SMP_smp = quad_sampler},
+	}
+	sg.apply_bindings(bindings)
+
+	quad_count := len(batch_vertices) / 4
+	index_count := quad_count * 6
+	sg.draw(0, index_count, 1)
+
+	sg.destroy_buffer(vertex_buffers[0])
+	if len(vert_shader_args) > 0 {
+		sg.destroy_buffer(vertex_buffers[1])
+	}
+	delete(batch_vertices)
+	delete(vert_shader_args)
 }
 
 quad :: proc(props: common.QuadObjectProps) {

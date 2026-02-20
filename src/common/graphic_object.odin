@@ -25,6 +25,26 @@ ShaderArgumentValue :: union {
 
 ShaderArgs :: map[string]ShaderArgumentValue
 
+ObjectProp :: struct {
+	position:    [2]f32,
+	size:        [2]f32,
+	color:       [4]f32,
+	scale:       [2]f32,
+	origin:      [2]f32,
+	rotation:    f32,
+	opacity:     Maybe(f32),
+	atlas:       AtlasProps,
+	shader_args: ShaderArgs,
+}
+
+GroupObjectProps :: struct {
+	z_index: i32,
+	texture: string,
+	shader:  string,
+	fixed:   bool,
+	quads:   ^[dynamic]ObjectProp,
+}
+
 QuadObjectProps :: struct {
 	zIndex:      i32,
 	position:    [2]f32,
@@ -62,4 +82,5 @@ TextObjectProps :: struct {
 GraphicObjectProps :: union {
 	QuadObjectProps,
 	TextObjectProps,
+	GroupObjectProps,
 }
