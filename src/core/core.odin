@@ -5,6 +5,7 @@ import "../common"
 import "../graphics"
 import "base:runtime"
 import "core:sort"
+import "core:strings"
 import lua "vendor:lua/5.4"
 
 LUA_GLOBAL_STATE: ^lua.State
@@ -234,9 +235,9 @@ add_group_to_render_queue :: proc(
 	quads := new([dynamic]common.ObjectProp)
 	append(quads, prop)
 	group_quads := common.GroupObjectProps {
-		texture = texture,
+		texture = strings.clone(texture),
 		z_index = z_index,
-		shader  = shader,
+		shader  = strings.clone(texture),
 		fixed   = fixed,
 		quads   = quads,
 	}

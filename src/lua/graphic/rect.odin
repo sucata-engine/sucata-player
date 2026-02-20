@@ -33,6 +33,9 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		shader := lua_common.get_table_string(L, 1, "shader", "")
 		shader_args := lua_common.get_shader_args(L, 1)
 
+		defer delete(texture_path)
+		defer delete(shader)
+
 		atlas_width := f32(lua_common.get_table_number(L, 1, "atlas_width", 0.0))
 		atlas_height := f32(lua_common.get_table_number(L, 1, "atlas_height", 0.0))
 		atlas_size := f32(lua_common.get_table_number(L, 1, "atlas_size", 0.0))
