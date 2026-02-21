@@ -29,6 +29,7 @@ read_file_as_string :: proc(file_path: string) -> (string, bool) {
 
 read_dir :: proc(dir_path: string) -> ([]string, bool) {
 	files := find_assets_with_prefix(dir_path)
+	defer delete(files)
 	if len(files) > 0 {
 		return files, true
 	}

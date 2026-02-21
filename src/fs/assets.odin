@@ -133,7 +133,7 @@ load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byt
 
 unload_assets :: proc() {
 	if assets != nil {
-		for entry in assets.entries {
+		for &entry in assets.entries {
 			delete(entry.path)
 			if entry.cache != nil {
 				delete(entry.cache)
@@ -174,7 +174,6 @@ find_assets_with_prefix :: proc(prefix: string, allocator := context.allocator) 
 	context.allocator = allocator
 
 	matching := make([dynamic]string)
-	defer delete(matching)
 	for entry in assets.entries {
 		if strings.has_prefix(entry.path, prefix) {
 			append(&matching, entry.path)
