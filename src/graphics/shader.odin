@@ -22,7 +22,6 @@ get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool) {
 		return asset_data, true
 	}
 	shader_entire_path := path.get_path(shader_path)
-	defer delete(shader_entire_path)
 	schd_data, ok := os.read_entire_file_from_filename(shader_entire_path)
 	if !ok {
 		return {}, false
