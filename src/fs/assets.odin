@@ -123,7 +123,7 @@ load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byt
 	)
 
 	decompressed_data := decompressed_buffer[entry.offset:entry.offset + entry.size]
-	entry_data := make([]byte, len(decompressed_data), allocator = context.allocator)
+	entry_data := make([]byte, len(decompressed_data))
 	copy(entry_data, decompressed_data)
 
 	entry.cache = entry_data
@@ -134,7 +134,10 @@ load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byt
 unload_assets :: proc() {
 	if assets != nil {
 		for &entry in assets.entries {
-			delete(entry.path)
+			if entry.cache != nil {
+				delete(entry.cache)
+				entry.cache = nil
+			}
 		}
 		delete(assets.path)
 		delete(assets.entries)
