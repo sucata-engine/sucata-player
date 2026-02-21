@@ -124,10 +124,6 @@ cleanup_callback :: proc "c" () {
 
 	sg.shutdown()
 
-	if is_build_mode {
-		fs.unload_assets()
-	}
-
 	if LUA_GLOBAL_STATE != nil {
 		lua.close(LUA_GLOBAL_STATE)
 		LUA_GLOBAL_STATE = nil
