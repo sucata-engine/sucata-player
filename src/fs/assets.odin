@@ -54,23 +54,6 @@ get_entry :: proc(path: string) -> ^common.Asset_Entry {
 	return nil
 }
 
-unload_asset :: proc(file_path: string) {
-	if assets == nil {
-		return
-	}
-
-	clean_path := file_path
-	if strings.has_prefix(file_path, "src://") {
-		clean_path = file_path[6:]
-	}
-
-	entry := get_entry(clean_path)
-	if entry == nil {
-		return
-	}
-	delete(entry.cache)
-}
-
 load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 	if assets == nil {
 		return nil, false
@@ -81,7 +64,7 @@ load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 		return nil, false
 	}
 
-	if entry.cache != nil {
+	if entry.is_cached {
 		return entry.cache, true
 	}
 
@@ -125,6 +108,7 @@ load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 	copy(entry_data, decompressed_data)
 
 	entry.cache = entry_data
+	entry.is_cached = true
 
 	return entry_data, true
 }
@@ -132,10 +116,10 @@ load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 unload_assets :: proc() {
 	if assets != nil {
 		for &entry in assets.entries {
-			if entry.cache != nil {
+			if entry.is_cached {
 				delete(entry.cache)
-				entry.cache = nil
 			}
+			delete(entry.path)
 		}
 		delete(assets.path)
 		delete(assets.entries)
