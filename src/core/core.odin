@@ -237,7 +237,7 @@ add_group_to_render_queue :: proc(
 	group_quads := common.GroupObjectProps {
 		texture = strings.clone(texture),
 		z_index = z_index,
-		shader  = strings.clone(texture),
+		shader  = strings.clone(shader),
 		fixed   = fixed,
 		quads   = quads,
 	}
