@@ -166,6 +166,7 @@ get_attr_vertex_format :: proc(format: string) -> sg.Vertex_Attr_State {
 
 json_array_to_cstring :: proc(arr: json.Array) -> string {
 	bytes := make([]u8, len(arr))
+	defer delete(bytes)
 	for v, i in arr {
 		bytes[i] = u8(v.(json.Float))
 	}
