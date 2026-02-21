@@ -8,9 +8,7 @@ import "vendor:compress/lz4"
 
 assets: ^common.Asset_Archive = nil
 
-load_assets :: proc(asset_path: string, allocator := context.allocator) -> bool {
-	context.allocator = allocator
-
+load_assets :: proc(asset_path: string) -> bool {
 	file_data, read_ok := os.read_entire_file(asset_path)
 	if !read_ok {
 		return false
@@ -56,7 +54,7 @@ get_entry :: proc(path: string) -> ^common.Asset_Entry {
 	return nil
 }
 
-unload_asset :: proc(file_path: string, allocator := context.allocator) {
+unload_asset :: proc(file_path: string) {
 	if assets == nil {
 		return
 	}
@@ -73,7 +71,7 @@ unload_asset :: proc(file_path: string, allocator := context.allocator) {
 	delete(entry.cache)
 }
 
-load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byte, ok: bool) {
+load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 	if assets == nil {
 		return nil, false
 	}
@@ -113,7 +111,7 @@ load_asset :: proc(path: string, allocator := context.allocator) -> (data: []byt
 		total_uncompressed_size = last_entry.offset + last_entry.size
 	}
 
-	decompressed_buffer := make([]byte, total_uncompressed_size, allocator)
+	decompressed_buffer := make([]byte, total_uncompressed_size)
 	defer delete(decompressed_buffer)
 	decompressed_size := lz4.decompress_safe(
 		raw_data(compressed_data),
@@ -146,8 +144,7 @@ unload_assets :: proc() {
 	}
 }
 
-get_asset :: proc(file_path: string, allocator := context.allocator) -> (data: []byte, ok: bool) {
-	context.allocator = allocator
+get_asset :: proc(file_path: string) -> (data: []byte, ok: bool) {
 	if assets == nil {
 		return nil, false
 	}
@@ -157,12 +154,11 @@ get_asset :: proc(file_path: string, allocator := context.allocator) -> (data: [
 		clean_path = file_path[6:]
 	}
 
-	vlr, vlr_ok := load_asset(clean_path, allocator)
+	vlr, vlr_ok := load_asset(clean_path)
 	return vlr, vlr_ok
 }
 
-list_assets :: proc(allocator := context.allocator) -> []string {
-	context.allocator = allocator
+list_assets :: proc() -> []string {
 	paths := make([]string, len(assets.entries))
 	for entry, i in assets.entries {
 		paths[i] = entry.path
@@ -170,9 +166,7 @@ list_assets :: proc(allocator := context.allocator) -> []string {
 	return paths
 }
 
-find_assets_with_prefix :: proc(prefix: string, allocator := context.allocator) -> []string {
-	context.allocator = allocator
-
+find_assets_with_prefix :: proc(prefix: string) -> []string {
 	matching := make([dynamic]string)
 	for entry in assets.entries {
 		if strings.has_prefix(entry.path, prefix) {
