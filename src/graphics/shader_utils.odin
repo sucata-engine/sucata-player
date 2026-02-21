@@ -246,6 +246,7 @@ create_shader_desc_from_schd :: proc(
 	if json_ok != .None {
 		panic("shader .schd JSON inválido")
 	}
+	defer json.destroy_value(json_data)
 
 	desc: sg.Shader_Desc
 	attributes := create_shader_attributes(json_data)
