@@ -257,15 +257,21 @@ create_shader_desc_from_schd :: proc(
 		program := find_program_in_schd(json_data, "glsl430")
 
 		desc.label = strings.clone_to_cstring(program["name"].(json.String))
-		desc.vertex_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["vertex_func"].(json.Object)["data"].(json.Array)),
+
+		vertex_func_source := json_array_to_cstring(
+			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
 		)
-		desc.fragment_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["fragment_func"].(json.Object)["data"].(json.Array)),
+
+		fragment_func_source := json_array_to_cstring(
+			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
 		)
@@ -359,18 +365,22 @@ create_shader_desc_from_schd :: proc(
 		program := find_program_in_schd(json_data, "hlsl5")
 
 		desc.label = strings.clone_to_cstring(program["name"].(json.String))
-		desc.vertex_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["vertex_func"].(json.Object)["data"].(json.Array)),
+		vertex_func_source := json_array_to_cstring(
+			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
 		)
 		desc.vertex_func.d3d11_target = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["d3d11_target"].(json.String),
 		)
-		desc.fragment_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["fragment_func"].(json.Object)["data"].(json.Array)),
+		fragment_func_source := json_array_to_cstring(
+			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
 		)
@@ -456,15 +466,19 @@ create_shader_desc_from_schd :: proc(
 		program := find_program_in_schd(json_data, "metal_macos")
 
 		desc.label = strings.clone_to_cstring(program["name"].(json.String))
-		desc.vertex_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["vertex_func"].(json.Object)["data"].(json.Array)),
+		vertex_func_source := json_array_to_cstring(
+			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
 		)
-		desc.fragment_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["fragment_func"].(json.Object)["data"].(json.Array)),
+		fragment_func_source := json_array_to_cstring(
+			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
 		)
@@ -541,15 +555,19 @@ create_shader_desc_from_schd :: proc(
 		program := find_program_in_schd(json_data, "wgsl")
 
 		desc.label = strings.clone_to_cstring(program["name"].(json.String))
-		desc.vertex_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["vertex_func"].(json.Object)["data"].(json.Array)),
+		vertex_func_source := json_array_to_cstring(
+			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
 		)
-		desc.fragment_func.source = strings.clone_to_cstring(
-			json_array_to_cstring(program["fragment_func"].(json.Object)["data"].(json.Array)),
+		fragment_func_source := json_array_to_cstring(
+			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
+		defer delete(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
 		)
