@@ -3,6 +3,7 @@ package graphics
 import sg "../../sokol/gfx"
 import "core:encoding/json"
 import "core:fmt"
+import "core:mem"
 import "core:strings"
 
 get_shader_attr_type :: proc(type: string, base_type: string) -> sg.Vertex_Format {
@@ -256,24 +257,35 @@ create_shader_desc_from_schd :: proc(
 	case .GLCORE:
 		program := find_program_in_schd(json_data, "glsl430")
 
-		desc.label = strings.clone_to_cstring(program["name"].(json.String))
+		desc.label = strings.clone_to_cstring(
+			program["name"].(json.String),
+			allocator = context.temp_allocator,
+		)
 
 		vertex_func_source := json_array_to_cstring(
 			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(vertex_func_source)
-		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(
+			vertex_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 
 		fragment_func_source := json_array_to_cstring(
 			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(fragment_func_source)
-		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(
+			fragment_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 
 		for attr, attr_index in program["attrs"].(json.Array) {
@@ -283,6 +295,7 @@ create_shader_desc_from_schd :: proc(
 			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
 			desc.attrs[attr_index].glsl_name = strings.clone_to_cstring(
 				attr_obj["glsl_name"].(json.String),
+				allocator = context.temp_allocator,
 			)
 		}
 
@@ -309,7 +322,10 @@ create_shader_desc_from_schd :: proc(
 				struct_name := glsl_uniform_obj["glsl_name"]
 				if struct_name != nil {
 					desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].glsl_name =
-						strings.clone_to_cstring(struct_name.(json.String))
+						strings.clone_to_cstring(
+							struct_name.(json.String),
+							allocator = context.temp_allocator,
+						)
 				}
 			}
 		}
@@ -354,38 +370,52 @@ create_shader_desc_from_schd :: proc(
 				json_number_to_number(pair_obj["sampler_slot"]),
 			)
 			desc.texture_sampler_pairs[pair_index].glsl_name = strings.clone_to_cstring(
-				fmt.aprintf(
+				fmt.tprintf(
 					"%s_%s",
 					pair_obj["view_name"].(json.String),
 					pair_obj["sampler_name"].(json.String),
 				),
+				allocator = context.temp_allocator,
 			)
 		}
 	case .D3D11:
 		program := find_program_in_schd(json_data, "hlsl5")
 
-		desc.label = strings.clone_to_cstring(program["name"].(json.String))
+		desc.label = strings.clone_to_cstring(
+			program["name"].(json.String),
+			allocator = context.temp_allocator,
+		)
 		vertex_func_source := json_array_to_cstring(
 			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(vertex_func_source)
-		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(
+			vertex_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 		desc.vertex_func.d3d11_target = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["d3d11_target"].(json.String),
+			allocator = context.temp_allocator,
 		)
 		fragment_func_source := json_array_to_cstring(
 			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(fragment_func_source)
-		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(
+			fragment_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 		desc.fragment_func.d3d11_target = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["d3d11_target"].(json.String),
+			allocator = context.temp_allocator,
 		)
 
 		for attr, attr_index in program["attrs"].(json.Array) {
@@ -395,6 +425,7 @@ create_shader_desc_from_schd :: proc(
 			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
 			desc.attrs[attr_index].hlsl_sem_name = strings.clone_to_cstring(
 				attr_obj["hlsl_sem_name"].(json.String),
+				allocator = context.temp_allocator,
 			)
 			desc.attrs[attr_index].hlsl_sem_index = u8(
 				json_number_to_number(attr_obj["hlsl_sem_index"]),
@@ -465,22 +496,33 @@ create_shader_desc_from_schd :: proc(
 	case .METAL_MACOS:
 		program := find_program_in_schd(json_data, "metal_macos")
 
-		desc.label = strings.clone_to_cstring(program["name"].(json.String))
+		desc.label = strings.clone_to_cstring(
+			program["name"].(json.String),
+			allocator = context.temp_allocator,
+		)
 		vertex_func_source := json_array_to_cstring(
 			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(vertex_func_source)
-		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(
+			vertex_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 		fragment_func_source := json_array_to_cstring(
 			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(fragment_func_source)
-		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(
+			fragment_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 
 		for attr, attr_index in program["attrs"].(json.Array) {
@@ -554,22 +596,33 @@ create_shader_desc_from_schd :: proc(
 	case .WGPU:
 		program := find_program_in_schd(json_data, "wgsl")
 
-		desc.label = strings.clone_to_cstring(program["name"].(json.String))
+		desc.label = strings.clone_to_cstring(
+			program["name"].(json.String),
+			allocator = context.temp_allocator,
+		)
 		vertex_func_source := json_array_to_cstring(
 			program["vertex_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(vertex_func_source)
-		desc.vertex_func.source = strings.clone_to_cstring(vertex_func_source)
+		desc.vertex_func.source = strings.clone_to_cstring(
+			vertex_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.vertex_func.entry = strings.clone_to_cstring(
 			program["vertex_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 		fragment_func_source := json_array_to_cstring(
 			program["fragment_func"].(json.Object)["data"].(json.Array),
 		)
 		defer delete(fragment_func_source)
-		desc.fragment_func.source = strings.clone_to_cstring(fragment_func_source)
+		desc.fragment_func.source = strings.clone_to_cstring(
+			fragment_func_source,
+			allocator = context.temp_allocator,
+		)
 		desc.fragment_func.entry = strings.clone_to_cstring(
 			program["fragment_func"].(json.Object)["entry_point"].(json.String),
+			allocator = context.temp_allocator,
 		)
 
 		for attr, attr_index in program["attrs"].(json.Array) {
