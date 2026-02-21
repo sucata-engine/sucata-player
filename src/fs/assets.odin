@@ -135,7 +135,9 @@ unload_assets :: proc() {
 	if assets != nil {
 		for entry in assets.entries {
 			delete(entry.path)
-			delete(entry.cache)
+			if len(entry.cache) > 0 {
+				delete(entry.cache)
+			}
 		}
 		delete(assets.path)
 		delete(assets.entries)
