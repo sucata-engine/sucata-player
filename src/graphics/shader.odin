@@ -17,17 +17,17 @@ CustomShader :: struct {
 
 custom_shaders := map[string]CustomShader{}
 
-get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool) {
+get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
 	if asset_data, ok := fs.get_asset(shader_path); ok && len(asset_data) > 0 {
-		return asset_data, true
+		return asset_data, true, true
 	}
 	shader_entire_path := path.get_path(shader_path)
 	schd_data, ok := os.read_entire_file_from_filename(shader_entire_path)
 	if !ok {
-		return {}, false
+		return {}, false, false
 	}
 
-	return schd_data, true
+	return schd_data, true, false
 }
 
 DEFAULT_BUFFER :: [3]string{"position", "col", "uv"}
@@ -106,8 +106,12 @@ init_shader :: proc(name: string, schd_path: string) -> bool {
 		return true
 	}
 
-	schd_data, ok := get_shader_from_path(schd_path)
-	defer delete(schd_data)
+	schd_data, ok, is_asset := get_shader_from_path(schd_path)
+	defer {
+		if !is_asset {
+			delete(schd_data)
+		}
+	}
 	if !ok {
 		common.print_warning(
 			"Failed to read shader definition file: %s, unable to create the shader",
