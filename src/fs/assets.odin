@@ -2,6 +2,7 @@ package fs
 
 import "../common"
 import "core:encoding/json"
+import "core:fmt"
 import "core:os"
 import "core:strings"
 import "vendor:compress/lz4"
@@ -117,6 +118,7 @@ unload_assets :: proc() {
 	if assets != nil {
 		for &entry in assets.entries {
 			if entry.is_cached {
+				fmt.printfln(entry.path)
 				delete(entry.cache)
 			}
 			delete(entry.path)

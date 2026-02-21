@@ -123,6 +123,7 @@ cleanup_callback :: proc "c" () {
 	graphics.shutdown_graphics()
 
 	sg.shutdown()
+	fs.unload_assets()
 
 	if LUA_GLOBAL_STATE != nil {
 		lua.close(LUA_GLOBAL_STATE)
@@ -130,7 +131,6 @@ cleanup_callback :: proc "c" () {
 	}
 	cleanup_temp_arena()
 	path.uninit_paths()
-	fs.unload_assets()
 }
 
 elapsed_time := 0.0
