@@ -10,7 +10,7 @@ IS_HOVER_FUNCTION :: lua_common.LuaFunction {
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 
-		if !lua_common.validate_arg_count(L, 2, "is_hover") do return 0
+		if !lua_common.validate_arg_count(L, 1, "is_hover") do return 0
 		if !lua_common.validate_table(L, 1, "is_hover") do return 0
 
 		id := lua_common.get_table_string(L, 1, "id", "")
