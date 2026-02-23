@@ -66,8 +66,8 @@ process_hoverables :: proc() {
 		mouse_y = rotated_y
 	}
 
-	world_mouse_x := (mouse_x + camera.camera.position.x / camera.camera.zoom)
-	world_mouse_y := (mouse_y + camera.camera.position.y / camera.camera.zoom)
+	world_mouse_x := (mouse_x + camera.camera.position.x) / camera.camera.zoom
+	world_mouse_y := (mouse_y + camera.camera.position.y) / camera.camera.zoom
 
 	for hoverable in _hoverables {
 		if hoverable.fixed {
