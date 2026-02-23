@@ -85,11 +85,13 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		return nil
 	}
 
-	bitmap_width: i32 = 512
-	bitmap_height: i32 = 512
+	bitmap_width: i32 = 1024
+	bitmap_height: i32 = 1024
 	bitmap := make([^]byte, bitmap_width * bitmap_height)
 
-	char_data := make([]stbt.bakedchar, 96)
+	first_char: i32 = 32
+	char_count: i32 = 255 - first_char + 1
+	char_data := make([]stbt.bakedchar, char_count)
 	result := stbt.BakeFontBitmap(
 		raw_data(ttf_data),
 		0,
@@ -97,8 +99,8 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		bitmap,
 		bitmap_width,
 		bitmap_height,
-		32,
-		96,
+		first_char,
+		char_count,
 		raw_data(char_data),
 	)
 

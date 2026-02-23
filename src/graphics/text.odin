@@ -6,6 +6,7 @@ import "../common"
 import shader_text "../shaders/text"
 import "core:c"
 import "core:strings"
+import "core:unicode/utf8"
 
 text_ib: sg.Buffer
 text_shader: sg.Shader
@@ -77,12 +78,16 @@ shutdown_text_buffers :: proc() {
 
 calculate_text_width :: proc(text: string, font: ^Font, scale: [2]f32) -> f32 {
 	width: f32 = 0
-	for i in 0 ..< len(text) {
-		char := text[i]
-		if char < 32 || char >= 128 {
+	i := 0
+	for i < len(text) {
+		r, size := utf8.decode_rune(text[i:])
+		i += size
+
+		if r < 32 || r > 255 {
 			continue
 		}
-		char_index := int(char) - 32
+
+		char_index := int(r) - 32
 		if char_index < 0 || char_index >= len(font.char_data) {
 			continue
 		}
@@ -125,11 +130,14 @@ wrap_text :: proc(text: string, font: ^Font, scale: [2]f32, max_width: f32) -> [
 	current_line: string
 	current_width: f32 = 0
 	word_start := 0
+	i := 0
 
-	for i in 0 ..< len(text) {
-		char := text[i]
+	for i < len(text) {
+		r, size := utf8.decode_rune(text[i:])
+		current_byte := i
+		i += size
 
-		if char == '\n' {
+		if r == '\n' {
 			if i > word_start {
 				line_text := text[word_start:i]
 				append(&lines, line_text)
@@ -142,11 +150,11 @@ wrap_text :: proc(text: string, font: ^Font, scale: [2]f32, max_width: f32) -> [
 			continue
 		}
 
-		if char < 32 || char >= 128 {
+		if r < 32 || r > 255 {
 			continue
 		}
 
-		char_index := int(char) - 32
+		char_index := int(r) - 32
 		if char_index < 0 || char_index >= len(font.char_data) {
 			continue
 		}
@@ -282,15 +290,20 @@ text :: proc(props: common.TextObjectProps) {
 
 		cursor_pos := [2]f32{position[0] + alignment_offset, current_y}
 
-		for i in 0 ..< len(line) {
-			char := line[i]
-			if char < 32 || char >= 128 {
+		i := 0
+		for i < len(line) {
+			r, size := utf8.decode_rune(line[i:])
+			i += size
+
+			if r < 32 || r > 255 {
 				continue
 			}
-			char_index := int(char) - 32
+
+			char_index := int(r) - 32
 			if char_index < 0 || char_index >= len(font.char_data) {
 				continue
 			}
+
 			baked_char := font.char_data[char_index]
 
 			char_width := f32(baked_char.x1 - baked_char.x0)
@@ -313,8 +326,8 @@ text :: proc(props: common.TextObjectProps) {
 				f32(font.bitmap_height),
 			)
 
-			for i in 0 ..< 4 {
-				append(&text_batch_vertices, Vertex_Data{points[i], text_color, uv_pos[i]})
+			for j in 0 ..< 4 {
+				append(&text_batch_vertices, Vertex_Data{points[j], text_color, uv_pos[j]})
 			}
 
 			cursor_pos[0] += f32(baked_char.xadvance) * scale[0]
