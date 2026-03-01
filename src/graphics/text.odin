@@ -79,6 +79,10 @@ shutdown_text_buffers :: proc() {
 calculate_text_width :: proc(text: string, font: ^Font, scale: [2]f32) -> f32 {
 	width: f32 = 0
 	i := 0
+	if font == nil {
+		return 0
+	}
+
 	for i < len(text) {
 		r, size := utf8.decode_rune(text[i:])
 		i += size
@@ -289,6 +293,10 @@ text :: proc(props: common.TextObjectProps) {
 		alignment_offset := calculate_alignment_offset(line_width, max_width, align)
 
 		cursor_pos := [2]f32{position[0] + alignment_offset, current_y}
+
+		if(font == nil) {
+			return
+		}
 
 		i := 0
 		for i < len(line) {

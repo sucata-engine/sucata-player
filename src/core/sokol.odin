@@ -175,7 +175,9 @@ frame_callback :: proc "c" () {
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
 
+	is_draw_step = true
 	run_draw()
+	is_draw_step = false
 	sg.end_pass()
 
 	sg.commit()

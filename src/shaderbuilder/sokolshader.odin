@@ -8,7 +8,8 @@ import "core:os/os2"
 import "core:path/filepath"
 
 build_sokol_shader :: proc(input_file: string) -> (bool, string) {
-	sucata_path := filepath.dir(path.get_executable_path())
+	sucata_path := path.get_sucata_folder()
+	defer delete(sucata_path)
 	if !os2.exists(input_file) {
 		common.print_error("Shader file does not exist: %s", input_file)
 		return false, ""
@@ -55,7 +56,8 @@ build_sokol_shader :: proc(input_file: string) -> (bool, string) {
 }
 
 remove_temp :: proc() {
-	sucata_path := filepath.dir(path.get_executable_path())
+	sucata_path := path.get_sucata_folder()
+	defer delete(sucata_path)
 	temp_path := filepath.join({sucata_path, "temp"})
 	if os2.exists(temp_path) {
 		os2.remove_all(temp_path)
@@ -63,7 +65,8 @@ remove_temp :: proc() {
 }
 
 get_sokol_shdc_path :: proc() -> string {
-	sucata_path := filepath.dir(path.get_executable_path())
+	sucata_path := path.get_sucata_folder()
+	defer delete(sucata_path)
 
 	shdc_path := ""
 

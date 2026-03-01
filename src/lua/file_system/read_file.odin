@@ -20,6 +20,7 @@ READ_FILE_FUNCTION :: lua_common.LuaFunction {
 		defer delete(file_path)
 
 		content, ok := fs.read_file_as_string(file_path)
+		defer delete(content)
 
 		if ok {
 			cstring_content := strings.clone_to_cstring(content)

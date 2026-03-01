@@ -28,6 +28,7 @@ RUN_COMMAND :: Command {
 		}
 		process, _ := os2.process_start(process_desc)
 		state, _ := os2.process_wait(process)
+
 		if state.exited {
 			fmt.printfln("Process exited with code: %d", state.exit_code)
 		}

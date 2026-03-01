@@ -1,6 +1,7 @@
 package graphics
 
 import sg "../../sokol/gfx"
+import "../common"
 import "../fs"
 import "../path"
 import "core:fmt"
@@ -38,6 +39,7 @@ get_default_system_font :: proc() -> string {
 			"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
 			"/usr/share/fonts/TTF/DejaVuSans.ttf",
 			"/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/liberation-sans-fonts/LiberationSans-Regular.ttf",
 		}
 		for font_path in linux_fonts {
 			if os.exists(font_path) {
@@ -76,6 +78,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	}
 
 	if !read_ok {
+		common.print_error("Font '%s' not found", font_path)
 		return nil
 	}
 	defer delete(ttf_data)

@@ -55,8 +55,8 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 }
 
 clone_lua_dll :: proc(output_dir: string) {
-	executable_path := path.get_executable_path()
-	source_path := filepath.dir(executable_path)
+	source_path := path.get_sucata_folder()
+	defer delete(source_path)
 	lua_dll_path := filepath.join({source_path, LUA_DLL_FILE_NAME})
 
 	lua_dll_data, read_ok := os.read_entire_file(lua_dll_path)
@@ -71,8 +71,8 @@ clone_lua_dll :: proc(output_dir: string) {
 }
 
 clone_sdl_dll :: proc(output_dir: string) {
-	executable_path := path.get_executable_path()
-	source_path := filepath.dir(executable_path)
+	source_path := path.get_sucata_folder()
+	defer delete(source_path)
 	sdl_dll_path := filepath.join({source_path, SDL_DLL_FILE_NAME})
 
 	sdl_dll_data, read_ok := os.read_entire_file(sdl_dll_path)

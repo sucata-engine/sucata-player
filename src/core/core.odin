@@ -16,6 +16,7 @@ height: i32 = 600
 
 is_build_mode: bool = false
 is_game_started: bool = false
+is_draw_step: bool = false
 
 scene: [dynamic]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
@@ -209,6 +210,10 @@ quit :: proc() {
 }
 
 add_to_render_queue :: proc(props: common.GraphicObjectProps) {
+	if !is_draw_step {
+		common.print_error("Trying to render outside draw() function")
+		return
+	}
 	append(&renderQueue, props)
 }
 
@@ -219,6 +224,10 @@ add_group_to_render_queue :: proc(
 	fixed: bool,
 	prop: common.ObjectProp,
 ) {
+	if !is_draw_step {
+		common.print_error("Trying to render outside draw() function")
+		return
+	}
 	for i in 0 ..< len(renderQueue) {
 		#partial switch v in renderQueue[i] {
 		case common.GroupObjectProps:
