@@ -21,7 +21,7 @@ FIND_BY_ID_FUNCTION :: lua_common.LuaFunction {
 		if entity == nil {
 			lua.pushnil(L)
 		} else {
-			lua.rawgeti(L, lua.REGISTRYINDEX, lua.Integer(entity.table))
+			lua.rawgeti(L, lua.REGISTRYINDEX, lua.Integer(entity.state))
 		}
 
 		return 1

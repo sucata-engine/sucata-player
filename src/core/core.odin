@@ -82,9 +82,7 @@ init :: proc(entity: ^common.Entity) {
 	if entity.initiated {
 		return
 	}
-	if entity.init > 0 {
-		call_lua_function_with_table_ref(LUA_GLOBAL_STATE, entity.init, entity.table)
-	}
+	run_entity_behaviour(entity, "init")
 	entity.initiated = true
 }
 
@@ -104,9 +102,7 @@ run_update :: proc() {
 }
 
 update :: proc(entity: ^common.Entity) {
-	if entity.update > 0 {
-		call_lua_function_with_table_ref(LUA_GLOBAL_STATE, entity.update, entity.table)
-	}
+	run_entity_behaviour(entity, "tick")
 }
 
 run_draw :: proc() {
@@ -126,9 +122,7 @@ run_draw :: proc() {
 }
 
 draw :: proc(entity: ^common.Entity) {
-	if entity.draw > 0 {
-		call_lua_function_with_table_ref(LUA_GLOBAL_STATE, entity.draw, entity.table)
-	}
+	run_entity_behaviour(entity, "draw")
 }
 
 run_free :: proc() {
@@ -169,27 +163,16 @@ free_obj :: proc(entity: ^common.Entity) {
 		return
 	}
 
-	if entity.free > 0 {
-		call_lua_function_with_table_ref(LUA_GLOBAL_STATE, entity.free, entity.table)
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.free)
-	}
 
-	if entity.init > 0 {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.init)
-	}
-	if entity.draw > 0 {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.draw)
-	}
-	if entity.update > 0 {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.update)
-	}
-	if entity.table > 0 {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.table)
+	run_entity_behaviour(entity, "free")
+	if entity.state > 0 {
+		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.state)
 	}
 
 	remove_handler_owner(entity.id)
 	remove_entity_tags(entity.id)
 	delete_entity_id(entity)
+	delete(entity.behaviours)
 	delete(entity.id)
 	free(entity)
 }
