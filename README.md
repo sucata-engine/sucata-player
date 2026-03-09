@@ -1,4 +1,12 @@
-# 🔩 Sucata Game Engine
+<div align="center">
+    <img src="assets/sucata.png" height="150" width="150" />
+</div>
+
+<h1 align="center">Sucata</h1>
+
+<p align="center">
+    Gather yours scraps and recycle into a game! <br/>
+</p>
 
 An open-source 2D game engine made with Odin programming language and Lua as scripting language, inspired by Love2D and Godot Engine.
 

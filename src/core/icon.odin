@@ -7,12 +7,39 @@ import "../path"
 import "core:strings"
 import stbi "vendor:stb/image"
 
+default_icon_png := #load("../../assets/sucata.png")
+
+load_default_icon :: proc() -> sapp.Icon_Desc {
+	width: i32
+	height: i32
+	channels: i32
+
+	pixels := stbi.load_from_memory(
+		&default_icon_png[0],
+		i32(len(default_icon_png)),
+		&width,
+		&height,
+		&channels,
+		4,
+	)
+
+	icon := sapp.Icon_Desc{}
+
+	pixel_count := width * height * 4
+	icon.images[0] = {
+		width = width,
+		height = height,
+		pixels = {ptr = pixels, size = uint(pixel_count)},
+	}
+
+	return icon
+}
+
 load_window_icon :: proc(icon_path: string) -> sapp.Icon_Desc {
 	icon_desc := sapp.Icon_Desc{}
 
 	if icon_path == "" {
-		icon_desc.sokol_default = true
-		return icon_desc
+		return load_default_icon()
 	}
 
 	w, h: i32

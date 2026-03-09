@@ -12,6 +12,10 @@ BUILD_HEADER :: "SUCATA_BUILD_"
 LUA_DLL_FILE_NAME :: "lua54.dll"
 SDL_DLL_FILE_NAME :: "SDL3.dll"
 
+DEFAULT_ICON_WINDOWS :: #load("../../assets/icons/sucata.ico")
+DEFAULT_ICON_LINUX :: #load("../../assets/icons/sucata.png")
+DEFAULT_ICON_MAC :: #load("../../assets/icons/sucata.icns")
+
 clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string = "") {
 	player_path := path.get_sucata_player_path()
 	defer delete(player_path)
@@ -44,12 +48,14 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 		clone_sdl_dll(output_dir)
 		if icon_path != "" {
 			embed_windows_icon(output_path, icon_path)
+		} else {
+			embed_windows_default_icon(output_path)
 		}
-	} else if path.location.system == "linux" && icon_path != "" {
-		icon_output := filepath.join({output_dir, "icon.png"})
-		if icon_data, ok := os.read_entire_file(icon_path); ok {
-			os.write_entire_file(icon_output, icon_data)
-			delete(icon_data)
+	} else if path.location.system == "linux" {
+		if icon_path != "" {
+			embed_linux_icon(output_path, icon_path)
+		} else {
+			embed_linux_default_icon(output_path)
 		}
 	}
 }
@@ -148,6 +154,7 @@ create_macos_app_bundle :: proc(
 			icon_file_name = "app.icns"
 			if icon_data, ok := os.read_entire_file(icon_path); ok {
 				icns_path := filepath.join({resources_path, icon_file_name})
+				defer delete(icns_path)
 				os.write_entire_file(icns_path, icon_data)
 				delete(icon_data)
 			}
@@ -155,10 +162,16 @@ create_macos_app_bundle :: proc(
 			icon_file_name = "app.png"
 			if icon_data, ok := os.read_entire_file(icon_path); ok {
 				png_path := filepath.join({resources_path, icon_file_name})
+				defer delete(png_path)
 				os.write_entire_file(png_path, icon_data)
 				delete(icon_data)
 			}
 		}
+	} else {
+		icon_file_name = "app.icns"
+		icns_path := filepath.join({resources_path, icon_file_name})
+		defer delete(icns_path)
+		os.write_entire_file(icns_path, DEFAULT_ICON_MAC)
 	}
 
 	icon_plist_entry :=
@@ -197,6 +210,38 @@ create_macos_app_bundle :: proc(
 	os.write_entire_file(info_plist_path, transmute([]byte)info_plist_content)
 }
 
+embed_linux_default_icon :: proc(output_path: string) {
+	output_dir := filepath.dir(output_path)
+	defer delete(output_dir)
+	icon_output := filepath.join({output_dir, "icon.png"})
+	defer delete(icon_output)
+	os.write_entire_file(icon_output, DEFAULT_ICON_LINUX)
+}
+
+embed_linux_icon :: proc(output_path: string, icon_path: string) {
+	if !os.exists(icon_path) {
+		common.print_warning(fmt.tprintf("Icon file not found: %s", icon_path))
+		return
+	}
+
+	output_dir := filepath.dir(output_path)
+	defer delete(output_dir)
+	icon_output := filepath.join({output_dir, "icon.png"})
+	defer delete(icon_output)
+	if icon_data, ok := os.read_entire_file(icon_path); ok {
+		os.write_entire_file(icon_output, icon_data)
+		delete(icon_data)
+	}
+}
+
+embed_windows_default_icon :: proc(exe_path: string) {
+	exe_dir := filepath.dir(exe_path)
+	defer delete(exe_dir)
+	icon_output := filepath.join({exe_dir, "icon.ico"})
+	defer delete(icon_output)
+	os.write_entire_file(icon_output, DEFAULT_ICON_WINDOWS)
+}
+
 embed_windows_icon :: proc(exe_path: string, icon_path: string) {
 	if !os.exists(icon_path) {
 		common.print_warning(fmt.tprintf("Icon file not found: %s", icon_path))
@@ -211,7 +256,9 @@ embed_windows_icon :: proc(exe_path: string, icon_path: string) {
 	}
 
 	exe_dir := filepath.dir(exe_path)
+	defer delete(exe_dir)
 	icon_output := filepath.join({exe_dir, "icon.ico"})
+	defer delete(icon_output)
 	if icon_data, ok := os.read_entire_file(icon_path); ok {
 		os.write_entire_file(icon_output, icon_data)
 		delete(icon_data)
