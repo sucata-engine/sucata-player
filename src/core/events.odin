@@ -1,13 +1,18 @@
 package core
 
 import common "../common"
+import "core:hash"
 import "core:strings"
 import lua "vendor:lua/5.4"
 
-event_handlers: map[string][dynamic]common.EventHandler = {}
+event_handlers: map[u64][dynamic]common.EventHandler = {}
+
+event_name_to_u64 :: #force_inline proc(event: string) -> u64 {
+	return hash.fnv64a(transmute([]u8)event)
+}
 
 add_handler :: proc(owner: string, event: string, function_ref: i32) {
-	event_key := strings.clone(event)
+	event_key := event_name_to_u64(event)
 	owner_clone := strings.clone(owner)
 
 	if _, exists := event_handlers[event_key]; !exists {
@@ -21,13 +26,14 @@ add_handler :: proc(owner: string, event: string, function_ref: i32) {
 }
 
 remove_handler :: proc(owner: string, event: string, function_ref: i32) {
-	if handlers, exists := event_handlers[event]; exists {
+	event_key := event_name_to_u64(event)
+	if handlers, exists := event_handlers[event_key]; exists {
 		for i: int = 0; i < len(handlers); i += 1 {
 			handler := handlers[i]
 			if handler.owner == owner && handler.function == function_ref {
 				lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handler.function)
 				delete(handler.owner)
-				ordered_remove(&handlers, i)
+				ordered_remove(&event_handlers[event_key], i)
 				break
 			}
 		}
@@ -41,11 +47,11 @@ remove_handler_owner :: proc(owner: string) {
 			if handlers[i].owner == owner {
 				lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handlers[i].function)
 				delete(handlers[i].owner)
-				ordered_remove(handlers, i)
+				ordered_remove(&event_handlers[event], i)
 			}
 		}
 	}
-	empty_events := make([dynamic]string, context.temp_allocator)
+	empty_events := make([dynamic]u64, context.temp_allocator)
 	for event in event_handlers {
 		if len(event_handlers[event]) == 0 {
 			append(&empty_events, event)
@@ -58,7 +64,8 @@ remove_handler_owner :: proc(owner: string) {
 }
 
 emit_event :: proc(event: string, data: i32) {
-	if handlers, exists := event_handlers[event]; exists {
+	event_key := event_name_to_u64(event)
+	if handlers, exists := event_handlers[event_key]; exists {
 		for i: int = 0; i < len(handlers); i += 1 {
 			handler := handlers[i]
 			call_lua_function_with_table_ref(LUA_GLOBAL_STATE, handler.function, data)
@@ -73,7 +80,6 @@ cleanup_event_handlers :: proc() {
 			delete(handler.owner)
 		}
 		delete(handlers)
-		delete(event)
 	}
 	delete(event_handlers)
 	event_handlers = {}
