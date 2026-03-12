@@ -298,10 +298,10 @@ validate_table :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool 
 	return true
 }
 
-validate_table_or_string :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.istable(L, index) && !lua.isstring(L, index) {
+validate_table_or_number :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
+	if !lua.istable(L, index) && !lua.isnumber(L, index) {
 		error_msg := fmt.tprintf(
-			"%s expects argument %d to be of type table or string",
+			"%s expects argument %d to be of type table or number",
 			func_name,
 			index,
 		)

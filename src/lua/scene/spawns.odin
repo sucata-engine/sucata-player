@@ -4,7 +4,6 @@ import common "../../common"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import "core:strings"
 import lua "vendor:lua/5.4"
 
 SPAWNS_FUNCTION :: lua_common.LuaFunction {
@@ -28,10 +27,8 @@ SPAWNS_FUNCTION :: lua_common.LuaFunction {
 				entity := lua_common.create_entity_by_lua(L, lua.gettop(L))
 				spawned_id := core.spawn(entity)
 
-				if spawned_id != "" {
-					entity_id_c := strings.clone_to_cstring(spawned_id)
-					defer delete(entity_id_c)
-					lua.pushstring(L, entity_id_c)
+				if spawned_id != 0 {
+					lua.pushnumber(L, lua.Number(spawned_id))
 					lua.rawseti(L, spawned_ids_table, lua.Integer(i))
 				}
 			}

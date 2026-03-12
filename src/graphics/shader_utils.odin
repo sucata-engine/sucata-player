@@ -3,7 +3,6 @@ package graphics
 import sg "../../sokol/gfx"
 import "core:encoding/json"
 import "core:fmt"
-import "core:mem"
 import "core:strings"
 
 get_shader_attr_type :: proc(type: string, base_type: string) -> sg.Vertex_Format {

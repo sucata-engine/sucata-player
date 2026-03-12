@@ -12,10 +12,9 @@ FIND_BY_ID_FUNCTION :: lua_common.LuaFunction {
 		context = core.DEFAULT_CONTEXT
 
 		if !lua_common.validate_arg_count(L, 1, "find_by_id") do return 0
-		if !lua_common.validate_string(L, 1, "find_by_id") do return 0
+		if !lua_common.validate_number(L, 1, "find_by_id") do return 0
 
-		entity_id := strings.clone_from_cstring(lua.tostring(L, 1))
-		defer delete(entity_id)
+		entity_id := u64(lua.tonumber(L, 1))
 		entity := core.find_by_id(entity_id)
 
 		if entity == nil {

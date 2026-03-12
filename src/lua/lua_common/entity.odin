@@ -54,8 +54,7 @@ get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int)
 }
 
 lua_table_to_entity :: proc(L: ^lua.State, table_index: c.int) -> ^common.Entity {
-	context.random_generator = crypto.random_generator()
-	id := uuid.to_string(uuid.generate_v4())
+	id := core.get_entity_id()
 	state := get_table_ref(L, table_index, "state")
 	behaviours := get_behaviours_refs_from_table_index(L, table_index)
 
@@ -75,7 +74,7 @@ create_entity_by_lua :: proc(L: ^lua.State, table_index: c.int) -> ^common.Entit
 	return entity
 }
 
-copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, id: string) -> i32 {
+copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, id: u64) -> i32 {
 	lua.getfield(L, table_index, "state")
 
 	if !lua.istable(L, -1) {
@@ -100,9 +99,7 @@ copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, i
 		lua.setmetatable(L, new_table_index)
 	}
 
-	id_cstring := strings.clone_to_cstring(id)
-	defer delete_cstring(id_cstring)
-	lua.pushstring(L, id_cstring)
+	lua.pushnumber(L, lua.Number(id))
 	lua.setfield(L, new_table_index, "id")
 
 	lua.remove(L, state_index)
@@ -110,11 +107,11 @@ copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, i
 	return lua.L_ref(L, lua.REGISTRYINDEX)
 }
 
-get_entity_id :: proc(L: ^lua.State, table_index: c.int) -> string {
+get_entity_id :: proc(L: ^lua.State, table_index: c.int) -> u64 {
 	if lua.istable(L, table_index) {
-		return get_table_string(L, table_index, "id", "")
-	} else if lua.isstring(L, table_index) {
-		return strings.clone_from_cstring(lua.tostring(L, table_index))
+		return u64(get_table_number(L, table_index, "id", 0))
+	} else if lua.isnumber(L, table_index) {
+		return u64(lua.tonumber(L, table_index))
 	}
-	return ""
+	return 0
 }

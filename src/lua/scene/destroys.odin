@@ -3,7 +3,6 @@ package scene
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import "core:strings"
 import lua "vendor:lua/5.4"
 
 DESTROYS_FUNCTION :: lua_common.LuaFunction {
@@ -25,15 +24,12 @@ DESTROYS_FUNCTION :: lua_common.LuaFunction {
 			lua.rawgeti(L, 1, lua.Integer(i))
 			if lua.istable(L, -1) {
 				entity_id := lua_common.get_entity_id(L, lua.gettop(L))
-				defer delete(entity_id)
 				entity := core.find_by_id(entity_id)
 
 				if entity != nil {
 					core.add_to_destroy_queue(entity)
 				} else {
-					entity_id_c := strings.clone_to_cstring(entity_id)
-					defer delete(entity_id_c)
-					lua.pushstring(L, entity_id_c)
+					lua.pushnumber(L, lua.Number(entity_id))
 					lua.rawseti(L, undestroyed_ids_table, lua.Integer(i))
 				}
 			}

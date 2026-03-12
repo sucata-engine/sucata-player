@@ -23,10 +23,9 @@ GET_ENTITIES_BY_TAG_FUNCTION :: lua_common.LuaFunction {
 
 		if entitys != nil {
 			for i := 0; i < len(entitys); i += 1 {
-				id := strings.clone_to_cstring(entitys[i])
-				defer delete(id)
+				id := lua.Number(entitys[i])
 				lua.pushinteger(L, lua.Integer(i + 1))
-				lua.pushstring(L, id)
+				lua.pushnumber(L, id)
 				lua.settable(L, -3)
 			}
 		}

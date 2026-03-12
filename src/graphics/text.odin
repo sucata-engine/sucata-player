@@ -106,20 +106,28 @@ calculate_alignment_offset :: proc(
 	max_width: f32,
 	align: common.TextAlign,
 ) -> f32 {
+
+	if max_width <= 0 {
+		switch align {
+		case .Left:
+			return 0
+		case .Center:
+			return -line_width / 2
+		case .Right:
+			return -line_width
+		}
+		return 0
+	}
+
 	switch align {
 	case .Left:
 		return 0
 	case .Center:
-		if max_width > 0 {
-			return (max_width - line_width) / 2
-		}
-		return -line_width / 2
+		return (max_width * 0.5) - (line_width * 0.5)
 	case .Right:
-		if max_width > 0 {
-			return max_width - line_width
-		}
-		return -line_width
+		return max_width - line_width
 	}
+
 	return 0
 }
 
@@ -235,6 +243,10 @@ text :: proc(props: common.TextObjectProps) {
 	text := strings.clone(props.text)
 	defer delete(text)
 
+	if (font == nil) {
+		return
+	}
+
 	position[1] += font_size / 2
 
 	mvp: matrix[4, 4]f32
@@ -293,10 +305,6 @@ text :: proc(props: common.TextObjectProps) {
 		alignment_offset := calculate_alignment_offset(line_width, max_width, align)
 
 		cursor_pos := [2]f32{position[0] + alignment_offset, current_y}
-
-		if(font == nil) {
-			return
-		}
 
 		i := 0
 		for i < len(line) {

@@ -18,13 +18,19 @@ is_build_mode: bool = false
 is_game_started: bool = false
 is_draw_step: bool = false
 
-next_entity_id: u64 = 1
+next_entity_id: u64 = 0
 scene: [dynamic]^common.Entity = {}
+global_scene: [dynamic]^common.Entity = [dynamic]^common.Entity{}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
 main :: proc() {
 	init_sokol()
+}
+
+get_entity_id :: proc() -> u64 {
+	next_entity_id += 1
+	return next_entity_id
 }
 
 load_scene :: proc(entities: [dynamic]^common.Entity) {
@@ -39,17 +45,18 @@ load_scene :: proc(entities: [dynamic]^common.Entity) {
 	}
 }
 
-destroy :: proc(entity: ^common.Entity) {
+destroy :: proc(entity: ^common.Entity) -> bool {
 	if entity == nil {
-		return
+		return false
 	}
 	for i := 0; i < len(scene); i += 1 {
 		if scene[i] == entity {
 			ordered_remove(&scene, i)
-			break
+			free_obj(entity)
+			return true
 		}
 	}
-	free_obj(entity)
+	return false
 }
 
 spawn :: proc(entity: ^common.Entity) -> u64 {
@@ -68,13 +75,45 @@ spawn :: proc(entity: ^common.Entity) -> u64 {
 	return gObj.id
 }
 
-run_init :: proc() {
-	if scene == nil || len(scene) == 0 {
+load_global :: proc(entity: ^common.Entity) -> u64 {
+	if entity == nil {
+		return 0
+	}
+
+	append(&global_scene, entity)
+	gObj := global_scene[len(global_scene) - 1]
+	if is_game_started {
+		init(gObj)
+	}
+	return gObj.id
+}
+
+unload_global :: proc(entity: ^common.Entity) {
+	if entity == nil {
 		return
 	}
-	for &entity in scene {
-		if entity != nil && !entity.destroyed {
-			init(entity)
+	for i := 0; i < len(global_scene); i += 1 {
+		if global_scene[i] == entity {
+			ordered_remove(&global_scene, i)
+			free_obj(entity)
+			break
+		}
+	}
+}
+
+run_init :: proc() {
+	if scene != nil && len(scene) > 0 {
+		for &entity in scene {
+			if entity != nil && !entity.destroyed {
+				init(entity)
+			}
+		}
+	}
+	if len(global_scene) > 0 {
+		for &global in global_scene {
+			if global != nil && !global.destroyed {
+				init(global)
+			}
 		}
 	}
 }
@@ -88,16 +127,26 @@ init :: proc(entity: ^common.Entity) {
 }
 
 run_update :: proc() {
-	if scene == nil || len(scene) == 0 {
-		return
-	}
-	for i := len(scene) - 1; i >= 0; i -= 1 {
-		if i >= len(scene) {
-			continue
+	if global_scene != nil && len(global_scene) > 0 {
+		for i := len(global_scene) - 1; i >= 0; i -= 1 {
+			if i >= len(global_scene) {
+				continue
+			}
+			entity := global_scene[i]
+			if entity != nil && !entity.destroyed && entity.initiated {
+				update(entity)
+			}
 		}
-		entity := scene[i]
-		if entity != nil && !entity.destroyed && entity.initiated {
-			update(entity)
+	}
+	if scene != nil && len(scene) > 0 {
+		for i := len(scene) - 1; i >= 0; i -= 1 {
+			if i >= len(scene) {
+				continue
+			}
+			entity := scene[i]
+			if entity != nil && !entity.destroyed && entity.initiated {
+				update(entity)
+			}
 		}
 	}
 }
@@ -108,12 +157,18 @@ update :: proc(entity: ^common.Entity) {
 
 run_draw :: proc() {
 	draw_debug_info()
-	if scene == nil {
-		return
+	if global_scene != nil {
+		for &entity in global_scene {
+			if entity != nil && !entity.destroyed && entity.initiated {
+				draw(entity)
+			}
+		}
 	}
-	for &entity in scene {
-		if entity != nil && !entity.destroyed && entity.initiated {
-			draw(entity)
+	if scene != nil {
+		for &entity in scene {
+			if entity != nil && !entity.destroyed && entity.initiated {
+				draw(entity)
+			}
 		}
 	}
 	order_render_queue()
@@ -163,7 +218,6 @@ free_obj :: proc(entity: ^common.Entity) {
 	if entity == nil {
 		return
 	}
-
 
 	run_entity_behaviour(entity, "free")
 	if entity.state > 0 {
@@ -243,7 +297,9 @@ add_to_destroy_queue :: proc(entity: ^common.Entity) {
 
 process_destroy_queue :: proc() {
 	for &entity in destroyQueue {
-		destroy(entity)
+		if !destroy(entity) {
+			unload_global(entity)
+		}
 	}
 	clear(&destroyQueue)
 }

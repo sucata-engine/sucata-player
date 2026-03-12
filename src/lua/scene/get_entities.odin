@@ -3,7 +3,6 @@ package scene
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import "core:strings"
 import lua "vendor:lua/5.4"
 
 GET_ENTITIES_FUNCTION :: lua_common.LuaFunction {
@@ -17,10 +16,9 @@ GET_ENTITIES_FUNCTION :: lua_common.LuaFunction {
 
 		if entities != nil {
 			for i := 0; i < len(entities); i += 1 {
-				id := strings.clone_to_cstring(entities[i].id)
-				defer delete(id)
+				id := lua.Number(entities[i].id)
 				lua.pushinteger(L, lua.Integer(i + 1))
-				lua.pushstring(L, id)
+				lua.pushnumber(L, id)
 				lua.settable(L, -3)
 			}
 		}
