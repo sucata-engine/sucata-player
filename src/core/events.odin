@@ -11,28 +11,26 @@ event_name_to_u64 :: #force_inline proc(event: string) -> u64 {
 	return hash.fnv64a(transmute([]u8)event)
 }
 
-add_handler :: proc(owner: string, event: string, function_ref: i32) {
+add_handler :: proc(owner: u64, event: string, function_ref: i32) {
 	event_key := event_name_to_u64(event)
-	owner_clone := strings.clone(owner)
 
 	if _, exists := event_handlers[event_key]; !exists {
 		event_handlers[event_key] = [dynamic]common.EventHandler{}
 	}
 	handler := common.EventHandler {
 		function = function_ref,
-		owner    = owner_clone,
+		owner    = owner,
 	}
 	append(&event_handlers[event_key], handler)
 }
 
-remove_handler :: proc(owner: string, event: string, function_ref: i32) {
+remove_handler :: proc(owner: u64, event: string, function_ref: i32) {
 	event_key := event_name_to_u64(event)
 	if handlers, exists := event_handlers[event_key]; exists {
 		for i: int = 0; i < len(handlers); i += 1 {
 			handler := handlers[i]
 			if handler.owner == owner && handler.function == function_ref {
 				lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handler.function)
-				delete(handler.owner)
 				ordered_remove(&event_handlers[event_key], i)
 				break
 			}
@@ -40,13 +38,12 @@ remove_handler :: proc(owner: string, event: string, function_ref: i32) {
 	}
 }
 
-remove_handler_owner :: proc(owner: string) {
+remove_handler_owner :: proc(owner: u64) {
 	for event in event_handlers {
 		handlers := &event_handlers[event]
 		for i := len(handlers) - 1; i >= 0; i -= 1 {
 			if handlers[i].owner == owner {
 				lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handlers[i].function)
-				delete(handlers[i].owner)
 				ordered_remove(&event_handlers[event], i)
 			}
 		}
@@ -77,7 +74,6 @@ cleanup_event_handlers :: proc() {
 	for event, handlers in event_handlers {
 		for handler in handlers {
 			lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handler.function)
-			delete(handler.owner)
 		}
 		delete(handlers)
 	}

@@ -2,9 +2,9 @@ package core
 
 import common "../common"
 
-entities: map[string]^common.Entity = {}
+entities: map[u64]^common.Entity = {}
 
-find_by_id :: proc(id: string) -> ^common.Entity {
+find_by_id :: proc(id: u64) -> ^common.Entity {
 	if obj_ptr := entities[id]; obj_ptr != nil {
 		if !obj_ptr.destroyed {
 			return obj_ptr

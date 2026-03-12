@@ -18,6 +18,7 @@ is_build_mode: bool = false
 is_game_started: bool = false
 is_draw_step: bool = false
 
+next_entity_id: u64 = 1
 scene: [dynamic]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
@@ -51,9 +52,9 @@ destroy :: proc(entity: ^common.Entity) {
 	free_obj(entity)
 }
 
-spawn :: proc(entity: ^common.Entity) -> string {
+spawn :: proc(entity: ^common.Entity) -> u64 {
 	if entity == nil {
-		return ""
+		return 0
 	}
 	if scene == nil {
 		scene = [dynamic]^common.Entity{}
@@ -173,7 +174,6 @@ free_obj :: proc(entity: ^common.Entity) {
 	remove_entity_tags(entity.id)
 	delete_entity_id(entity)
 	delete(entity.behaviours)
-	delete(entity.id)
 	free(entity)
 }
 
