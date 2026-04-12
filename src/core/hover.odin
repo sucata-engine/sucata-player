@@ -1,6 +1,6 @@
 package core
 
-import camera "../camera"
+import "../graphics"
 import "core:math"
 import "core:sort"
 import "core:strings"
@@ -57,17 +57,17 @@ process_hoverables :: proc() {
 
 	mouse_x, mouse_y := mouse_position()
 
-	if camera.camera.rotation != 0 {
-		cos_r := math.cos(-camera.camera.rotation)
-		sin_r := math.sin(-camera.camera.rotation)
+	if graphics.camera.rotation != 0 {
+		cos_r := math.cos(-graphics.camera.rotation)
+		sin_r := math.sin(-graphics.camera.rotation)
 		rotated_x := mouse_x * cos_r - mouse_y * sin_r
 		rotated_y := mouse_x * sin_r + mouse_y * cos_r
 		mouse_x = rotated_x
 		mouse_y = rotated_y
 	}
 
-	world_mouse_x := (mouse_x + camera.camera.position.x) / camera.camera.zoom
-	world_mouse_y := (mouse_y + camera.camera.position.y) / camera.camera.zoom
+	world_mouse_x := (mouse_x + graphics.camera.position.x) / graphics.camera.zoom
+	world_mouse_y := (mouse_y + graphics.camera.position.y) / graphics.camera.zoom
 
 	for hoverable in _hoverables {
 		if hoverable.fixed {

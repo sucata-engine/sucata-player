@@ -1,8 +1,6 @@
-package cam
+package lua_camera
 
-import camera "../../camera"
-import core "../../core"
-import lua_common "../lua_common"
+import "../lua_common"
 import "core:c"
 import lua "shared:luajit"
 

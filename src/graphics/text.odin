@@ -1,6 +1,5 @@
 package graphics
 
-import "../camera"
 import "../common"
 import shader_text "../shaders/text"
 import "core:c"
@@ -253,7 +252,7 @@ text :: proc(props: common.TextObjectProps) {
 	if props.fixed {
 		mvp = get_fixed_mvp()
 	} else {
-		mvp = camera.get_view_projection_matrix(game_width, game_height)
+		mvp = get_view_projection_matrix(game_width, game_height)
 	}
 
 	text_batch_vertices := [dynamic]Vertex_Data{}

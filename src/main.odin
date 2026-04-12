@@ -1,10 +1,10 @@
 package src
 
-import "./src/build"
-import "./src/common"
-import "./src/core"
-import "./src/filesystem"
-import "./src/lua"
+import "./build"
+import "./common"
+import "./core"
+import "./filesystem"
+import "./lua"
 import "core:fmt"
 import "core:log"
 import "core:os"

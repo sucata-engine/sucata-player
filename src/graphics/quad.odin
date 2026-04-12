@@ -1,6 +1,5 @@
 package graphics
 
-import "../camera"
 import "../common"
 import shader_quad "../shaders/quad"
 import "core:c"
@@ -95,7 +94,7 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	if props.fixed {
 		mvp = get_fixed_mvp()
 	} else {
-		mvp = camera.get_view_projection_matrix(game_width, game_height)
+		mvp = get_view_projection_matrix(game_width, game_height)
 	}
 
 	vertex_buffers := [8]sg.Buffer{}
@@ -231,7 +230,7 @@ quad :: proc(props: common.QuadObjectProps) {
 	if props.fixed {
 		mvp = get_fixed_mvp()
 	} else {
-		mvp = camera.get_view_projection_matrix(game_width, game_height)
+		mvp = get_view_projection_matrix(game_width, game_height)
 	}
 
 	vertex_buffers := [8]sg.Buffer{}
