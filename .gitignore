@@ -2,6 +2,7 @@
 *.lua
 *.exe
 *.ignore
+*.bin
 
 sucata
 sucata-player
