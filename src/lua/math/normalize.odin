@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:math"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 NORMALIZE_FUNCTION :: lua_common.LuaFunction {
 	name = "normalize",
@@ -20,7 +20,7 @@ NORMALIZE_FUNCTION :: lua_common.LuaFunction {
 
 		sum_of_squares: lua.Number = 0
 		for i in 1 ..= arg_count {
-			value := lua.tonumber(L, i32(i))
+			value := lua.tonumber(L, lua.Index(i))
 			sum_of_squares += value * value
 		}
 		length := math.sqrt(f32(sum_of_squares))
@@ -33,7 +33,7 @@ NORMALIZE_FUNCTION :: lua_common.LuaFunction {
 		}
 
 		for i in 1 ..= arg_count {
-			value := f32(lua.tonumber(L, i32(i)))
+			value := f32(lua.tonumber(L, lua.Index(i)))
 			lua.pushnumber(L, lua.Number(value / length))
 		}
 

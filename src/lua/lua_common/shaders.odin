@@ -3,9 +3,9 @@ package lua_common
 import "../../common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
-get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs {
+get_shader_args :: proc(L: ^lua.State, table_index: lua.Index) -> common.ShaderArgs {
 	lua.getfield(L, table_index, "shader_args")
 
 	if lua.type(L, -1) != lua.Type.TABLE {
@@ -16,7 +16,7 @@ get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs 
 	shader_args := common.ShaderArgs{}
 
 	lua.pushnil(L)
-	for lua.next(L, -2) != 0 {
+	for lua.next(L, -2) != false {
 		key_type := lua.type(L, -2)
 		if key_type != lua.Type.STRING {
 			lua.pop(L, 1)
@@ -35,7 +35,7 @@ get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs 
 			result := [4]f32{}
 
 			lua.pushnil(L)
-			for lua.next(L, -2) != 0 {
+			for lua.next(L, -2) != false {
 				value_type := lua.type(L, -1)
 				if value_type == lua.Type.NUMBER && count < 4 {
 					result[count] = f32(lua.tonumber(L, -1))

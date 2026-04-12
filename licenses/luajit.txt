@@ -1,0 +1,3 @@
+Copyright (C) 2005-2026 Mike Pall.
+
+Licensed under the MIT License.

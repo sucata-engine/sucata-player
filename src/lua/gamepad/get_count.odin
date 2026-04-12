@@ -3,7 +3,7 @@ package gamepad
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 GET_COUNT_FUNCTION :: lua_common.LuaFunction {
 	name = "get_count",

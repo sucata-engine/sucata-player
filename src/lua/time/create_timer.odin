@@ -3,7 +3,7 @@ package timenamespace
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 CREATE_TIMER_FUNCTION :: lua_common.LuaFunction {
 	name = "create_timer",
@@ -14,7 +14,7 @@ CREATE_TIMER_FUNCTION :: lua_common.LuaFunction {
 		if !lua_common.validate_function(L, 1, "create_timer") do return 0
 
 		lua.pushvalue(L, 1)
-		callback_ref: i32 = lua.L_ref(L, lua.REGISTRYINDEX)
+		callback_ref: lua.Ref = lua.L_ref(L, lua.REGISTRYINDEX)
 
 		time: f64 = 1.0
 		auto_start: bool = true
@@ -34,7 +34,7 @@ CREATE_TIMER_FUNCTION :: lua_common.LuaFunction {
 			return 0
 		}
 
-		timer_id := core.create_timer(callback_ref, time, auto_start, one_shot, repeat)
+		timer_id := core.create_timer(i32(callback_ref), time, auto_start, one_shot, repeat)
 		lua.pushnumber(L, lua.Number(timer_id))
 
 		return 1

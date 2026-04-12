@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 SET_WINDOW_TITLE_FUNCTION :: lua_common.LuaFunction {
 	name = "set_window_title",

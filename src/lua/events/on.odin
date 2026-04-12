@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 ON_FUNCTION :: lua_common.LuaFunction {
 	name = "on",
@@ -21,7 +21,7 @@ ON_FUNCTION :: lua_common.LuaFunction {
 		defer delete(event)
 		func_ref := lua.L_ref(L, lua.REGISTRYINDEX)
 
-		core.add_handler(owner_id, event, func_ref)
+		core.add_handler(owner_id, event, i32(func_ref))
 
 		return 0
 	},

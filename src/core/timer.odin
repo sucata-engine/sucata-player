@@ -1,6 +1,6 @@
 package core
 
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 Timer :: struct {
 	left_time: f64,

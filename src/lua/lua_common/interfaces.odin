@@ -1,6 +1,6 @@
 package lua_common
 
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 LuaNamespace :: struct {
 	name:      cstring,

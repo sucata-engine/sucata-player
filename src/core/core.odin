@@ -6,7 +6,7 @@ import "base:runtime"
 import "core:sort"
 import "core:strings"
 import sapp "shared:sokol/app"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 LUA_GLOBAL_STATE: ^lua.State
 DEFAULT_CONTEXT: runtime.Context

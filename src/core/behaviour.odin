@@ -1,6 +1,6 @@
 package core
 
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 behaviours := map[i64]i32{}
 

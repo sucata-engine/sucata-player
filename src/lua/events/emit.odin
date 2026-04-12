@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 EMIT_FUNCTION :: lua_common.LuaFunction {
 	name = "emit",
@@ -19,8 +19,8 @@ EMIT_FUNCTION :: lua_common.LuaFunction {
 		defer delete(event)
 		data_ref := lua.L_ref(L, lua.REGISTRYINDEX)
 
-		core.emit_event(event, data_ref)
-		defer lua.L_unref(L, lua.REGISTRYINDEX, data_ref)
+		core.emit_event(event, i32(data_ref))
+		defer lua.L_unref(L, lua.REGISTRYINDEX, i32(data_ref))
 
 		return 0
 	},

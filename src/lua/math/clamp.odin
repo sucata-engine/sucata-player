@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:math"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 CLAMP_FUNCTION :: lua_common.LuaFunction {
 	name = "clamp",

@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 FIND_BY_ID_FUNCTION :: lua_common.LuaFunction {
 	name = "find_by_id",

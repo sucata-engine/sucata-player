@@ -8,7 +8,7 @@ echo "Building sucata..."
 odin build .
 
 echo "Building sucata-player..."
-odin build ./src/player.odin -file -out:sucata-player
+odin build ./src/player.odin -file -out:sucata-player -extra-linker-flags:"-L/opt/homebrew/lib"
 
 mkdir -p release/unix
 

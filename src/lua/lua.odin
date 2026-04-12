@@ -19,8 +19,8 @@ import "gamepad"
 import "graphic"
 import "input"
 import lua_common "lua_common"
+import lua "shared:luajit"
 import timens "time"
-import lua "vendor:lua/5.4"
 
 GC_Config :: struct {
 	pause:    c.int,
@@ -54,7 +54,6 @@ load_file_as_cstring :: proc(path: string) -> (cstring, bool) {
 		return "", false
 	}
 	temp := string(data)
-	// Memory Leak
 	s := strings.clone_to_cstring(temp)
 	delete(data)
 	return s, true
@@ -150,7 +149,7 @@ load_path :: proc() {
 
 	lua.getglobal(L, "package")
 
-	lua.getfield(L, -1, "searchers")
+	lua.getfield(L, -1, "loaders")
 	lua.pushcfunction(L, custom_loader)
 	lua.rawseti(L, -2, 2)
 	lua.pop(L, 1)
@@ -216,7 +215,7 @@ init_lua :: proc(path: string, entity_file: string = "") {
 		return
 	}
 
-	if lua.pcall(L, 0, lua.MULTRET, 0) != 0 {
+	if lua.pcall(L, 0, lua.MULTRET, 0) != .OK {
 		err := lua.tostring(L, -1)
 		common.print_error("Failed to execute Lua buffer: %s", err)
 		lua.pop(L, 1)

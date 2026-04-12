@@ -3,7 +3,7 @@ package input
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 GET_MOUSE_SCROLL_FUNCTION :: lua_common.LuaFunction {
 	name = "get_mouse_scroll",

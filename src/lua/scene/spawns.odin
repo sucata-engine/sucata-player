@@ -4,7 +4,7 @@ import common "../../common"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 SPAWNS_FUNCTION :: lua_common.LuaFunction {
 	name = "spawns",
@@ -14,9 +14,7 @@ SPAWNS_FUNCTION :: lua_common.LuaFunction {
 		if !lua_common.validate_arg_count(L, 1, "spawns") do return 0
 		if !lua_common.validate_table(L, 1, "spawns") do return 0
 
-		lua.len(L, 1)
-		table_length := lua.tointeger(L, -1)
-		lua.pop(L, 1)
+		table_length := c.int(lua.objlen(L, 1))
 
 		lua.newtable(L)
 		spawned_ids_table := lua.gettop(L)
@@ -24,12 +22,12 @@ SPAWNS_FUNCTION :: lua_common.LuaFunction {
 		for i in 1 ..= table_length {
 			lua.rawgeti(L, 1, lua.Integer(i))
 			if lua.istable(L, -1) {
-				entity := lua_common.create_entity_by_lua(L, lua.gettop(L))
+				entity := lua_common.create_entity_by_lua(L, c.int(lua.gettop(L)))
 				spawned_id := core.spawn(entity)
 
 				if spawned_id != 0 {
 					lua.pushnumber(L, lua.Number(spawned_id))
-					lua.rawseti(L, spawned_ids_table, lua.Integer(i))
+					lua.rawseti(L, spawned_ids_table, c.int(i))
 				}
 			}
 			lua.pop(L, 1)

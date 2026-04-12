@@ -6,11 +6,11 @@ import "core:c"
 import "core:crypto"
 import "core:encoding/uuid"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int) -> [dynamic]i64 {
 	top := lua.gettop(L)
-	table_index := lua.absindex(L, table_index2)
+	table_index := absindex(L, lua.Index(table_index2))
 
 	if !lua.istable(L, table_index) {
 		return nil
@@ -24,7 +24,7 @@ get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int)
 	}
 
 	behaviours_index := lua.gettop(L)
-	length := lua.rawlen(L, behaviours_index)
+	length := lua.objlen(L, behaviours_index)
 
 	refs := [dynamic]i64{}
 
@@ -37,7 +37,7 @@ get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int)
 
 			if !core.has_behaviour(bhv_id) {
 				ref := lua.L_ref(L, lua.REGISTRYINDEX)
-				core.add_behaviour(bhv_id, ref)
+				core.add_behaviour(bhv_id, i32(ref))
 			} else {
 				lua.pop(L, 1)
 			}
@@ -75,11 +75,11 @@ create_entity_by_lua :: proc(L: ^lua.State, table_index: c.int) -> ^common.Entit
 }
 
 copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, id: u64) -> i32 {
-	lua.getfield(L, table_index, "state")
+	lua.getfield(L, lua.Index(table_index), "state")
 
 	if !lua.istable(L, -1) {
 		lua.pop(L, 1)
-		return lua.REFNIL
+		return i32(lua.REFNIL)
 	}
 
 	state_index := lua.gettop(L)
@@ -88,14 +88,14 @@ copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, i
 	new_table_index := lua.gettop(L)
 
 	lua.pushnil(L)
-	for lua.next(L, state_index) != 0 {
+	for lua.next(L, c.int(state_index)) != false {
 		lua.pushvalue(L, -2)
 		lua.pushvalue(L, -2)
 		lua.settable(L, new_table_index)
 		lua.pop(L, 1)
 	}
 
-	if lua.getmetatable(L, state_index) != 0 {
+	if lua.getmetatable(L, state_index) != false {
 		lua.setmetatable(L, new_table_index)
 	}
 
@@ -104,14 +104,14 @@ copy_state_table_with_modifications :: proc(L: ^lua.State, table_index: c.int, i
 
 	lua.remove(L, state_index)
 
-	return lua.L_ref(L, lua.REGISTRYINDEX)
+	return i32(lua.L_ref(L, lua.REGISTRYINDEX))
 }
 
 get_entity_id :: proc(L: ^lua.State, table_index: c.int) -> u64 {
-	if lua.istable(L, table_index) {
+	if lua.istable(L, lua.Index(table_index)) {
 		return u64(get_table_number(L, table_index, "id", 0))
-	} else if lua.isnumber(L, table_index) {
-		return u64(lua.tonumber(L, table_index))
+	} else if lua.isnumber(L, lua.Index(table_index)) {
+		return u64(lua.tonumber(L, lua.Index(table_index)))
 	}
 	return 0
 }

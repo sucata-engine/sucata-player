@@ -3,7 +3,7 @@ package input
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 IS_PRESSED_FUNCTION :: lua_common.LuaFunction {
 	name = "is_pressed",
@@ -14,13 +14,13 @@ IS_PRESSED_FUNCTION :: lua_common.LuaFunction {
 		arg_count := lua.gettop(L)
 
 		for i in 1 ..= arg_count {
-			if !lua.isstring(L, c.int(i)) {
+			if !lua.isstring(L, lua.Index(i)) {
 				lua.pushstring(L, "is_pressed expects all arguments to be strings")
 				lua.error(L)
 				return 0
 			}
 
-			key_name := string(lua.tostring(L, c.int(i)))
+			key_name := string(lua.tostring(L, lua.Index(i)))
 
 			if core.is_pressed(key_name) {
 				lua.pushboolean(L, true)

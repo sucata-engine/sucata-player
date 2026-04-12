@@ -12,7 +12,7 @@ mkdir release\windows
 echo Copying files...
 copy sucata.exe release\windows\
 copy sucata-player.exe release\windows\
-copy lua54.dll release\windows\
+copy luajit.dll release\windows\
 copy SDL3.dll release\windows\
 
 echo Done!

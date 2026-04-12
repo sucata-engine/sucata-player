@@ -3,7 +3,7 @@ package core
 import "../common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 	top := lua.gettop(L)
@@ -11,7 +11,7 @@ call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 		return false
 	}
 
-	if lua.checkstack(L, 1) == 0 {
+	if !lua.checkstack(L, 1) {
 		common.print_error("Lua stack overflow")
 		return false
 	}
@@ -24,7 +24,7 @@ call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 	}
 
 	result := lua.pcall(L, 0, 0, 0)
-	if result != 0 {
+	if result != .OK {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -34,7 +34,7 @@ call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 
 	lua.settop(L, top)
 
-	return result == 0
+	return result == .OK
 }
 
 call_lua_function_with_table_ref :: proc(
@@ -48,7 +48,7 @@ call_lua_function_with_table_ref :: proc(
 		return false
 	}
 
-	if lua.checkstack(L, 3) == 0 {
+	if !lua.checkstack(L, 3) {
 		common.print_error("Lua stack overflow")
 		return false
 	}
@@ -66,7 +66,7 @@ call_lua_function_with_table_ref :: proc(
 	}
 
 	result := lua.pcall(L, 1, 0, 0)
-	if result != 0 {
+	if result != .OK {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -74,7 +74,7 @@ call_lua_function_with_table_ref :: proc(
 
 	lua.settop(L, top)
 
-	return result == 0
+	return result == .OK
 }
 
 call_lua_method_with_self_ref :: proc(
@@ -90,7 +90,7 @@ call_lua_method_with_self_ref :: proc(
 		return false
 	}
 
-	if lua.checkstack(L, 4) == 0 {
+	if !lua.checkstack(L, 4) {
 		common.print_error("Lua stack overflow")
 		return false
 	}
@@ -118,7 +118,7 @@ call_lua_method_with_self_ref :: proc(
 
 	result := lua.pcall(L, 1, 0, 0)
 
-	if result != 0 {
+	if result != .OK {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -126,13 +126,13 @@ call_lua_method_with_self_ref :: proc(
 
 	lua.settop(L, top)
 
-	return result == 0
+	return result == .OK
 }
 
 get_memory_usage :: proc(L: ^lua.State) -> (kb_used: c.int, bytes_used: c.int) {
 	if L == nil do return 0, 0
 
-	kb_used = lua.gc(L, lua.GCCOUNT, 0)
-	bytes_used = lua.gc(L, lua.GCCOUNTB, 0)
+	kb_used = c.int(lua.gc(L, lua.GCCOUNT, 0))
+	bytes_used = c.int(lua.gc(L, lua.GCCOUNTB, 0))
 	return
 }

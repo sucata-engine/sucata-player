@@ -3,7 +3,7 @@ package timenamespace
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "shared:luajit"
 
 PAUSE_TIMER_FUNCTION :: lua_common.LuaFunction {
 	name = "pause_timer",
