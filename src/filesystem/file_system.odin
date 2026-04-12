@@ -9,11 +9,6 @@ read_file :: proc(file_path: string) -> ([]u8, bool) {
 		return asset, true
 	}
 
-	file_path_normalized := get_path(file_path)
-	if data, ok := os.read_entire_file(file_path_normalized); ok {
-		return data, true
-	}
-
 	return {}, false
 }
 

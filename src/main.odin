@@ -41,8 +41,8 @@ run :: proc(args: []string) {
 	file_path := args[0]
 
 	filesystem.init_run_paths(file_path)
-	common.print("Running Sucata project: %s", filesystem.location.file)
+	common.print("Running Sucata project: %s", filesystem.filesystem.file)
 
-	lua.init_lua(filesystem.location.file)
+	lua.init_lua(filesystem.filesystem.file)
 	core.main()
 }

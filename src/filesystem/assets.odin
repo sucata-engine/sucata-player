@@ -128,6 +128,12 @@ unload_assets :: proc() {
 }
 
 get_asset :: proc(file_path: string) -> (data: []byte, ok: bool) {
+	if !filesystem.is_bundle {
+		path := get_path(file_path)
+		data, ok := os.read_entire_file(path)
+		return data, ok
+	}
+
 	if assets == nil {
 		return nil, false
 	}

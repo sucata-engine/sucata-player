@@ -10,50 +10,52 @@ init_run_paths :: proc(file: string, default_file: string = "main.lua") {
 	file_absolute, ok_file_absolute := filepath.abs(file)
 
 	if os.is_file(file) {
-		location.file = file_absolute
+		filesystem.file = file_absolute
 	} else {
 		defer delete(file_absolute)
-		location.file = filepath.join({file_absolute, default_file})
+		filesystem.file = filepath.join({file_absolute, default_file})
 	}
 
-	location.src = filepath.dir(location.file)
-	location.build = filepath.dir(location.file)
-	location.name = filepath.base(location.src)
+	filesystem.is_bundle = false
+	filesystem.src = filepath.dir(filesystem.file)
+	filesystem.build = filepath.dir(filesystem.file)
+	filesystem.name = filepath.base(filesystem.src)
 
 	when ODIN_OS == .Windows {
-		location.data = get_config_dir("windows")
-		location.system = "windows"
+		filesystem.data = get_config_dir("windows")
+		filesystem.system = "windows"
 	} else when ODIN_OS == .Darwin {
-		location.data = get_config_dir("darwin")
-		location.system = "darwin"
+		filesystem.data = get_config_dir("darwin")
+		filesystem.system = "darwin"
 	} else when ODIN_OS == .Linux {
-		location.data = get_config_dir("linux")
-		location.system = "linux"
+		filesystem.data = get_config_dir("linux")
+		filesystem.system = "linux"
 	}
 }
 
 uninit_paths :: proc() {
-	delete(location.build)
-	delete(location.data)
-	delete(location.file)
-	delete(location.src)
+	delete(filesystem.build)
+	delete(filesystem.data)
+	delete(filesystem.file)
+	delete(filesystem.src)
 }
 
 init_build_paths :: proc(assets_file: string) {
-	location.file = "main.lua"
-	location.src = filepath.dir(assets_file)
-	location.build = filepath.dir(assets_file)
-	location.name = filepath.base(location.src)
+	filesystem.file = "main.lua"
+	filesystem.src = filepath.dir(assets_file)
+	filesystem.build = filepath.dir(assets_file)
+	filesystem.name = filepath.base(filesystem.src)
+	filesystem.is_bundle = true
 
 	when ODIN_OS == .Windows {
-		location.data = get_config_dir("windows")
-		location.system = "windows"
+		filesystem.data = get_config_dir("windows")
+		filesystem.system = "windows"
 	} else when ODIN_OS == .Darwin {
-		location.data = get_config_dir("darwin")
-		location.system = "darwin"
+		filesystem.data = get_config_dir("darwin")
+		filesystem.system = "darwin"
 	} else when ODIN_OS == .Linux {
-		location.data = get_config_dir("linux")
-		location.system = "linux"
+		filesystem.data = get_config_dir("linux")
+		filesystem.system = "linux"
 	}
 }
 

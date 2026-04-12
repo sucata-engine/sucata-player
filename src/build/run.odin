@@ -30,8 +30,8 @@ run :: proc(assets_hash: string) {
 
 	filesystem.init_build_paths(assets_path)
 	filesystem.load_assets(assets_path)
-	common.print_info("Running Sucata script: %s", filesystem.location.file)
+	common.print_info("Running Sucata script: %s", filesystem.filesystem.file)
 
-	lua.init_lua(filesystem.location.file)
+	lua.init_lua(filesystem.filesystem.file)
 	core.main()
 }

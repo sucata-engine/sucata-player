@@ -46,10 +46,6 @@ load_window_icon :: proc(icon_path: string) -> sapp.Icon_Desc {
 
 	if asset_data, ok := filesystem.get_asset(icon_path); ok && len(asset_data) > 0 {
 		pixels = stbi.load_from_memory(raw_data(asset_data), i32(len(asset_data)), &w, &h, nil, 4)
-	} else {
-		path_cstr := strings.clone_to_cstring(filesystem.get_path(icon_path))
-		defer delete_cstring(path_cstr)
-		pixels = stbi.load(path_cstr, &w, &h, nil, 4)
 	}
 
 	if pixels == nil {
@@ -102,10 +98,6 @@ set_window_icon :: proc(icon_path: string) {
 
 	if asset_data, ok := filesystem.get_asset(icon_path); ok && len(asset_data) > 0 {
 		pixels = stbi.load_from_memory(raw_data(asset_data), i32(len(asset_data)), &w, &h, nil, 4)
-	} else {
-		path_cstr := strings.clone_to_cstring(filesystem.get_path(icon_path))
-		defer delete_cstring(path_cstr)
-		pixels = stbi.load(path_cstr, &w, &h, nil, 4)
 	}
 
 	if pixels == nil {

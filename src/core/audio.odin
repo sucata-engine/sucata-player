@@ -151,19 +151,9 @@ load_sound :: proc(sound_path: string, group: string = "default") -> (u32, bool)
 			return 0, false
 		}
 	} else {
-		c_path := strings.clone_to_cstring(filesystem.get_path(sound_path))
-		defer delete(c_path)
-		result := ma.sound_init_from_file(
-			&mixer.engine,
-			c_path,
-			{.STREAM},
-			mixer_group,
-			nil,
-			&slot.sound,
-		)
-		if result != .SUCCESS {
-			return 0, false
-		}
+		// NOTE: do NOT call decoder_uninit here — decoder_init_memory was never called,
+		// so the decoder struct is uninitialized. Calling uninit on it is undefined behavior.
+		return 0, false
 	}
 
 	slot.id = mixer.next_id

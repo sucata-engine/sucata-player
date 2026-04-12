@@ -72,8 +72,6 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		ttf_data = make([]byte, len(asset_data))
 		copy(ttf_data, asset_data)
 		read_ok = true
-	} else {
-		ttf_data, read_ok = os.read_entire_file(filesystem.get_path(font_path))
 	}
 
 	if !read_ok {

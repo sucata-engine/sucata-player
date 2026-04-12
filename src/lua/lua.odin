@@ -113,26 +113,6 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 		}
 	}
 
-	for pattern in fs_patterns {
-		full_path := filesystem.get_path(pattern)
-		if os.exists(full_path) {
-			data, read_ok := os.read_entire_file(full_path)
-			if read_ok {
-				chunk_name := strings.clone_to_cstring(full_path)
-
-				result := lua.L_loadbuffer(L, raw_data(data), len(data), chunk_name)
-				delete_cstring(chunk_name)
-				delete(data)
-
-				if result == .OK {
-					return 1
-				} else {
-					lua.pop(L, 1)
-				}
-			}
-		}
-	}
-
 	return 1
 }
 
@@ -157,7 +137,7 @@ load_path :: proc() {
 	old_path := lua.tostring(L, -1)
 	lua.pop(L, 1)
 
-	script_dir := filesystem.location.src
+	script_dir := filesystem.filesystem.src
 
 	new_path := fmt.tprintf(
 		"%s;%s/?.lua;%s/?/init.lua;%s/?/?.lua",
@@ -192,8 +172,6 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	if asset_data, found := filesystem.get_asset(path); found && len(asset_data) > 0 {
 		code = strings.clone_to_cstring(string(asset_data))
 		ok = true
-	} else {
-		code, ok = load_file_as_cstring(path)
 	}
 
 	if !ok {
@@ -230,8 +208,10 @@ init_lua :: proc(path: string, entity_file: string = "") {
 
 create_meta :: proc(L: ^lua.State) {
 	lua.newtable(L)
-	lua.pushstring(L, "windows")
+	lua.pushstring(L, strings.clone_to_cstring(filesystem.filesystem.system))
 	lua.setfield(L, -2, "OS")
+	lua.pushstring(L, strings.clone_to_cstring(core.VERSION))
+	lua.setfield(L, -2, "VERSION")
 	lua.setfield(L, -2, "meta")
 }
 

@@ -20,13 +20,8 @@ get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
 	if asset_data, ok := filesystem.get_asset(shader_path); ok && len(asset_data) > 0 {
 		return asset_data, true, true
 	}
-	shader_entire_path := filesystem.get_path(shader_path)
-	schd_data, ok := os.read_entire_file_from_filename(shader_entire_path)
-	if !ok {
-		return {}, false, false
-	}
 
-	return schd_data, true, false
+	return {}, false, false
 }
 
 DEFAULT_BUFFER :: [3]string{"position", "col", "uv"}
