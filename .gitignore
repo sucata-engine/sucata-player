@@ -1,8 +1,6 @@
 *.pdb
 *.lua
 *.exe
-*.cmd
-*.sh
 *.ignore
 
 sucata
