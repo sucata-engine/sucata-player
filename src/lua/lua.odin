@@ -229,6 +229,13 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	setup_garbage_collector(L, default_gc_config)
 }
 
+create_meta :: proc(L: ^lua.State) {
+	lua.newtable(L)
+	lua.pushstring(L, "windows")
+	lua.setfield(L, -2, "OS")
+	lua.setfield(L, -2, "meta")
+}
+
 create_namespaces :: proc(L: ^lua.State) {
 	lua.newtable(L)
 	for namespace in lua_namespaces {
@@ -241,6 +248,8 @@ create_namespaces :: proc(L: ^lua.State) {
 
 		lua.setfield(L, -2, namespace.name)
 	}
+	create_meta(L)
+
 	lua.setglobal(L, "sucata")
 }
 
