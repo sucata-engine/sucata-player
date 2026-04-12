@@ -1,7 +1,7 @@
 package file_system
 
 import core "../../core"
-import "../../fs"
+import "../../filesystem"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
@@ -18,7 +18,7 @@ EXISTS_FUNCTION :: lua_common.LuaFunction {
 		fpath := strings.clone_from_cstring(lua.tostring(L, 1))
 		defer delete(fpath)
 
-		exists := fs.exists(fpath)
+		exists := filesystem.exists(fpath)
 		lua.pushboolean(L, b32(exists))
 
 		return 1

@@ -1,6 +1,6 @@
 package file_system
 
-import "../../fs"
+import "../../filesystem"
 import "core:strings"
 
 import core "../../core"
@@ -19,7 +19,7 @@ READ_FILE_FUNCTION :: lua_common.LuaFunction {
 		file_path := strings.clone_from_cstring(lua.tostring(L, 1))
 		defer delete(file_path)
 
-		content, ok := fs.read_file_as_string(file_path)
+		content, ok := filesystem.read_file_as_string(file_path)
 		defer delete(content)
 
 		if ok {

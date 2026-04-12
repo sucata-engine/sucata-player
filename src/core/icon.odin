@@ -1,8 +1,7 @@
 package core
 
 import common "../common"
-import "../fs"
-import "../path"
+import "../filesystem"
 import "core:strings"
 import sapp "shared:sokol/app"
 import stbi "vendor:stb/image"
@@ -45,10 +44,10 @@ load_window_icon :: proc(icon_path: string) -> sapp.Icon_Desc {
 	w, h: i32
 	pixels: [^]u8
 
-	if asset_data, ok := fs.get_asset(icon_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(icon_path); ok && len(asset_data) > 0 {
 		pixels = stbi.load_from_memory(raw_data(asset_data), i32(len(asset_data)), &w, &h, nil, 4)
 	} else {
-		path_cstr := strings.clone_to_cstring(path.get_path(icon_path))
+		path_cstr := strings.clone_to_cstring(filesystem.get_path(icon_path))
 		defer delete_cstring(path_cstr)
 		pixels = stbi.load(path_cstr, &w, &h, nil, 4)
 	}
@@ -101,10 +100,10 @@ set_window_icon :: proc(icon_path: string) {
 	w, h: i32
 	pixels: [^]u8
 
-	if asset_data, ok := fs.get_asset(icon_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(icon_path); ok && len(asset_data) > 0 {
 		pixels = stbi.load_from_memory(raw_data(asset_data), i32(len(asset_data)), &w, &h, nil, 4)
 	} else {
-		path_cstr := strings.clone_to_cstring(path.get_path(icon_path))
+		path_cstr := strings.clone_to_cstring(filesystem.get_path(icon_path))
 		defer delete_cstring(path_cstr)
 		pixels = stbi.load(path_cstr, &w, &h, nil, 4)
 	}

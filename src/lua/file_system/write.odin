@@ -1,7 +1,7 @@
 package file_system
 
 import core "../../core"
-import "../../fs"
+import "../../filesystem"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
@@ -21,7 +21,7 @@ WRITE_FUNCTION :: lua_common.LuaFunction {
 		content := strings.clone_from_cstring(lua.tostring(L, 2))
 		defer delete(content)
 
-		ok := fs.write_file(file_path, transmute([]u8)content)
+		ok := filesystem.write_file(file_path, transmute([]u8)content)
 		lua.pushboolean(L, b32(ok))
 
 		return 1

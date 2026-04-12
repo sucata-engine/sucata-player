@@ -2,8 +2,7 @@ package lua
 
 import "../common"
 import "../core"
-import "../fs"
-import "../path"
+import "../filesystem"
 import "./audio"
 import cam "./camera"
 import "./file_system"
@@ -90,7 +89,7 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 	}
 
 	for pattern in asset_patterns {
-		if asset_data, ok := fs.get_asset(pattern); ok && len(asset_data) > 0 {
+		if asset_data, ok := filesystem.get_asset(pattern); ok && len(asset_data) > 0 {
 			chunk_name := strings.clone_to_cstring(pattern)
 
 			result := lua.L_loadbuffer(L, raw_data(asset_data), len(asset_data), chunk_name)
@@ -115,7 +114,7 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 	}
 
 	for pattern in fs_patterns {
-		full_path := path.get_path(pattern)
+		full_path := filesystem.get_path(pattern)
 		if os.exists(full_path) {
 			data, read_ok := os.read_entire_file(full_path)
 			if read_ok {
@@ -158,7 +157,7 @@ load_path :: proc() {
 	old_path := lua.tostring(L, -1)
 	lua.pop(L, 1)
 
-	script_dir := path.location.src
+	script_dir := filesystem.location.src
 
 	new_path := fmt.tprintf(
 		"%s;%s/?.lua;%s/?/init.lua;%s/?/?.lua",
@@ -190,7 +189,7 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	code: cstring
 	ok: bool
 
-	if asset_data, found := fs.get_asset(path); found && len(asset_data) > 0 {
+	if asset_data, found := filesystem.get_asset(path); found && len(asset_data) > 0 {
 		code = strings.clone_to_cstring(string(asset_data))
 		ok = true
 	} else {

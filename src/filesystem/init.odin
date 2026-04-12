@@ -1,4 +1,4 @@
-package path
+package filesystem
 
 import "core:fmt"
 import "core:os"

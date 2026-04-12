@@ -1,6 +1,6 @@
 package file_system
 
-import "../../fs"
+import "../../filesystem"
 import "core:strings"
 
 import core "../../core"
@@ -19,7 +19,7 @@ READ_DIR_FUNCTION :: lua_common.LuaFunction {
 		dir_path := strings.clone_from_cstring(lua.tostring(L, 1))
 		defer delete(dir_path)
 
-		content, ok := fs.read_dir(dir_path)
+		content, ok := filesystem.read_dir(dir_path)
 
 		if ok {
 			lua.newtable(L)

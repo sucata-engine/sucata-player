@@ -1,7 +1,6 @@
 package graphics
 
-import "../fs"
-import "../path"
+import "../filesystem"
 import "core:image"
 import "core:strings"
 import sg "shared:sokol/gfx"
@@ -50,10 +49,10 @@ load_image :: proc(_path: string) -> Image {
 	w, h: i32
 	pixels: [^]u8
 
-	if asset_data, ok := fs.get_asset(file_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(file_path); ok && len(asset_data) > 0 {
 		pixels = stbi.load_from_memory(raw_data(asset_data), i32(len(asset_data)), &w, &h, nil, 4)
 	} else {
-		path_cstr := strings.clone_to_cstring(path.get_path(file_path))
+		path_cstr := strings.clone_to_cstring(filesystem.get_path(file_path))
 		defer delete_cstring(path_cstr)
 		pixels = stbi.load(path_cstr, &w, &h, nil, 4)
 	}

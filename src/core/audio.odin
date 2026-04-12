@@ -1,7 +1,6 @@
 package core
 
-import "../fs"
-import "../path"
+import "../filesystem"
 import "base:runtime"
 import "core:strings"
 import ma "vendor:miniaudio"
@@ -134,7 +133,7 @@ load_sound :: proc(sound_path: string, group: string = "default") -> (u32, bool)
 		mixer_group = mixer.groups[group]
 	}
 
-	if asset_data, ok := fs.get_asset(sound_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(sound_path); ok && len(asset_data) > 0 {
 		if ma.decoder_init_memory(&asset_data[0], len(asset_data), nil, &slot.decoder) !=
 		   .SUCCESS {
 			return 0, false
@@ -152,7 +151,7 @@ load_sound :: proc(sound_path: string, group: string = "default") -> (u32, bool)
 			return 0, false
 		}
 	} else {
-		c_path := strings.clone_to_cstring(path.get_path(sound_path))
+		c_path := strings.clone_to_cstring(filesystem.get_path(sound_path))
 		defer delete(c_path)
 		result := ma.sound_init_from_file(
 			&mixer.engine,

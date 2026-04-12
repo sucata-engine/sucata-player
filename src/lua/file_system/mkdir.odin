@@ -1,7 +1,7 @@
 package file_system
 
 import core "../../core"
-import "../../fs"
+import "../../filesystem"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
@@ -17,7 +17,7 @@ MKDIR_FUNCTION :: lua_common.LuaFunction {
 
 		dir_path := strings.clone_from_cstring(lua.tostring(L, 1))
 		defer delete(dir_path)
-		fs.mkdir(dir_path)
+		filesystem.mkdir(dir_path)
 
 		return 0
 	},

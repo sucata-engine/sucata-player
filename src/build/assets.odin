@@ -1,7 +1,7 @@
 package build
 
 import "../common"
-import ph "../path"
+import "../filesystem"
 import "core:bytes"
 import "core:crypto/hash"
 import "core:encoding/hex"
@@ -128,7 +128,7 @@ get_assets_hash :: proc(assets_path: string) -> string {
 }
 
 lua_path_to_dir_path :: proc(req: string) -> string {
-	base_dir := ph.location.src
+	base_dir := filesystem.location.src
 	path, ok := strings.replace_all(req, ".", "/")
 	defer {
 		if path != req {
@@ -170,7 +170,7 @@ collect_paths :: proc(file_path: string, files: ^[dynamic]string) -> os.Errno {
 	defer regex.destroy_iterator(interator_files)
 	if err == nil {
 		for match in regex.match_iterator(&interator_files) {
-			match_path := ph.get_path(match.groups[1])
+			match_path := filesystem.get_path(match.groups[1])
 			if !contains_file(match_path, files) {
 				append(files, match_path)
 			}

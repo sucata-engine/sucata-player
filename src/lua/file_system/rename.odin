@@ -1,7 +1,7 @@
 package file_system
 
 import core "../../core"
-import "../../fs"
+import "../../filesystem"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
@@ -21,7 +21,7 @@ RENAME_FUNCTION :: lua_common.LuaFunction {
 		new_path := strings.clone_from_cstring(lua.tostring(L, 2))
 		defer delete(new_path)
 
-		fs.rename(old_path, new_path)
+		filesystem.rename(old_path, new_path)
 
 		return 0
 	},

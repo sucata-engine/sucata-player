@@ -1,17 +1,16 @@
 package core
 
 import "../common"
-import "../fs"
+import "../filesystem"
 import "../graphics"
-import "../path"
 import "base:runtime"
 import "core:strings"
+import lua "shared:luajit"
 import sapp "shared:sokol/app"
 import sg "shared:sokol/gfx"
 import sglue "shared:sokol/glue"
 import shelpers "shared:sokol/helpers"
 import st "shared:sokol/time"
-import lua "shared:luajit"
 
 delta_time: f64 = 0.016
 time_scale: f64 = 1.0
@@ -123,14 +122,14 @@ cleanup_callback :: proc "c" () {
 	graphics.shutdown_graphics()
 
 	sg.shutdown()
-	fs.unload_assets()
+	filesystem.unload_assets()
 
 	if LUA_GLOBAL_STATE != nil {
 		lua.close(LUA_GLOBAL_STATE)
 		LUA_GLOBAL_STATE = nil
 	}
 	cleanup_temp_arena()
-	path.uninit_paths()
+	filesystem.uninit_paths()
 }
 
 elapsed_time := 0.0

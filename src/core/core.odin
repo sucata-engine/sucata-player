@@ -5,8 +5,8 @@ import "../graphics"
 import "base:runtime"
 import "core:sort"
 import "core:strings"
-import sapp "shared:sokol/app"
 import lua "shared:luajit"
+import sapp "shared:sokol/app"
 
 LUA_GLOBAL_STATE: ^lua.State
 DEFAULT_CONTEXT: runtime.Context
@@ -23,6 +23,8 @@ scene: [dynamic]^common.Entity = {}
 global_scene: [dynamic]^common.Entity = [dynamic]^common.Entity{}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
+
+VERSION :: "0.2.2"
 
 main :: proc() {
 	init_sokol()

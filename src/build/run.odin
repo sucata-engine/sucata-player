@@ -2,9 +2,8 @@ package build
 
 import "../common"
 import "../core"
-import "../fs"
+import "../filesystem"
 import "../lua"
-import "../path"
 import "core:fmt"
 import "core:os"
 import "core:path/filepath"
@@ -29,10 +28,10 @@ run :: proc(assets_hash: string) {
 		)
 	}
 
-	path.init_build_paths(assets_path)
-	fs.load_assets(assets_path)
-	common.print_info("Running Sucata script: %s", path.location.file)
+	filesystem.init_build_paths(assets_path)
+	filesystem.load_assets(assets_path)
+	common.print_info("Running Sucata script: %s", filesystem.location.file)
 
-	lua.init_lua(path.location.file)
+	lua.init_lua(filesystem.location.file)
 	core.main()
 }

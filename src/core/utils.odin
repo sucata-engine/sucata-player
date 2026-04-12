@@ -1,7 +1,6 @@
 package core
 
 import "../common"
-import "core:c"
 import "core:strings"
 import lua "shared:luajit"
 
@@ -127,12 +126,4 @@ call_lua_method_with_self_ref :: proc(
 	lua.settop(L, top)
 
 	return result == .OK
-}
-
-get_memory_usage :: proc(L: ^lua.State) -> (kb_used: c.int, bytes_used: c.int) {
-	if L == nil do return 0, 0
-
-	kb_used = c.int(lua.gc(L, lua.GCCOUNT, 0))
-	bytes_used = c.int(lua.gc(L, lua.GCCOUNTB, 0))
-	return
 }

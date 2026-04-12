@@ -1,7 +1,7 @@
 package build
 
 import "../common"
-import "../path"
+import "../filesystem"
 import "core:fmt"
 import "core:mem"
 import "core:os"
@@ -17,21 +17,21 @@ DEFAULT_ICON_LINUX :: #load("../../assets/icons/sucata.png")
 DEFAULT_ICON_MAC :: #load("../../assets/icons/sucata.icns")
 
 clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string = "") {
-	player_path := path.get_sucata_player_path()
+	player_path := filesystem.get_sucata_player_path()
 	defer delete(player_path)
 	common.print_info("Cloning engine from: %s", player_path)
 
 	engine_data, read_ok := os.read_entire_file(player_path)
 	defer delete(engine_data)
 
-	engine_name := path.location.name
-	if path.location.system == "windows" {
+	engine_name := filesystem.location.name
+	if filesystem.location.system == "windows" {
 		engine_name = fmt.tprintf("{0}.exe", engine_name)
 	}
 	output_path := filepath.join({output_dir, engine_name})
 	defer delete(output_path)
 
-	if path.location.system == "darwin" {
+	if filesystem.location.system == "darwin" {
 		create_macos_app_bundle(output_dir, engine_name, engine_data, assets_hash, icon_path)
 		return
 	}
@@ -42,7 +42,7 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 	os.write(output_handle, engine_data)
 	write_build_header(output_handle, assets_hash)
 
-	if path.location.system == "windows" {
+	if filesystem.location.system == "windows" {
 		remove_console_window(output_path)
 		clone_lua_dll(output_dir)
 		clone_sdl_dll(output_dir)
@@ -51,7 +51,7 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 		} else {
 			embed_windows_default_icon(output_path)
 		}
-	} else if path.location.system == "linux" {
+	} else if filesystem.location.system == "linux" {
 		if icon_path != "" {
 			embed_linux_icon(output_path, icon_path)
 		} else {
@@ -61,7 +61,7 @@ clone_engine :: proc(output_dir: string, assets_hash: string, icon_path: string 
 }
 
 clone_lua_dll :: proc(output_dir: string) {
-	source_path := path.get_sucata_folder()
+	source_path := filesystem.get_sucata_folder()
 	defer delete(source_path)
 	lua_dll_path := filepath.join({source_path, LUA_DLL_FILE_NAME})
 
@@ -77,7 +77,7 @@ clone_lua_dll :: proc(output_dir: string) {
 }
 
 clone_sdl_dll :: proc(output_dir: string) {
-	source_path := path.get_sucata_folder()
+	source_path := filesystem.get_sucata_folder()
 	defer delete(source_path)
 	sdl_dll_path := filepath.join({source_path, SDL_DLL_FILE_NAME})
 

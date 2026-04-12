@@ -1,6 +1,5 @@
-package fs
+package filesystem
 
-import fpath "../path"
 import "core:os"
 import "core:path/filepath"
 import "core:strings"
@@ -10,7 +9,7 @@ read_file :: proc(file_path: string) -> ([]u8, bool) {
 		return asset, true
 	}
 
-	file_path_normalized := fpath.get_path(file_path)
+	file_path_normalized := get_path(file_path)
 	if data, ok := os.read_entire_file(file_path_normalized); ok {
 		return data, true
 	}
@@ -35,7 +34,7 @@ read_dir :: proc(dir_path: string) -> ([]string, bool) {
 		return files, true
 	}
 
-	dir_path_normalized := fpath.get_path(dir_path)
+	dir_path_normalized := get_path(dir_path)
 	dir_handle, open_err := os.open(dir_path_normalized, os.O_RDONLY, 0)
 	if open_err != os.ERROR_NONE {
 		return {}, false
@@ -60,7 +59,7 @@ read_dir :: proc(dir_path: string) -> ([]string, bool) {
 }
 
 write_file :: proc(file_path: string, data: []u8) -> bool {
-	file_path_normalized := fpath.get_path(file_path)
+	file_path_normalized := get_path(file_path)
 	file_handle, create_err := os.open(
 		file_path_normalized,
 		os.O_CREATE | os.O_WRONLY | os.O_TRUNC,
@@ -76,23 +75,23 @@ write_file :: proc(file_path: string, data: []u8) -> bool {
 }
 
 mkdir :: proc(dir_path: string) {
-	dir_path_normalized := fpath.get_path(dir_path)
+	dir_path_normalized := get_path(dir_path)
 	os.make_directory(dir_path_normalized, 0o755)
 }
 
 rm :: proc(path: string) {
-	file_path_normalized := fpath.get_path(path)
+	file_path_normalized := get_path(path)
 	os.remove(file_path_normalized)
 }
 
 rename :: proc(old_path: string, new_path: string) {
-	old_path_normalized := fpath.get_path(old_path)
-	new_path_normalized := fpath.get_path(new_path)
+	old_path_normalized := get_path(old_path)
+	new_path_normalized := get_path(new_path)
 	os.rename(old_path_normalized, new_path_normalized)
 }
 
 exists :: proc(path: string) -> bool {
-	path_normalized := fpath.get_path(path)
+	path_normalized := get_path(path)
 	_, stat_err := os.stat(path_normalized)
 	return stat_err == os.ERROR_NONE
 }

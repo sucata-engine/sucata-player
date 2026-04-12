@@ -1,8 +1,7 @@
 package graphics
 
 import "../common"
-import "../fs"
-import "../path"
+import "../filesystem"
 import "core:c"
 import "core:os"
 import sg "shared:sokol/gfx"
@@ -18,10 +17,10 @@ CustomShader :: struct {
 custom_shaders := map[string]CustomShader{}
 
 get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
-	if asset_data, ok := fs.get_asset(shader_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(shader_path); ok && len(asset_data) > 0 {
 		return asset_data, true, true
 	}
-	shader_entire_path := path.get_path(shader_path)
+	shader_entire_path := filesystem.get_path(shader_path)
 	schd_data, ok := os.read_entire_file_from_filename(shader_entire_path)
 	if !ok {
 		return {}, false, false

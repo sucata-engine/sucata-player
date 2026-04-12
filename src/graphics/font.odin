@@ -1,8 +1,7 @@
 package graphics
 
 import "../common"
-import "../fs"
-import "../path"
+import "../filesystem"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -69,12 +68,12 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	ttf_data: []byte
 	read_ok: bool
 
-	if asset_data, ok := fs.get_asset(font_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(font_path); ok && len(asset_data) > 0 {
 		ttf_data = make([]byte, len(asset_data))
 		copy(ttf_data, asset_data)
 		read_ok = true
 	} else {
-		ttf_data, read_ok = os.read_entire_file(path.get_path(font_path))
+		ttf_data, read_ok = os.read_entire_file(filesystem.get_path(font_path))
 	}
 
 	if !read_ok {
