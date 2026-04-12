@@ -5,6 +5,6 @@ set -e
 echo "Building Sucata for Unix..."
 
 echo "Building sucata-player..."
-odin build src/ -extra-linker-flags:"-L/opt/homebrew/lib" -debug -sanitize:address
+odin build src/ -extra-linker-flags:"-L/opt/homebrew/lib" -debug -sanitize:address -out:sucata-player
 
 echo "Done!"
