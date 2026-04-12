@@ -151,8 +151,6 @@ load_sound :: proc(sound_path: string, group: string = "default") -> (u32, bool)
 			return 0, false
 		}
 	} else {
-		// NOTE: do NOT call decoder_uninit here — decoder_init_memory was never called,
-		// so the decoder struct is uninitialized. Calling uninit on it is undefined behavior.
 		return 0, false
 	}
 
