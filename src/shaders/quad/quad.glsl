@@ -1,5 +1,5 @@
 @header package shader_quad
-@header import sg "../../../sokol/gfx"
+@header import sg "shared:sokol/gfx"
 
 /* quad vertex shader */
 @vs vs

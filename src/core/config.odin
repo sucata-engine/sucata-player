@@ -1,9 +1,9 @@
 package core
 
-import sapp "../../sokol/app"
 import common "../common"
 import graphics "../graphics"
 import "core:strings"
+import sapp "shared:sokol/app"
 
 windowConfig := common.WindowConfig {
 	width           = 800,

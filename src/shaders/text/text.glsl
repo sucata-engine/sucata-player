@@ -1,5 +1,5 @@
 @header package shader_text
-@header import sg "../../../sokol/gfx"
+@header import sg "shared:sokol/gfx"
 
 /* text vertex shader */
 @vs vs

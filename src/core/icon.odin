@@ -1,10 +1,10 @@
 package core
 
-import sapp "../../sokol/app"
 import common "../common"
 import "../fs"
 import "../path"
 import "core:strings"
+import sapp "shared:sokol/app"
 import stbi "vendor:stb/image"
 
 default_icon_png := #load("../../assets/sucata.png")

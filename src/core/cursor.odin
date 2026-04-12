@@ -1,7 +1,7 @@
 package core
 
-import sapp "../../sokol/app"
 import "core:strings"
+import sapp "shared:sokol/app"
 
 string_to_mouse_cursor :: proc(s: string) -> sapp.Mouse_Cursor {
 	s_lower := strings.to_lower(s)

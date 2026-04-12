@@ -1,9 +1,9 @@
 package graphics
 
-import sg "../../sokol/gfx"
 import "core:encoding/json"
 import "core:fmt"
 import "core:strings"
+import sg "shared:sokol/gfx"
 
 get_shader_attr_type :: proc(type: string, base_type: string) -> sg.Vertex_Format {
 	switch type {
@@ -342,7 +342,8 @@ create_shader_desc_from_schd :: proc(
 			desc.views[view_index].texture.sample_type = get_image_sample_type(
 				texture_obj["sample_type"].(json.String),
 			)
-			desc.views[view_index].texture.multisampled = texture_obj["multisampled"].(json.Boolean)
+			desc.views[view_index].texture.multisampled =
+			texture_obj["multisampled"].(json.Boolean)
 		}
 
 		for sampler, sampler_index in program["samplers"].(json.Array) {
@@ -459,7 +460,8 @@ create_shader_desc_from_schd :: proc(
 			desc.views[view_index].texture.sample_type = get_image_sample_type(
 				texture_obj["sample_type"].(json.String),
 			)
-			desc.views[view_index].texture.multisampled = texture_obj["multisampled"].(json.Boolean)
+			desc.views[view_index].texture.multisampled =
+			texture_obj["multisampled"].(json.Boolean)
 			desc.views[view_index].texture.hlsl_register_t_n = u8(
 				json_number_to_number(texture_obj["hlsl_register_t_n"]),
 			)
@@ -559,7 +561,8 @@ create_shader_desc_from_schd :: proc(
 			desc.views[view_index].texture.sample_type = get_image_sample_type(
 				texture_obj["sample_type"].(json.String),
 			)
-			desc.views[view_index].texture.multisampled = texture_obj["multisampled"].(json.Boolean)
+			desc.views[view_index].texture.multisampled =
+			texture_obj["multisampled"].(json.Boolean)
 			desc.views[view_index].texture.msl_texture_n = u8(
 				json_number_to_number(texture_obj["msl_texture_n"]),
 			)
@@ -659,7 +662,8 @@ create_shader_desc_from_schd :: proc(
 			desc.views[view_index].texture.sample_type = get_image_sample_type(
 				texture_obj["sample_type"].(json.String),
 			)
-			desc.views[view_index].texture.multisampled = texture_obj["multisampled"].(json.Boolean)
+			desc.views[view_index].texture.multisampled =
+			texture_obj["multisampled"].(json.Boolean)
 			desc.views[view_index].texture.wgsl_group1_binding_n = u8(
 				json_number_to_number(texture_obj["wgsl_group1_binding_n"]),
 			)

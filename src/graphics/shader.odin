@@ -1,11 +1,11 @@
 package graphics
 
-import sg "../../sokol/gfx"
 import "../common"
 import "../fs"
 import "../path"
 import "core:c"
 import "core:os"
+import sg "shared:sokol/gfx"
 
 CustomShader :: struct {
 	ib:              sg.Buffer,

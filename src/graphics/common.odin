@@ -1,7 +1,7 @@
 package graphics
 
-import sg "../../sokol/gfx"
 import "core:math/linalg"
+import sg "shared:sokol/gfx"
 
 Vec2 :: [2]f32
 Vec3 :: [3]f32

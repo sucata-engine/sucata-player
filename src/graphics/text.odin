@@ -1,12 +1,12 @@
 package graphics
 
-import sg "../../sokol/gfx"
 import "../camera"
 import "../common"
 import shader_text "../shaders/text"
 import "core:c"
 import "core:strings"
 import "core:unicode/utf8"
+import sg "shared:sokol/gfx"
 
 text_ib: sg.Buffer
 text_shader: sg.Shader
