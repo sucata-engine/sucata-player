@@ -103,6 +103,7 @@ Some libraries used in Sucata Game Engine:
 
 - [odin](https://odin-lang.org/) - Programming language used to build the engine
 - [lua](https://www.lua.org/) - Scripting language used in the engine
+- [luajit](https://www.luajit.org/) - Scripting language used in the engine
 - [sokol](https://github.com/floooh/sokol) - Cross-platform development libraries for graphics, audio, and input handling
 - [sokol-tools](https://github.com/floooh/sokol-tools) - Cross-platform shader tools for building shader
 - [miniaudio](https://github.com/mackron/miniaudio) - Single file audio playback and capture library
