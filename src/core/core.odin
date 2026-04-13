@@ -21,6 +21,7 @@ is_draw_step: bool = false
 next_entity_id: u64 = 0
 scene: [dynamic]^common.Entity = {}
 global_scene: [dynamic]^common.Entity = [dynamic]^common.Entity{}
+global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
@@ -77,11 +78,22 @@ spawn :: proc(entity: ^common.Entity) -> u64 {
 	return gObj.id
 }
 
-load_global :: proc(entity: ^common.Entity) -> u64 {
+load_global :: proc(key: string, entity: ^common.Entity) -> u64 {
 	if entity == nil {
+		delete(key)
 		return 0
 	}
 
+	for k, e in global_scene_map {
+		if k == key {
+			delete_key(&global_scene_map, k)
+			delete(k)
+			_remove_global_entity(e)
+			break
+		}
+	}
+
+	global_scene_map[key] = entity
 	append(&global_scene, entity)
 	gObj := global_scene[len(global_scene) - 1]
 	if is_game_started {
@@ -90,7 +102,25 @@ load_global :: proc(entity: ^common.Entity) -> u64 {
 	return gObj.id
 }
 
-unload_global :: proc(entity: ^common.Entity) {
+get_global :: proc(key: string) -> ^common.Entity {
+	if e, ok := global_scene_map[key]; ok {
+		return e
+	}
+	return nil
+}
+
+unload_global_by_key :: proc(key: string) {
+	for k, e in global_scene_map {
+		if k == key {
+			delete_key(&global_scene_map, k)
+			delete(k)
+			_remove_global_entity(e)
+			break
+		}
+	}
+}
+
+_remove_global_entity :: proc(entity: ^common.Entity) {
 	if entity == nil {
 		return
 	}
@@ -101,6 +131,20 @@ unload_global :: proc(entity: ^common.Entity) {
 			break
 		}
 	}
+}
+
+unload_global :: proc(entity: ^common.Entity) {
+	if entity == nil {
+		return
+	}
+	for k, e in global_scene_map {
+		if e == entity {
+			delete_key(&global_scene_map, k)
+			delete(k)
+			break
+		}
+	}
+	_remove_global_entity(entity)
 }
 
 run_init :: proc() {
