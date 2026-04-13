@@ -208,10 +208,17 @@ init_lua :: proc(path: string, entity_file: string = "") {
 
 create_meta :: proc(L: ^lua.State) {
 	lua.newtable(L)
-	lua.pushstring(L, strings.clone_to_cstring(filesystem.filesystem.system))
+
+	os_cstr := strings.clone_to_cstring(filesystem.filesystem.system)
+	defer delete_cstring(os_cstr)
+	lua.pushstring(L, os_cstr)
 	lua.setfield(L, -2, "OS")
-	lua.pushstring(L, strings.clone_to_cstring(core.VERSION))
+
+	version_cstr := strings.clone_to_cstring(core.VERSION)
+	defer delete_cstring(version_cstr)
+	lua.pushstring(L, version_cstr)
 	lua.setfield(L, -2, "VERSION")
+
 	lua.setfield(L, -2, "meta")
 }
 

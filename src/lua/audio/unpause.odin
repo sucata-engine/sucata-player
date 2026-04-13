@@ -6,7 +6,7 @@ import "core:c"
 import lua "shared:luajit"
 
 UNPAUSE_FUNCTION :: lua_common.LuaFunction {
-	name = "pause",
+	name = "unpause",
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 

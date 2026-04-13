@@ -8,6 +8,10 @@ import "vendor:compress/lz4"
 
 assets: ^common.Asset_Archive = nil
 
+// Cache para modo não-bundle: evita reler o mesmo arquivo do disco e elimina
+// a necessidade de os chamadores liberarem os dados retornados por get_asset.
+file_cache: map[string][]byte = {}
+
 load_assets :: proc(asset_path: string) -> bool {
 	file_data, read_ok := os.read_entire_file(asset_path)
 	if !read_ok {
@@ -129,9 +133,18 @@ unload_assets :: proc() {
 
 get_asset :: proc(file_path: string) -> (data: []byte, ok: bool) {
 	if !filesystem.is_bundle {
+		if cached, hit := file_cache[file_path]; hit {
+			return cached, true
+		}
+
 		path := get_path(file_path)
-		data, ok := os.read_entire_file(path)
-		return data, ok
+		file_data, read_ok := os.read_entire_file(path)
+		if !read_ok {
+			return nil, false
+		}
+
+		file_cache[strings.clone(file_path)] = file_data
+		return file_data, true
 	}
 
 	if assets == nil {
@@ -143,8 +156,16 @@ get_asset :: proc(file_path: string) -> (data: []byte, ok: bool) {
 		clean_path = file_path[6:]
 	}
 
-	vlr, vlr_ok := load_asset(clean_path)
-	return vlr, vlr_ok
+	return load_asset(clean_path)
+}
+
+unload_file_cache :: proc() {
+	for key, data in file_cache {
+		delete(data)
+		delete(key)
+	}
+	delete(file_cache)
+	file_cache = {}
 }
 
 list_assets :: proc() -> []string {

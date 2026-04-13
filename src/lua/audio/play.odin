@@ -3,6 +3,7 @@ package audio
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
+import "core:fmt"
 import lua "shared:luajit"
 
 PLAY_FUNCTION :: lua_common.LuaFunction {
@@ -29,10 +30,16 @@ PLAY_FUNCTION :: lua_common.LuaFunction {
 		defer delete(audio_path)
 		defer delete(group)
 
-		if ok {
-			core.play_sound(audio_id, volume, pitch, b32(loop))
+		if !ok {
+			lua.pushstring(
+				L,
+				"audio.play: failed to load sound (file not found or engine not initialized)",
+			)
+			lua.error(L)
+			return 0
 		}
 
+		core.play_sound(audio_id, volume, pitch, b32(loop))
 		lua.pushnumber(L, lua.Number(audio_id))
 
 		return 1

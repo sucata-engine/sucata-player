@@ -106,6 +106,7 @@ init_callback :: proc "c" () {
 		run_init()
 	}
 
+	flush_init_queue()
 	process_post_commands()
 }
 
@@ -123,6 +124,7 @@ cleanup_callback :: proc "c" () {
 
 	sg.shutdown()
 	filesystem.unload_assets()
+	filesystem.unload_file_cache()
 
 	if LUA_GLOBAL_STATE != nil {
 		lua.close(LUA_GLOBAL_STATE)
