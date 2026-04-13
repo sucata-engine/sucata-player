@@ -15,7 +15,7 @@ rm -rf sokol-odin
 
 git clone https://github.com/morikosm/luajit-odin.git
 mkdir luajit
-mv ./luajit-odin ./luajit
+mv ./luajit-odin/luajit.odin ./luajit
 
 git clone https://github.com/laytan/odin-http.git
 mv ./odin-http/client ./http
