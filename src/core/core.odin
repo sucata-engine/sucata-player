@@ -261,6 +261,7 @@ add_group_to_render_queue :: proc(
 	texture: string,
 	shader: string,
 	fixed: bool,
+	tiled: bool,
 	prop: common.ObjectProp,
 ) {
 	if !is_draw_step {
@@ -273,7 +274,8 @@ add_group_to_render_queue :: proc(
 			if v.texture == texture &&
 			   v.z_index == z_index &&
 			   v.shader == shader &&
-			   v.fixed == fixed {
+			   v.fixed == fixed &&
+			   v.tiled == tiled {
 
 				append(renderQueue[i].(common.GroupObjectProps).quads, prop)
 				return
@@ -287,6 +289,7 @@ add_group_to_render_queue :: proc(
 		z_index = z_index,
 		shader  = strings.clone(shader),
 		fixed   = fixed,
+		tiled   = tiled,
 		quads   = quads,
 	}
 	append(&renderQueue, group_quads)

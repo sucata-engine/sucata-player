@@ -42,6 +42,7 @@ GroupObjectProps :: struct {
 	texture: string,
 	shader:  string,
 	fixed:   bool,
+	tiled:   bool,
 	quads:   ^[dynamic]ObjectProp,
 }
 
@@ -57,6 +58,7 @@ QuadObjectProps :: struct {
 	rotation:    f32,
 	opacity:     Maybe(f32),
 	fixed:       bool,
+	tiled:       bool,
 	atlas:       AtlasProps,
 	shader_args: ShaderArgs,
 }

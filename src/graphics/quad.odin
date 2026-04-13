@@ -11,6 +11,7 @@ quad_buffers_inited: bool
 quad_shader: sg.Shader
 quad_pipeline: sg.Pipeline
 quad_sampler: sg.Sampler
+quad_sampler_repeat: sg.Sampler
 
 init_quad_indices :: proc() {
 	if quad_buffers_inited {
@@ -61,6 +62,15 @@ init_quad_indices :: proc() {
 		},
 	)
 
+	quad_sampler_repeat = sg.make_sampler(
+		{
+			min_filter = .NEAREST,
+			mag_filter = .NEAREST,
+			wrap_u = .REPEAT,
+			wrap_v = .REPEAT,
+		},
+	)
+
 	quad_buffers_inited = true
 }
 
@@ -69,6 +79,7 @@ shutdown_quad_buffers :: proc() {
 		sg.destroy_buffer(quad_ib)
 		sg.destroy_pipeline(quad_pipeline)
 		sg.destroy_sampler(quad_sampler)
+		sg.destroy_sampler(quad_sampler_repeat)
 		sg.destroy_shader(quad_shader)
 		quad_buffers_inited = false
 	}
@@ -114,7 +125,13 @@ quad_group :: proc(props: common.GroupObjectProps) {
 
 		points := to_world_space_2d(position, size, scale, origin, rotation)
 		quad_color := Vec4{color[0], color[1], color[2], opacity}
-		uv_pos := calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
+
+		uv_pos: [4][2]f32
+		if props.tiled {
+			uv_pos = calculate_atlas_uv_tiled(atlas, f32(image.width), f32(image.height), size)
+		} else {
+			uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
+		}
 
 		for i in 0 ..< 4 {
 			append(
@@ -159,12 +176,13 @@ quad_group :: proc(props: common.GroupObjectProps) {
 
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
+	active_sampler := quad_sampler_repeat if props.tiled else quad_sampler
 	quad_image := image.view
 	bindings := sg.Bindings {
 		vertex_buffers = vertex_buffers,
 		index_buffer = quad_ib,
 		views = {shader_quad.VIEW_tex = quad_image},
-		samplers = {shader_quad.SMP_smp = quad_sampler},
+		samplers = {shader_quad.SMP_smp = active_sampler},
 	}
 	sg.apply_bindings(bindings)
 
@@ -202,7 +220,13 @@ quad :: proc(props: common.QuadObjectProps) {
 
 	opacity := props.opacity.(f32) or_else color[3]
 	quad_color := Vec4{color[0], color[1], color[2], opacity}
-	uv_pos := calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
+
+	uv_pos: [4][2]f32
+	if props.tiled {
+		uv_pos = calculate_atlas_uv_tiled(atlas, f32(image.width), f32(image.height), size)
+	} else {
+		uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
+	}
 
 	vertices: [4]Vertex_Data
 	vertices[0] = Vertex_Data {
@@ -266,12 +290,13 @@ quad :: proc(props: common.QuadObjectProps) {
 	}
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
+	active_sampler := quad_sampler_repeat if props.tiled else quad_sampler
 	quad_image := image.view
 	bindings := sg.Bindings {
 		vertex_buffers = vertex_buffers,
 		index_buffer = quad_ib,
 		views = {shader_quad.VIEW_tex = quad_image},
-		samplers = {shader_quad.SMP_smp = quad_sampler},
+		samplers = {shader_quad.SMP_smp = active_sampler},
 	}
 
 	sg.apply_bindings(bindings)

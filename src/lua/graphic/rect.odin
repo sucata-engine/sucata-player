@@ -30,6 +30,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		rotation := f32(lua_common.get_table_number(L, 1, "rotation", 0.0))
 		opacity := lua_common.get_table_number_nil(L, 1, "opacity")
 		fixed := lua_common.get_table_boolean(L, 1, "fixed", false)
+		tiled := lua_common.get_table_boolean(L, 1, "tiled", false)
 		shader := lua_common.get_table_string(L, 1, "shader", "")
 		shader_args := lua_common.get_shader_args(L, 1)
 
@@ -81,7 +82,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 			shader_args = shader_args,
 		}
 
-		core.add_group_to_render_queue(i32(zIndex), texture_path, shader, fixed, props)
+		core.add_group_to_render_queue(i32(zIndex), texture_path, shader, fixed, tiled, props)
 
 		return 0
 	},
