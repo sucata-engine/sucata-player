@@ -25,7 +25,7 @@ global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
-VERSION :: "0.2.3"
+VERSION :: "0.2.2"
 
 main :: proc() {
 	init_sokol()
