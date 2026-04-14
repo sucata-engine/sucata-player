@@ -48,8 +48,8 @@ lua_namespaces :: []lua_common.LuaNamespace {
 }
 
 load_file_as_cstring :: proc(path: string) -> (cstring, bool) {
-	data, ok := os.read_entire_file(path)
-	if !ok {
+	data, ok := os.read_entire_file_from_path(path, context.allocator)
+	if ok != nil {
 		return "", false
 	}
 	temp := string(data)

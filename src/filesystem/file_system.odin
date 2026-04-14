@@ -30,24 +30,25 @@ read_dir :: proc(dir_path: string) -> ([]string, bool) {
 	}
 
 	dir_path_normalized := get_path(dir_path)
-	dir_handle, open_err := os.open(dir_path_normalized, os.O_RDONLY, 0)
+	dir_handle, open_err := os.open(dir_path_normalized, os.O_RDONLY)
 	if open_err != os.ERROR_NONE {
 		return {}, false
 	}
 	defer os.close(dir_handle)
 
-	file_infos, read_err := os.read_dir(dir_handle, -1)
+	file_infos, read_err := os.read_dir(dir_handle, -1, context.allocator)
 	if read_err != os.ERROR_NONE {
 		return {}, false
 	}
-	defer os.file_info_slice_delete(file_infos)
+	defer os.file_info_slice_delete(file_infos, context.allocator)
 
 	files_os := [dynamic]string{}
 	for info in file_infos {
-		full_path := filepath.join({dir_path, info.name})
+		full_path, _ := filepath.join({dir_path, info.name}, context.allocator)
 		defer delete(full_path)
 
-		append(&files_os, filepath.clean(full_path))
+		clean_path, _ := filepath.clean(full_path, context.allocator)
+		append(&files_os, clean_path)
 	}
 
 	return files_os[:], true
@@ -58,7 +59,6 @@ write_file :: proc(file_path: string, data: []u8) -> bool {
 	file_handle, create_err := os.open(
 		file_path_normalized,
 		os.O_CREATE | os.O_WRONLY | os.O_TRUNC,
-		0o644,
 	)
 	if create_err != os.ERROR_NONE {
 		return false
@@ -71,7 +71,7 @@ write_file :: proc(file_path: string, data: []u8) -> bool {
 
 mkdir :: proc(dir_path: string) {
 	dir_path_normalized := get_path(dir_path)
-	os.make_directory(dir_path_normalized, 0o755)
+	os.make_directory(dir_path_normalized)
 }
 
 rm :: proc(path: string) {
@@ -87,6 +87,10 @@ rename :: proc(old_path: string, new_path: string) {
 
 exists :: proc(path: string) -> bool {
 	path_normalized := get_path(path)
-	_, stat_err := os.stat(path_normalized)
-	return stat_err == os.ERROR_NONE
+	info, stat_err := os.stat(path_normalized, context.allocator)
+	if stat_err == os.ERROR_NONE {
+		os.file_info_delete(info, context.allocator)
+		return true
+	}
+	return false
 }

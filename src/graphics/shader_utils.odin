@@ -197,41 +197,42 @@ json_number_to_number :: proc(data: json.Value) -> f64 {
 
 create_shader_attributes :: proc(json_data: json.Value) -> [16]ShaderAttribute {
 	program := find_program_in_schd(json_data, "glsl430")
-	attrs := program["attrs"].(json.Array)
 	attributes := [16]ShaderAttribute{}
 	offset := 0
 	i := 0
 
-	for attr, attr_index in program["attrs"].(json.Array) {
-		attr_obj := attr.(json.Object)
-		attr_name := attr_obj["glsl_name"].(json.String)
-		attr_type := attr_obj["type"].(json.String)
-		attr_base_type := attr_obj["base_type"].(json.String)
-		attr_slot := json_number_to_number(attr_obj["slot"])
+	if attrs_val, ok := program["attrs"].(json.Array); ok {
+		for attr, attr_index in attrs_val {
+			attr_obj := attr.(json.Object)
+			attr_name := attr_obj["glsl_name"].(json.String)
+			attr_type := attr_obj["type"].(json.String)
+			attr_base_type := attr_obj["base_type"].(json.String)
+			attr_slot := json_number_to_number(attr_obj["slot"])
 
-		attr_type_enum := get_shader_attr_type(attr_type, attr_base_type)
-		attr_type_size := get_shader_attr_type_size(attr_type_enum)
+			attr_type_enum := get_shader_attr_type(attr_type, attr_base_type)
+			attr_type_size := get_shader_attr_type_size(attr_type_enum)
 
-		is_default_buffer := false
-		for default_attr in DEFAULT_BUFFER {
-			if default_attr == attr_name {
-				is_default_buffer = true
-				break
+			is_default_buffer := false
+			for default_attr in DEFAULT_BUFFER {
+				if default_attr == attr_name {
+					is_default_buffer = true
+					break
+				}
 			}
-		}
-		if is_default_buffer {
-			continue
-		}
+			if is_default_buffer {
+				continue
+			}
 
-		attributes[i] = ShaderAttribute {
-			name   = attr_name,
-			type   = attr_type_enum,
-			slot   = int(attr_slot),
-			size   = attr_type_size,
-			offset = offset,
+			attributes[i] = ShaderAttribute {
+				name   = attr_name,
+				type   = attr_type_enum,
+				slot   = int(attr_slot),
+				size   = attr_type_size,
+				offset = offset,
+			}
+			i += 1
+			offset += attr_type_size
 		}
-		i += 1
-		offset += attr_type_size
 	}
 	return attributes
 }
@@ -287,96 +288,107 @@ create_shader_desc_from_schd :: proc(
 			allocator = context.temp_allocator,
 		)
 
-		for attr, attr_index in program["attrs"].(json.Array) {
-			attr_obj := attr.(json.Object)
-			attr_type := attr_obj["type"].(json.String)
+		if attrs_val, ok := program["attrs"].(json.Array); ok {
+			for attr, attr_index in attrs_val {
+				attr_obj := attr.(json.Object)
+				attr_type := attr_obj["type"].(json.String)
 
-			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
-			desc.attrs[attr_index].glsl_name = strings.clone_to_cstring(
-				attr_obj["glsl_name"].(json.String),
-				allocator = context.temp_allocator,
-			)
+				desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+				desc.attrs[attr_index].glsl_name = strings.clone_to_cstring(
+					attr_obj["glsl_name"].(json.String),
+					allocator = context.temp_allocator,
+				)
+			}
 		}
 
-		for uniform_block, uniform_index in program["uniform_blocks"].(json.Array) {
-			uniform_block_obj := uniform_block.(json.Object)
+		if uniform_blocks_val, ok := program["uniform_blocks"].(json.Array); ok {
+			for uniform_block, uniform_index in uniform_blocks_val {
+				uniform_block_obj := uniform_block.(json.Object)
 
-			desc.uniform_blocks[uniform_index].stage = get_shader_stage(
-				uniform_block_obj["stage"].(json.String),
-			)
-			desc.uniform_blocks[uniform_index].layout = .STD140
-			desc.uniform_blocks[uniform_index].size = u32(
-				json_number_to_number(uniform_block_obj["size"]),
-			)
-
-			glsl_uniforms := uniform_block_obj["glsl_uniforms"].(json.Array)
-			for glsl_uniform, glsl_index in glsl_uniforms {
-				glsl_uniform_obj := glsl_uniform.(json.Object)
-
-				desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].type =
-					get_uniform_type(glsl_uniform_obj["type"].(json.String))
-				desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].array_count = u16(
-					json_number_to_number(glsl_uniform_obj["array_count"]),
+				desc.uniform_blocks[uniform_index].stage = get_shader_stage(
+					uniform_block_obj["stage"].(json.String),
 				)
-				struct_name := glsl_uniform_obj["glsl_name"]
-				if struct_name != nil {
-					desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].glsl_name =
-						strings.clone_to_cstring(
-							struct_name.(json.String),
-							allocator = context.temp_allocator,
+				desc.uniform_blocks[uniform_index].layout = .STD140
+				desc.uniform_blocks[uniform_index].size = u32(
+					json_number_to_number(uniform_block_obj["size"]),
+				)
+
+				if glsl_uniforms, ok2 := uniform_block_obj["glsl_uniforms"].(json.Array); ok2 {
+					for glsl_uniform, glsl_index in glsl_uniforms {
+						glsl_uniform_obj := glsl_uniform.(json.Object)
+
+						desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].type =
+							get_uniform_type(glsl_uniform_obj["type"].(json.String))
+						desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].array_count = u16(
+							json_number_to_number(glsl_uniform_obj["array_count"]),
 						)
+						struct_name := glsl_uniform_obj["glsl_name"]
+						if struct_name != nil {
+							desc.uniform_blocks[uniform_index].glsl_uniforms[glsl_index].glsl_name =
+								strings.clone_to_cstring(
+									struct_name.(json.String),
+									allocator = context.temp_allocator,
+								)
+						}
+					}
 				}
 			}
 		}
 
-		for view, view_index in program["views"].(json.Array) {
-			view_obj := view.(json.Object)
-			texture_obj := view_obj["texture"].(json.Object)
+		if views_val, ok := program["views"].(json.Array); ok {
+			for view, view_index in views_val {
+				view_obj := view.(json.Object)
+				texture_obj := view_obj["texture"].(json.Object)
 
-			desc.views[view_index].texture.stage = get_shader_stage(
-				texture_obj["stage"].(json.String),
-			)
-			desc.views[view_index].texture.image_type = get_image_type(
-				texture_obj["type"].(json.String),
-			)
-			desc.views[view_index].texture.sample_type = get_image_sample_type(
-				texture_obj["sample_type"].(json.String),
-			)
-			desc.views[view_index].texture.multisampled =
-			texture_obj["multisampled"].(json.Boolean)
+				desc.views[view_index].texture.stage = get_shader_stage(
+					texture_obj["stage"].(json.String),
+				)
+				desc.views[view_index].texture.image_type = get_image_type(
+					texture_obj["type"].(json.String),
+				)
+				desc.views[view_index].texture.sample_type = get_image_sample_type(
+					texture_obj["sample_type"].(json.String),
+				)
+				desc.views[view_index].texture.multisampled =
+				texture_obj["multisampled"].(json.Boolean)
+			}
 		}
 
-		for sampler, sampler_index in program["samplers"].(json.Array) {
-			sampler_obj := sampler.(json.Object)
+		if samplers_val, ok := program["samplers"].(json.Array); ok {
+			for sampler, sampler_index in samplers_val {
+				sampler_obj := sampler.(json.Object)
 
-			desc.samplers[sampler_index].stage = get_shader_stage(
-				sampler_obj["stage"].(json.String),
-			)
-			desc.samplers[sampler_index].sampler_type = get_sampler_type(
-				sampler_obj["sampler_type"].(json.String),
-			)
+				desc.samplers[sampler_index].stage = get_shader_stage(
+					sampler_obj["stage"].(json.String),
+				)
+				desc.samplers[sampler_index].sampler_type = get_sampler_type(
+					sampler_obj["sampler_type"].(json.String),
+				)
+			}
 		}
 
-		for pair, pair_index in program["texture_sampler_pairs"].(json.Array) {
-			pair_obj := pair.(json.Object)
+		if pairs_val, ok := program["texture_sampler_pairs"].(json.Array); ok {
+			for pair, pair_index in pairs_val {
+				pair_obj := pair.(json.Object)
 
-			desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
-				pair_obj["stage"].(json.String),
-			)
-			desc.texture_sampler_pairs[pair_index].view_slot = u8(
-				json_number_to_number(pair_obj["view_slot"]),
-			)
-			desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
-				json_number_to_number(pair_obj["sampler_slot"]),
-			)
-			desc.texture_sampler_pairs[pair_index].glsl_name = strings.clone_to_cstring(
-				fmt.tprintf(
-					"%s_%s",
-					pair_obj["view_name"].(json.String),
-					pair_obj["sampler_name"].(json.String),
-				),
-				allocator = context.temp_allocator,
-			)
+				desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
+					pair_obj["stage"].(json.String),
+				)
+				desc.texture_sampler_pairs[pair_index].view_slot = u8(
+					json_number_to_number(pair_obj["view_slot"]),
+				)
+				desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
+					json_number_to_number(pair_obj["sampler_slot"]),
+				)
+				desc.texture_sampler_pairs[pair_index].glsl_name = strings.clone_to_cstring(
+					fmt.tprintf(
+						"%s_%s",
+						pair_obj["view_name"].(json.String),
+						pair_obj["sampler_name"].(json.String),
+					),
+					allocator = context.temp_allocator,
+				)
+			}
 		}
 	case .D3D11:
 		program := find_program_in_schd(json_data, "hlsl5")
@@ -418,81 +430,91 @@ create_shader_desc_from_schd :: proc(
 			allocator = context.temp_allocator,
 		)
 
-		for attr, attr_index in program["attrs"].(json.Array) {
-			attr_obj := attr.(json.Object)
-			attr_type := attr_obj["type"].(json.String)
+		if attrs_val, ok := program["attrs"].(json.Array); ok {
+			for attr, attr_index in attrs_val {
+				attr_obj := attr.(json.Object)
+				attr_type := attr_obj["type"].(json.String)
 
-			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
-			desc.attrs[attr_index].hlsl_sem_name = strings.clone_to_cstring(
-				attr_obj["hlsl_sem_name"].(json.String),
-				allocator = context.temp_allocator,
-			)
-			desc.attrs[attr_index].hlsl_sem_index = u8(
-				json_number_to_number(attr_obj["hlsl_sem_index"]),
-			)
+				desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+				desc.attrs[attr_index].hlsl_sem_name = strings.clone_to_cstring(
+					attr_obj["hlsl_sem_name"].(json.String),
+					allocator = context.temp_allocator,
+				)
+				desc.attrs[attr_index].hlsl_sem_index = u8(
+					json_number_to_number(attr_obj["hlsl_sem_index"]),
+				)
+			}
 		}
 
-		for uniform_block, uniform_index in program["uniform_blocks"].(json.Array) {
-			uniform_block_obj := uniform_block.(json.Object)
+		if uniform_blocks_val, ok := program["uniform_blocks"].(json.Array); ok {
+			for uniform_block, uniform_index in uniform_blocks_val {
+				uniform_block_obj := uniform_block.(json.Object)
 
-			desc.uniform_blocks[uniform_index].stage = get_shader_stage(
-				uniform_block_obj["stage"].(json.String),
-			)
-			desc.uniform_blocks[uniform_index].layout = .STD140
-			desc.uniform_blocks[uniform_index].size = u32(
-				json_number_to_number(uniform_block_obj["size"]),
-			)
-			desc.uniform_blocks[uniform_index].hlsl_register_b_n = u8(
-				json_number_to_number(uniform_block_obj["hlsl_register_b_n"]),
-			)
+				desc.uniform_blocks[uniform_index].stage = get_shader_stage(
+					uniform_block_obj["stage"].(json.String),
+				)
+				desc.uniform_blocks[uniform_index].layout = .STD140
+				desc.uniform_blocks[uniform_index].size = u32(
+					json_number_to_number(uniform_block_obj["size"]),
+				)
+				desc.uniform_blocks[uniform_index].hlsl_register_b_n = u8(
+					json_number_to_number(uniform_block_obj["hlsl_register_b_n"]),
+				)
+			}
 		}
 
-		for view, view_index in program["views"].(json.Array) {
-			view_obj := view.(json.Object)
-			texture_obj := view_obj["texture"].(json.Object)
+		if views_val, ok := program["views"].(json.Array); ok {
+			for view, view_index in views_val {
+				view_obj := view.(json.Object)
+				texture_obj := view_obj["texture"].(json.Object)
 
-			desc.views[view_index].texture.stage = get_shader_stage(
-				texture_obj["stage"].(json.String),
-			)
-			desc.views[view_index].texture.image_type = get_image_type(
-				texture_obj["type"].(json.String),
-			)
-			desc.views[view_index].texture.sample_type = get_image_sample_type(
-				texture_obj["sample_type"].(json.String),
-			)
-			desc.views[view_index].texture.multisampled =
-			texture_obj["multisampled"].(json.Boolean)
-			desc.views[view_index].texture.hlsl_register_t_n = u8(
-				json_number_to_number(texture_obj["hlsl_register_t_n"]),
-			)
+				desc.views[view_index].texture.stage = get_shader_stage(
+					texture_obj["stage"].(json.String),
+				)
+				desc.views[view_index].texture.image_type = get_image_type(
+					texture_obj["type"].(json.String),
+				)
+				desc.views[view_index].texture.sample_type = get_image_sample_type(
+					texture_obj["sample_type"].(json.String),
+				)
+				desc.views[view_index].texture.multisampled =
+				texture_obj["multisampled"].(json.Boolean)
+				desc.views[view_index].texture.hlsl_register_t_n = u8(
+					json_number_to_number(texture_obj["hlsl_register_t_n"]),
+				)
+			}
 		}
 
-		for sampler, sampler_index in program["samplers"].(json.Array) {
-			sampler_obj := sampler.(json.Object)
+		if samplers_val, ok := program["samplers"].(json.Array); ok {
+			for sampler, sampler_index in samplers_val {
+				sampler_obj := sampler.(json.Object)
 
-			desc.samplers[sampler_index].stage = get_shader_stage(
-				sampler_obj["stage"].(json.String),
-			)
-			desc.samplers[sampler_index].sampler_type = get_sampler_type(
-				sampler_obj["sampler_type"].(json.String),
-			)
-			desc.samplers[sampler_index].hlsl_register_s_n = u8(
-				json_number_to_number(sampler_obj["hlsl_register_s_n"]),
-			)
+				desc.samplers[sampler_index].stage = get_shader_stage(
+					sampler_obj["stage"].(json.String),
+				)
+				desc.samplers[sampler_index].sampler_type = get_sampler_type(
+					sampler_obj["sampler_type"].(json.String),
+				)
+				desc.samplers[sampler_index].hlsl_register_s_n = u8(
+					json_number_to_number(sampler_obj["hlsl_register_s_n"]),
+				)
+			}
 		}
 
-		for pair, pair_index in program["texture_sampler_pairs"].(json.Array) {
-			pair_obj := pair.(json.Object)
+		if pairs_val, ok := program["texture_sampler_pairs"].(json.Array); ok {
+			for pair, pair_index in pairs_val {
+				pair_obj := pair.(json.Object)
 
-			desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
-				pair_obj["stage"].(json.String),
-			)
-			desc.texture_sampler_pairs[pair_index].view_slot = u8(
-				json_number_to_number(pair_obj["view_slot"]),
-			)
-			desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
-				json_number_to_number(pair_obj["sampler_slot"]),
-			)
+				desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
+					pair_obj["stage"].(json.String),
+				)
+				desc.texture_sampler_pairs[pair_index].view_slot = u8(
+					json_number_to_number(pair_obj["view_slot"]),
+				)
+				desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
+					json_number_to_number(pair_obj["sampler_slot"]),
+				)
+			}
 		}
 	case .METAL_MACOS:
 		program := find_program_in_schd(json_data, "metal_macos")
@@ -526,74 +548,84 @@ create_shader_desc_from_schd :: proc(
 			allocator = context.temp_allocator,
 		)
 
-		for attr, attr_index in program["attrs"].(json.Array) {
-			attr_obj := attr.(json.Object)
-			attr_type := attr_obj["type"].(json.String)
+		if attrs_val, ok := program["attrs"].(json.Array); ok {
+			for attr, attr_index in attrs_val {
+				attr_obj := attr.(json.Object)
+				attr_type := attr_obj["type"].(json.String)
 
-			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+				desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+			}
 		}
 
-		for uniform_block, uniform_index in program["uniform_blocks"].(json.Array) {
-			uniform_block_obj := uniform_block.(json.Object)
+		if uniform_blocks_val, ok := program["uniform_blocks"].(json.Array); ok {
+			for uniform_block, uniform_index in uniform_blocks_val {
+				uniform_block_obj := uniform_block.(json.Object)
 
-			desc.uniform_blocks[uniform_index].stage = get_shader_stage(
-				uniform_block_obj["stage"].(json.String),
-			)
-			desc.uniform_blocks[uniform_index].layout = .STD140
-			desc.uniform_blocks[uniform_index].size = u32(
-				json_number_to_number(uniform_block_obj["size"]),
-			)
-			desc.uniform_blocks[uniform_index].msl_buffer_n = u8(
-				json_number_to_number(uniform_block_obj["msl_buffer_n"]),
-			)
+				desc.uniform_blocks[uniform_index].stage = get_shader_stage(
+					uniform_block_obj["stage"].(json.String),
+				)
+				desc.uniform_blocks[uniform_index].layout = .STD140
+				desc.uniform_blocks[uniform_index].size = u32(
+					json_number_to_number(uniform_block_obj["size"]),
+				)
+				desc.uniform_blocks[uniform_index].msl_buffer_n = u8(
+					json_number_to_number(uniform_block_obj["msl_buffer_n"]),
+				)
+			}
 		}
 
-		for view, view_index in program["views"].(json.Array) {
-			view_obj := view.(json.Object)
-			texture_obj := view_obj["texture"].(json.Object)
+		if views_val, ok := program["views"].(json.Array); ok {
+			for view, view_index in views_val {
+				view_obj := view.(json.Object)
+				texture_obj := view_obj["texture"].(json.Object)
 
-			desc.views[view_index].texture.stage = get_shader_stage(
-				texture_obj["stage"].(json.String),
-			)
-			desc.views[view_index].texture.image_type = get_image_type(
-				texture_obj["type"].(json.String),
-			)
-			desc.views[view_index].texture.sample_type = get_image_sample_type(
-				texture_obj["sample_type"].(json.String),
-			)
-			desc.views[view_index].texture.multisampled =
-			texture_obj["multisampled"].(json.Boolean)
-			desc.views[view_index].texture.msl_texture_n = u8(
-				json_number_to_number(texture_obj["msl_texture_n"]),
-			)
+				desc.views[view_index].texture.stage = get_shader_stage(
+					texture_obj["stage"].(json.String),
+				)
+				desc.views[view_index].texture.image_type = get_image_type(
+					texture_obj["type"].(json.String),
+				)
+				desc.views[view_index].texture.sample_type = get_image_sample_type(
+					texture_obj["sample_type"].(json.String),
+				)
+				desc.views[view_index].texture.multisampled =
+				texture_obj["multisampled"].(json.Boolean)
+				desc.views[view_index].texture.msl_texture_n = u8(
+					json_number_to_number(texture_obj["msl_texture_n"]),
+				)
+			}
 		}
 
-		for sampler, sampler_index in program["samplers"].(json.Array) {
-			sampler_obj := sampler.(json.Object)
+		if samplers_val, ok := program["samplers"].(json.Array); ok {
+			for sampler, sampler_index in samplers_val {
+				sampler_obj := sampler.(json.Object)
 
-			desc.samplers[sampler_index].stage = get_shader_stage(
-				sampler_obj["stage"].(json.String),
-			)
-			desc.samplers[sampler_index].sampler_type = get_sampler_type(
-				sampler_obj["sampler_type"].(json.String),
-			)
-			desc.samplers[sampler_index].msl_sampler_n = u8(
-				json_number_to_number(sampler_obj["msl_sampler_n"]),
-			)
+				desc.samplers[sampler_index].stage = get_shader_stage(
+					sampler_obj["stage"].(json.String),
+				)
+				desc.samplers[sampler_index].sampler_type = get_sampler_type(
+					sampler_obj["sampler_type"].(json.String),
+				)
+				desc.samplers[sampler_index].msl_sampler_n = u8(
+					json_number_to_number(sampler_obj["msl_sampler_n"]),
+				)
+			}
 		}
 
-		for pair, pair_index in program["texture_sampler_pairs"].(json.Array) {
-			pair_obj := pair.(json.Object)
+		if pairs_val, ok := program["texture_sampler_pairs"].(json.Array); ok {
+			for pair, pair_index in pairs_val {
+				pair_obj := pair.(json.Object)
 
-			desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
-				pair_obj["stage"].(json.String),
-			)
-			desc.texture_sampler_pairs[pair_index].view_slot = u8(
-				json_number_to_number(pair_obj["view_slot"]),
-			)
-			desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
-				json_number_to_number(pair_obj["sampler_slot"]),
-			)
+				desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
+					pair_obj["stage"].(json.String),
+				)
+				desc.texture_sampler_pairs[pair_index].view_slot = u8(
+					json_number_to_number(pair_obj["view_slot"]),
+				)
+				desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
+					json_number_to_number(pair_obj["sampler_slot"]),
+				)
+			}
 		}
 	case .WGPU:
 		program := find_program_in_schd(json_data, "wgsl")
@@ -627,74 +659,84 @@ create_shader_desc_from_schd :: proc(
 			allocator = context.temp_allocator,
 		)
 
-		for attr, attr_index in program["attrs"].(json.Array) {
-			attr_obj := attr.(json.Object)
-			attr_type := attr_obj["type"].(json.String)
+		if attrs_val, ok := program["attrs"].(json.Array); ok {
+			for attr, attr_index in attrs_val {
+				attr_obj := attr.(json.Object)
+				attr_type := attr_obj["type"].(json.String)
 
-			desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+				desc.attrs[attr_index].base_type = get_shader_base_attr_type(attr_type)
+			}
 		}
 
-		for uniform_block, uniform_index in program["uniform_blocks"].(json.Array) {
-			uniform_block_obj := uniform_block.(json.Object)
+		if uniform_blocks_val, ok := program["uniform_blocks"].(json.Array); ok {
+			for uniform_block, uniform_index in uniform_blocks_val {
+				uniform_block_obj := uniform_block.(json.Object)
 
-			desc.uniform_blocks[uniform_index].stage = get_shader_stage(
-				uniform_block_obj["stage"].(json.String),
-			)
-			desc.uniform_blocks[uniform_index].layout = .STD140
-			desc.uniform_blocks[uniform_index].size = u32(
-				json_number_to_number(uniform_block_obj["size"]),
-			)
-			desc.uniform_blocks[uniform_index].wgsl_group0_binding_n = u8(
-				json_number_to_number(uniform_block_obj["wgsl_group0_binding_n"]),
-			)
+				desc.uniform_blocks[uniform_index].stage = get_shader_stage(
+					uniform_block_obj["stage"].(json.String),
+				)
+				desc.uniform_blocks[uniform_index].layout = .STD140
+				desc.uniform_blocks[uniform_index].size = u32(
+					json_number_to_number(uniform_block_obj["size"]),
+				)
+				desc.uniform_blocks[uniform_index].wgsl_group0_binding_n = u8(
+					json_number_to_number(uniform_block_obj["wgsl_group0_binding_n"]),
+				)
+			}
 		}
 
-		for view, view_index in program["views"].(json.Array) {
-			view_obj := view.(json.Object)
-			texture_obj := view_obj["texture"].(json.Object)
+		if views_val, ok := program["views"].(json.Array); ok {
+			for view, view_index in views_val {
+				view_obj := view.(json.Object)
+				texture_obj := view_obj["texture"].(json.Object)
 
-			desc.views[view_index].texture.stage = get_shader_stage(
-				texture_obj["stage"].(json.String),
-			)
-			desc.views[view_index].texture.image_type = get_image_type(
-				texture_obj["type"].(json.String),
-			)
-			desc.views[view_index].texture.sample_type = get_image_sample_type(
-				texture_obj["sample_type"].(json.String),
-			)
-			desc.views[view_index].texture.multisampled =
-			texture_obj["multisampled"].(json.Boolean)
-			desc.views[view_index].texture.wgsl_group1_binding_n = u8(
-				json_number_to_number(texture_obj["wgsl_group1_binding_n"]),
-			)
+				desc.views[view_index].texture.stage = get_shader_stage(
+					texture_obj["stage"].(json.String),
+				)
+				desc.views[view_index].texture.image_type = get_image_type(
+					texture_obj["type"].(json.String),
+				)
+				desc.views[view_index].texture.sample_type = get_image_sample_type(
+					texture_obj["sample_type"].(json.String),
+				)
+				desc.views[view_index].texture.multisampled =
+				texture_obj["multisampled"].(json.Boolean)
+				desc.views[view_index].texture.wgsl_group1_binding_n = u8(
+					json_number_to_number(texture_obj["wgsl_group1_binding_n"]),
+				)
+			}
 		}
 
-		for sampler, sampler_index in program["samplers"].(json.Array) {
-			sampler_obj := sampler.(json.Object)
+		if samplers_val, ok := program["samplers"].(json.Array); ok {
+			for sampler, sampler_index in samplers_val {
+				sampler_obj := sampler.(json.Object)
 
-			desc.samplers[sampler_index].stage = get_shader_stage(
-				sampler_obj["stage"].(json.String),
-			)
-			desc.samplers[sampler_index].sampler_type = get_sampler_type(
-				sampler_obj["sampler_type"].(json.String),
-			)
-			desc.samplers[sampler_index].wgsl_group1_binding_n = u8(
-				json_number_to_number(sampler_obj["wgsl_group1_binding_n"]),
-			)
+				desc.samplers[sampler_index].stage = get_shader_stage(
+					sampler_obj["stage"].(json.String),
+				)
+				desc.samplers[sampler_index].sampler_type = get_sampler_type(
+					sampler_obj["sampler_type"].(json.String),
+				)
+				desc.samplers[sampler_index].wgsl_group1_binding_n = u8(
+					json_number_to_number(sampler_obj["wgsl_group1_binding_n"]),
+				)
+			}
 		}
 
-		for pair, pair_index in program["texture_sampler_pairs"].(json.Array) {
-			pair_obj := pair.(json.Object)
+		if pairs_val, ok := program["texture_sampler_pairs"].(json.Array); ok {
+			for pair, pair_index in pairs_val {
+				pair_obj := pair.(json.Object)
 
-			desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
-				pair_obj["stage"].(json.String),
-			)
-			desc.texture_sampler_pairs[pair_index].view_slot = u8(
-				json_number_to_number(pair_obj["view_slot"]),
-			)
-			desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
-				json_number_to_number(pair_obj["sampler_slot"]),
-			)
+				desc.texture_sampler_pairs[pair_index].stage = get_shader_stage(
+					pair_obj["stage"].(json.String),
+				)
+				desc.texture_sampler_pairs[pair_index].view_slot = u8(
+					json_number_to_number(pair_obj["view_slot"]),
+				)
+				desc.texture_sampler_pairs[pair_index].sampler_slot = u8(
+					json_number_to_number(pair_obj["sampler_slot"]),
+				)
+			}
 		}
 	}
 	return desc, attributes

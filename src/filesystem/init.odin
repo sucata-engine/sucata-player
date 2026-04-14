@@ -2,18 +2,17 @@ package filesystem
 
 import "core:fmt"
 import "core:os"
-import "core:os/os2"
 import "core:path/filepath"
 import "core:strings"
 
 init_run_paths :: proc(file: string, default_file: string = "main.lua") {
-	file_absolute, ok_file_absolute := filepath.abs(file)
+	file_absolute, ok_file_absolute := filepath.abs(file, context.allocator)
 
 	if os.is_file(file) {
 		filesystem.file = file_absolute
 	} else {
 		defer delete(file_absolute)
-		filesystem.file = filepath.join({file_absolute, default_file})
+		filesystem.file, _ = filepath.join({file_absolute, default_file}, context.allocator)
 	}
 
 	filesystem.is_bundle = false
@@ -61,25 +60,27 @@ init_build_paths :: proc(assets_file: string) {
 
 get_config_dir :: proc(system: string) -> string {
 	if system == "windows" {
-		appdata := os.get_env("APPDATA")
+		appdata := os.get_env_alloc("APPDATA", context.allocator)
 		if appdata != "" {
 			return appdata
 		}
 	}
 
 	if system == "linux" {
-		home := os.get_env("HOME")
+		home := os.get_env_alloc("HOME", context.allocator)
 		defer delete(home)
 		if home != "" {
-			return filepath.join({home, ".local", "share"})
+			result, _ := filepath.join({home, ".local", "share"}, context.allocator)
+			return result
 		}
 	}
 
 	if system == "darwin" {
-		home := os.get_env("HOME")
+		home := os.get_env_alloc("HOME", context.allocator)
 		defer delete(home)
 		if home != "" {
-			return filepath.join({home, "Library", "Application Support"})
+			result, _ := filepath.join({home, "Library", "Application Support"}, context.allocator)
+			return result
 		}
 	}
 
@@ -93,7 +94,7 @@ get_sucata_folder :: proc() -> string {
 		return filepath.dir(arg0)
 	}
 
-	executable_path, ok := os2.get_executable_path(context.allocator)
+	executable_path, ok := os.get_executable_path(context.allocator)
 	defer delete(executable_path)
 	if ok == nil && os.exists(executable_path) {
 		return filepath.dir(executable_path)
@@ -115,7 +116,8 @@ get_sucata_path :: proc() -> string {
 	defer delete(sucata_folder)
 	defer delete(sucata_executable)
 
-	return filepath.join({sucata_folder, sucata_executable})
+	result, _ := filepath.join({sucata_folder, sucata_executable}, context.allocator)
+	return result
 }
 
 get_sucata_player_path :: proc() -> string {
@@ -124,5 +126,6 @@ get_sucata_player_path :: proc() -> string {
 	defer delete(sucata_folder)
 	defer delete(sucata_executable)
 
-	return filepath.join({sucata_folder, sucata_executable})
+	result, _ := filepath.join({sucata_folder, sucata_executable}, context.allocator)
+	return result
 }

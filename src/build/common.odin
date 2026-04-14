@@ -9,7 +9,7 @@ BUILD_HEADER :: "SUCATA_BUILD_"
 
 
 get_assets_hash :: proc(assets_path: string) -> string {
-	file_data, read_ok := os.read_entire_file(assets_path)
+	file_data, _ := os.read_entire_file_from_path(assets_path, context.allocator)
 	defer delete(file_data)
 
 	hash_bytes: [32]byte
