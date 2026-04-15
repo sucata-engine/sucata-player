@@ -129,8 +129,8 @@ unload_assets :: proc() {
 	}
 }
 
-get_asset :: proc(file_path: string) -> (data: []byte, ok: bool) {
-	if !filesystem.is_bundle {
+get_asset :: proc(file_path: string, from_system: bool = false) -> (data: []byte, ok: bool) {
+	if !filesystem.is_bundle || from_system {
 		if cached, hit := file_cache[file_path]; hit {
 			return cached, true
 		}

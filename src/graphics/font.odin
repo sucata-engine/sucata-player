@@ -55,8 +55,10 @@ loaded_fonts := map[string]^Font{}
 
 load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	font_path := file_path
+	from_system := false
 	if font_path == "" {
 		font_path = get_default_system_font()
+		from_system = true
 	}
 	font_name := fmt.aprintf("%s_%f", font_path, font_size, allocator = context.allocator)
 
@@ -68,7 +70,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	ttf_data: []byte
 	read_ok: bool
 
-	if asset_data, ok := filesystem.get_asset(font_path); ok && len(asset_data) > 0 {
+	if asset_data, ok := filesystem.get_asset(font_path, from_system); ok && len(asset_data) > 0 {
 		ttf_data = make([]byte, len(asset_data))
 		copy(ttf_data, asset_data)
 		read_ok = true
