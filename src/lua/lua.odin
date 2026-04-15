@@ -91,9 +91,14 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 	for pattern in asset_patterns {
 		if asset_data, ok := filesystem.get_asset(pattern); ok && len(asset_data) > 0 {
 			chunk_name := strings.clone_to_cstring(pattern)
+			defer delete_cstring(chunk_name)
 
-			result := lua.L_loadbuffer(L, raw_data(asset_data), len(asset_data), chunk_name)
-			delete_cstring(chunk_name)
+			result := lua.L_loadbuffer(
+				L,
+				raw_data(asset_data),
+				c.size_t(len(asset_data)),
+				chunk_name,
+			)
 
 			if result == .OK {
 				return 1
@@ -166,25 +171,16 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	create_namespaces(L)
 	load_path()
 
-	code: cstring
-	ok: bool
-
-	if asset_data, found := filesystem.get_asset(path); found && len(asset_data) > 0 {
-		code = strings.clone_to_cstring(string(asset_data))
-		ok = true
-	}
-
-	if !ok {
+	asset_data, found := filesystem.get_asset(path)
+	if !found || len(asset_data) == 0 {
+		common.print_error("Failed to find Lua asset: %s", path)
 		return
 	}
-	defer delete(code)
 
-	code_str := strings.clone_from_cstring(code)
-	defer delete(code_str)
 	chunk_name := strings.clone_to_cstring(path)
 	defer delete_cstring(chunk_name)
 
-	if lua.L_loadbuffer(L, raw_data(code_str), len(code_str), chunk_name) != .OK {
+	if lua.L_loadbuffer(L, raw_data(asset_data), c.size_t(len(asset_data)), chunk_name) != .OK {
 		err := lua.tostring(L, -1)
 		common.print_error("Failed to load Lua buffer: %s", err)
 		lua.pop(L, 1)
