@@ -159,7 +159,27 @@ frame_callback :: proc "c" () {
 		load_action = .CLEAR,
 		clear_value = clear_color,
 	}
-	sg.begin_pass({swapchain = sglue.swapchain(), action = pass_action})
+	sg.begin_pass(
+		{
+			action = pass_action,
+			attachments = {
+				colors = {0 = graphics.offscreen.color_att_view},
+				depth_stencil = graphics.offscreen.depth_att_view,
+			},
+		},
+	)
+
+	is_draw_step = true
+	run_draw()
+	is_draw_step = false
+	sg.end_pass()
+
+	swapchain_action := sg.Pass_Action{}
+	swapchain_action.colors[0] = {
+		load_action = .CLEAR,
+		clear_value = clear_color,
+	}
+	sg.begin_pass({swapchain = sglue.swapchain(), action = swapchain_action})
 
 	if windowConfig.keep_aspect > 0 {
 		screen_width := sapp.width()
@@ -175,10 +195,7 @@ frame_callback :: proc "c" () {
 		sg.apply_viewport(x, y, w, h, true)
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
-
-	is_draw_step = true
-	run_draw()
-	is_draw_step = false
+	graphics.draw_offscreen()
 	sg.end_pass()
 
 	sg.commit()
@@ -209,4 +226,5 @@ handle_window_resize :: proc(width, height: i32) {
 	} else {
 		graphics.set_game_dimensions(width, height)
 	}
+	graphics.init_offscreen(graphics.game_width, graphics.game_height)
 }

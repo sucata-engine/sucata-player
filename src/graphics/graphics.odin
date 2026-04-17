@@ -29,11 +29,15 @@ calc_indices :: proc() {
 init_graphics :: proc() {
 	load_default_image()
 	calc_indices()
+	init_offscreen(game_width, game_height)
+	init_postfx()
 }
 
 shutdown_graphics :: proc() {
 	shutdown_quad_buffers()
 	shutdown_text_buffers()
+	shutdown_offscreen()
+	shutdown_postfx()
 	unload_fonts()
 	destroy_images()
 	delete(indices)
