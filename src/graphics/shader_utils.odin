@@ -123,8 +123,8 @@ get_vertex_data :: proc(shader_calc: ShaderCalcProps) -> [dynamic]f32 {
 	return vertex_data
 }
 
-get_views_data :: proc(image: Image) -> [32]sg.View {
-	return {0 = image.view}
+get_views_data :: proc(image: sg.View) -> [32]sg.View {
+	return {0 = image}
 }
 
 get_samplers_data :: proc(tiled: bool) -> [12]sg.Sampler {

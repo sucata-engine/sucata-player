@@ -129,7 +129,7 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	bindings := sg.Bindings {
 		vertex_buffers = {0 = vertex_buffer},
 		index_buffer = quad_ib,
-		views = get_views_data(image),
+		views = get_views_data(image.view),
 		samplers = get_samplers_data(props.tiled),
 	}
 	sg.apply_bindings(bindings)

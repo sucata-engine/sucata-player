@@ -21,7 +21,6 @@ offscreen: Offscreen
 postfx_targets: [2]Offscreen
 postfx_vb: sg.Buffer
 postfx_ib: sg.Buffer
-postfx_sampler: sg.Sampler
 postfx_inited: bool
 
 postfx_passthrough_pipeline: sg.Pipeline
@@ -98,15 +97,6 @@ init_postfx :: proc(width, height: i32) {
 		},
 	)
 
-	postfx_sampler = sg.make_sampler(
-		{
-			min_filter = .LINEAR,
-			mag_filter = .LINEAR,
-			wrap_u = .CLAMP_TO_EDGE,
-			wrap_v = .CLAMP_TO_EDGE,
-		},
-	)
-
 	effects = make([dynamic]Postfx_Effect)
 	postfx_inited = true
 }
@@ -120,7 +110,6 @@ shutdown_postfx :: proc() {
 		delete(effects)
 		sg.destroy_buffer(postfx_vb)
 		sg.destroy_buffer(postfx_ib)
-		sg.destroy_sampler(postfx_sampler)
 		shutdown_offscreen(&postfx_targets[0])
 		shutdown_offscreen(&postfx_targets[1])
 		postfx_inited = false
@@ -151,8 +140,8 @@ draw_postfx :: proc(offscreen: ^Offscreen) {
 				{
 					vertex_buffers = {0 = postfx_vb},
 					index_buffer = postfx_ib,
-					views = {0 = current_src.color_tex_view},
-					samplers = {0 = postfx_sampler},
+					views = get_views_data(current_src.color_tex_view),
+					samplers = get_samplers_data(false),
 				},
 			)
 			sg.draw(0, 6, 1)
@@ -176,8 +165,8 @@ draw_postfx :: proc(offscreen: ^Offscreen) {
 				{
 					vertex_buffers = {0 = postfx_vb},
 					index_buffer = postfx_ib,
-					views = {0 = current_src.color_tex_view},
-					samplers = {0 = postfx_sampler},
+					views = get_views_data(current_src.color_tex_view),
+					samplers = get_samplers_data(false),
 				},
 			)
 			sg.draw(0, 6, 1)
@@ -195,8 +184,8 @@ draw_fullscreen_quad :: proc(tex_view: sg.View) {
 		{
 			vertex_buffers = {0 = postfx_vb},
 			index_buffer = postfx_ib,
-			views = {0 = tex_view},
-			samplers = {0 = postfx_sampler},
+			views = get_views_data(tex_view),
+			samplers = get_samplers_data(false),
 		},
 	)
 	sg.draw(0, 6, 1)
