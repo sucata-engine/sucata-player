@@ -8,33 +8,33 @@ layout(binding=0) uniform vs_params {
 };
 
 in vec2 position;
-in vec4 col;
+in vec4 color;
 in vec2 uv;
 
-out vec4 color;
+out vec4 texcolor;
 out vec2 texcoord;
 
 void main() {
     gl_Position = mvp * vec4(position, 0.0, 1.0);
-    color = col;
+    texcolor = color;
     texcoord = uv;
 }
 @end
 
 /* text fragment shader */
 @fs fs
-layout(binding=0) uniform texture2D tex;
-layout(binding=0) uniform sampler smp;
+layout(binding=0) uniform texture2D source_texture;
+layout(binding=0) uniform sampler source_sampler;
 
-in vec4 color;
+in vec4 texcolor;
 in vec2 texcoord;
 
 out vec4 frag_color;
 
 void main() {
-    vec4 tex_color = texture(sampler2D(tex,smp), texcoord);
-    float alpha = tex_color.r * color.a;
-    frag_color = vec4(color.rgb, alpha);
+    vec4 tex_color = texture(sampler2D(source_texture,source_sampler), texcoord);
+    float alpha = tex_color.r * texcolor.a;
+    frag_color = vec4(texcolor.rgb, alpha);
 }
 @end
 

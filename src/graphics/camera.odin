@@ -49,3 +49,10 @@ get_view_projection_matrix :: proc(game_width, game_height: i32) -> matrix[4, 4]
 
 	return linalg.matrix_mul(projection, view)
 }
+
+get_mvp :: proc(fixed: bool) -> matrix[4, 4]f32 {
+	if fixed {
+		return get_fixed_mvp()
+	}
+	return get_view_projection_matrix(game_width, game_height)
+}

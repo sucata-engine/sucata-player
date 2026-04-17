@@ -107,7 +107,6 @@ init_callback :: proc "c" () {
 	}
 
 	flush_init_queue()
-	process_post_commands()
 }
 
 cleanup_callback :: proc "c" () {
@@ -195,7 +194,7 @@ frame_callback :: proc "c" () {
 		sg.apply_viewport(x, y, w, h, true)
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
-	graphics.draw_offscreen()
+	graphics.draw_postfx(&graphics.offscreen)
 	sg.end_pass()
 
 	sg.commit()
@@ -226,5 +225,4 @@ handle_window_resize :: proc(width, height: i32) {
 	} else {
 		graphics.set_game_dimensions(width, height)
 	}
-	graphics.init_offscreen(graphics.game_width, graphics.game_height)
 }

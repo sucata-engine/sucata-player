@@ -3,6 +3,8 @@ package graphics
 import "../common"
 import "../filesystem"
 import "core:c"
+import "core:fmt"
+import "core:hash"
 import "core:os"
 import sg "shared:sokol/gfx"
 
@@ -12,9 +14,16 @@ CustomShader :: struct {
 	pipeline:        sg.Pipeline,
 	attributes:      [16]ShaderAttribute,
 	attributes_size: int,
+	views:           [32]ShaderView,
+	samplers:        [12]ShaderSampler,
 }
 
-custom_shaders := map[string]CustomShader{}
+next_shader_id: u64 = 1
+custom_shaders := map[u64]CustomShader{}
+
+shader_name_to_64 :: #force_inline proc(shader_name: string) -> u64 {
+	return hash.fnv64a(transmute([]u8)shader_name)
+}
 
 get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
 	if asset_data, ok := filesystem.get_asset(shader_path); ok && len(asset_data) > 0 {
@@ -24,26 +33,16 @@ get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
 	return {}, false, false
 }
 
-DEFAULT_BUFFER :: [3]string{"position", "col", "uv"}
-
 get_shader_attributes_to_sokol_format :: proc(
 	attributes: [16]ShaderAttribute,
 ) -> [16]sg.Vertex_Attr_State {
-	formats := [16]sg.Vertex_Attr_State {
-		0 = {format = .FLOAT2, buffer_index = 0, offset = 0},
-		1 = {format = .FLOAT4, buffer_index = 0, offset = 8},
-		2 = {format = .FLOAT2, buffer_index = 0, offset = 24},
-	}
-	i := 3
-	for attr in attributes {
+	formats: [16]sg.Vertex_Attr_State
+	for attr, i in attributes {
+		if attr.size == 0 do break
 		formats[i] = sg.Vertex_Attr_State {
 			format       = attr.type,
-			buffer_index = 1,
+			buffer_index = 0,
 			offset       = c.int(attr.offset),
-		}
-		i += 1
-		if i >= 16 {
-			break
 		}
 	}
 	return formats
@@ -89,17 +88,20 @@ get_custom_shader_vertex_data :: proc(shader: CustomShader, props: common.Shader
 	return data
 }
 
-create_shader_from_schd :: proc(schd_data: []byte) -> (sg.Shader, [16]ShaderAttribute) {
+create_shader_from_schd :: proc(
+	schd_data: []byte,
+) -> (
+	sg.Shader,
+	[16]ShaderAttribute,
+	[32]ShaderView,
+	[12]ShaderSampler,
+) {
 	backend := sg.query_backend()
-	desc, attributes := create_shader_desc_from_schd(backend, schd_data)
-	return sg.make_shader(desc), attributes
+	desc, attributes, views, samplers := create_shader_desc_from_schd(backend, schd_data)
+	return sg.make_shader(desc), attributes, views, samplers
 }
 
-init_shader :: proc(name: string, schd_path: string) -> bool {
-	if vlr, ok := custom_shaders[name]; ok {
-		return true
-	}
-
+init_shader :: proc(schd_path: string) -> (u64, bool) {
 	schd_data, ok, is_asset := get_shader_from_path(schd_path)
 	defer {
 		if !is_asset {
@@ -111,16 +113,16 @@ init_shader :: proc(name: string, schd_path: string) -> bool {
 			"Failed to read shader definition file: %s, unable to create the shader",
 			schd_path,
 		)
-		return false
+		return 0, false
 	}
 
-	shader, attributes := create_shader_from_schd(schd_data)
+	shader, attributes, views, samplers := create_shader_from_schd(schd_data)
 
 	pipeline := sg.make_pipeline(
 		{
 			shader = shader,
 			layout = {
-				buffers = {0 = {stride = c.int(size_of(Vertex_Data))}},
+				buffers = {0 = {stride = c.int(get_shader_vertex_size(attributes) * 4)}},
 				attrs = get_shader_attributes_to_sokol_format(attributes),
 			},
 			index_type = .UINT16,
@@ -145,19 +147,34 @@ init_shader :: proc(name: string, schd_path: string) -> bool {
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
 
-	custom_shaders[name] = CustomShader {
+	shader_id := next_shader_id
+	custom_shaders[shader_id] = CustomShader {
 		shader          = shader,
 		pipeline        = pipeline,
 		ib              = ib,
 		attributes      = attributes,
 		attributes_size = get_shader_vertex_size(attributes),
+		views           = views,
+		samplers        = samplers,
 	}
+	next_shader_id += 1
 
-	return true
+	return shader_id, true
 }
 
 destroy_shaders :: proc() {
 	for key, shader in custom_shaders {
+		for attr in shader.attributes {
+			if len(attr.name) > 0 {
+				delete(attr.name)
+			}
+		}
+		for view in shader.views {
+			delete(view.name)
+		}
+		for sampler in shader.samplers {
+			delete(sampler.name)
+		}
 		sg.destroy_pipeline(shader.pipeline)
 		sg.destroy_shader(shader.shader)
 		sg.destroy_buffer(shader.ib)

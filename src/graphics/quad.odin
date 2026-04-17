@@ -3,7 +3,7 @@ package graphics
 import "../common"
 import shader_quad "../shaders/quad"
 import "core:c"
-import "core:fmt"
+import "core:strings"
 import sg "shared:sokol/gfx"
 
 quad_ib: sg.Buffer
@@ -29,7 +29,7 @@ init_quad_indices :: proc() {
 						buffer_index = 0,
 						offset = 0,
 					},
-					shader_quad.ATTR_quad_col = {format = .FLOAT4, buffer_index = 0, offset = 8},
+					shader_quad.ATTR_quad_color = {format = .FLOAT4, buffer_index = 0, offset = 8},
 					shader_quad.ATTR_quad_uv = {format = .FLOAT2, buffer_index = 0, offset = 24},
 				},
 			},
@@ -63,12 +63,7 @@ init_quad_indices :: proc() {
 	)
 
 	quad_sampler_repeat = sg.make_sampler(
-		{
-			min_filter = .NEAREST,
-			mag_filter = .NEAREST,
-			wrap_u = .REPEAT,
-			wrap_v = .REPEAT,
-		},
+		{min_filter = .NEAREST, mag_filter = .NEAREST, wrap_u = .REPEAT, wrap_v = .REPEAT},
 	)
 
 	quad_buffers_inited = true
@@ -90,7 +85,7 @@ quad_group :: proc(props: common.GroupObjectProps) {
 
 	z_index := props.z_index
 	texture := props.texture
-	shader_name := props.shader
+	shader_id := props.shader
 	fixed := props.fixed
 	quads := props.quads
 
@@ -98,75 +93,30 @@ quad_group :: proc(props: common.GroupObjectProps) {
 		return
 	}
 
-	custom_shader, has_custom_shader := custom_shaders[shader_name]
+	custom_shader, has_custom_shader := custom_shaders[shader_id]
 	image := load_image(texture)
 
-	mvp: matrix[4, 4]f32
-	if props.fixed {
-		mvp = get_fixed_mvp()
-	} else {
-		mvp = get_view_projection_matrix(game_width, game_height)
-	}
-
-	vertex_buffers := [8]sg.Buffer{}
-	batch_vertices := [dynamic]Vertex_Data{}
-	vert_shader_args := [dynamic]f32{}
+	mvp := get_mvp(props.fixed)
+	batch_vertices := [dynamic]f32{}
 
 	for quad in quads {
-		position := quad.position
-		size := quad.size
-		color := quad.color
-		scale := quad.scale
-		origin := quad.origin
-		rotation := quad.rotation
-		atlas := quad.atlas
-		shader_args := quad.shader_args
-		opacity := quad.opacity.(f32) or_else color[3]
-
-		points := to_world_space_2d(position, size, scale, origin, rotation)
-		quad_color := Vec4{color[0], color[1], color[2], opacity}
-
-		uv_pos: [4][2]f32
-		if props.tiled {
-			uv_pos = calculate_atlas_uv_tiled(atlas, f32(image.width), f32(image.height), size)
-		} else {
-			uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
-		}
-
-		for i in 0 ..< 4 {
-			append(
-				&batch_vertices,
-				Vertex_Data{position = points[i], col = quad_color, uv = uv_pos[i]},
-			)
-		}
-
-		if has_custom_shader {
-			shader_params := get_custom_shader_vertex_data(custom_shader, shader_args)
-			for shader_param in shader_params {
-				append(&vert_shader_args, shader_param)
-			}
-		}
+		quad_vertex := get_quad_vertex_data(
+			quad,
+			image,
+			props.tiled,
+			has_custom_shader,
+			custom_shader,
+		)
+		append(&batch_vertices, ..quad_vertex[:])
 	}
 	if len(batch_vertices) == 0 {
 		return
 	}
 
-	vertex_buffers[0] = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, immutable = true},
-			size = uint(len(batch_vertices) * size_of(Vertex_Data)),
-			data = sg_range(batch_vertices[:]),
-		},
+	vertex_buffer := sg.make_buffer(
+		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(batch_vertices[:])},
 	)
-	if len(vert_shader_args) != 0 {
-		vertex_buffers[1] = sg.make_buffer(
-			{
-				usage = {vertex_buffer = true, immutable = true},
-				size = uint(size_of(f32) * len(vert_shader_args)),
-				data = sg_range(vert_shader_args[:]),
-			},
-		)
-	}
+	state := sg.query_buffer_state(vertex_buffer)
 
 	if has_custom_shader {
 		sg.apply_pipeline(custom_shader.pipeline)
@@ -176,134 +126,18 @@ quad_group :: proc(props: common.GroupObjectProps) {
 
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
-	active_sampler := quad_sampler_repeat if props.tiled else quad_sampler
-	quad_image := image.view
 	bindings := sg.Bindings {
-		vertex_buffers = vertex_buffers,
+		vertex_buffers = {0 = vertex_buffer},
 		index_buffer = quad_ib,
-		views = {shader_quad.VIEW_tex = quad_image},
-		samplers = {shader_quad.SMP_smp = active_sampler},
+		views = get_views_data(image),
+		samplers = get_samplers_data(props.tiled),
 	}
 	sg.apply_bindings(bindings)
 
-	quad_count := len(batch_vertices) / 4
+	quad_count := len(quads)
 	index_count := quad_count * 6
 	sg.draw(0, index_count, 1)
 
-	sg.destroy_buffer(vertex_buffers[0])
-	if len(vert_shader_args) > 0 {
-		sg.destroy_buffer(vertex_buffers[1])
-	}
+	sg.destroy_buffer(vertex_buffer)
 	delete(batch_vertices)
-	delete(vert_shader_args)
-}
-
-quad :: proc(props: common.QuadObjectProps) {
-	init_quad_indices()
-
-	position := props.position
-	size := props.size
-	color := props.color
-	z_index := props.zIndex
-	texture := props.texture
-	scale := props.scale
-	origin := props.origin
-	rotation := props.rotation
-	atlas := props.atlas
-	fixed := props.fixed
-	shader_name := props.shader
-	shader_args := props.shader_args
-
-	image := load_image(texture)
-
-	points := to_world_space_2d(position, size, scale, origin, rotation)
-
-	opacity := props.opacity.(f32) or_else color[3]
-	quad_color := Vec4{color[0], color[1], color[2], opacity}
-
-	uv_pos: [4][2]f32
-	if props.tiled {
-		uv_pos = calculate_atlas_uv_tiled(atlas, f32(image.width), f32(image.height), size)
-	} else {
-		uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
-	}
-
-	vertices: [4]Vertex_Data
-	vertices[0] = Vertex_Data {
-		position = points[0],
-		col      = quad_color,
-		uv       = uv_pos[0],
-	}
-	vertices[1] = Vertex_Data {
-		position = points[1],
-		col      = quad_color,
-		uv       = uv_pos[1],
-	}
-	vertices[2] = Vertex_Data {
-		position = points[2],
-		col      = quad_color,
-		uv       = uv_pos[2],
-	}
-	vertices[3] = Vertex_Data {
-		position = points[3],
-		col      = quad_color,
-		uv       = uv_pos[3],
-	}
-
-	mvp: matrix[4, 4]f32
-	if props.fixed {
-		mvp = get_fixed_mvp()
-	} else {
-		mvp = get_view_projection_matrix(game_width, game_height)
-	}
-
-	vertex_buffers := [8]sg.Buffer{}
-	has_vertex_buffer2 := false
-	vertex_buffers[0] = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, immutable = true},
-			size = uint(4 * size_of(Vertex_Data)),
-			data = sg_range(vertices[:]),
-		},
-	)
-	if shader_name != "" {
-		if shader, ok := custom_shaders[shader_name]; ok {
-			sg.apply_pipeline(shader.pipeline)
-
-			shader_params := get_custom_shader_vertex_data(shader, shader_args)
-
-			if len(shader_params) != 0 {
-				vertex_buffers[1] = sg.make_buffer(
-					{
-						usage = {vertex_buffer = true, immutable = true},
-						size = uint(4 * len(shader_params)),
-						data = sg_range(shader_params[:]),
-					},
-				)
-				has_vertex_buffer2 = true
-			}
-		} else {
-			sg.apply_pipeline(quad_pipeline)
-		}
-	} else {
-		sg.apply_pipeline(quad_pipeline)
-	}
-	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
-
-	active_sampler := quad_sampler_repeat if props.tiled else quad_sampler
-	quad_image := image.view
-	bindings := sg.Bindings {
-		vertex_buffers = vertex_buffers,
-		index_buffer = quad_ib,
-		views = {shader_quad.VIEW_tex = quad_image},
-		samplers = {shader_quad.SMP_smp = active_sampler},
-	}
-
-	sg.apply_bindings(bindings)
-	sg.draw(0, 6, 1)
-
-	sg.destroy_buffer(vertex_buffers[0])
-	if has_vertex_buffer2 {
-		sg.destroy_buffer(vertex_buffers[1])
-	}
 }

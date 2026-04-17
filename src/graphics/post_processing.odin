@@ -2,6 +2,7 @@ package graphics
 
 import shader "../shaders/post_processing"
 import "core:c"
+import "core:fmt"
 import sg "shared:sokol/gfx"
 
 Postfx_Vertex :: struct {
@@ -9,23 +10,29 @@ Postfx_Vertex :: struct {
 	uv:       Vec2,
 }
 
-postfx_pipeline: sg.Pipeline
-postfx_shader: sg.Shader
+Postfx_Effect :: struct {
+	id:      u64,
+	enabled: bool,
+}
+effects := [dynamic]Postfx_Effect{}
+
+offscreen: Offscreen
+
+postfx_targets: [2]Offscreen
 postfx_vb: sg.Buffer
+postfx_ib: sg.Buffer
 postfx_sampler: sg.Sampler
 postfx_inited: bool
 
+postfx_passthrough_pipeline: sg.Pipeline
+postfx_passthrough_shader: sg.Shader
+postfx_passthrough_inited: bool
 
-init_postfx :: proc() {
-	if postfx_inited {
-		return
-	}
-
-	postfx_shader = shader.load_post_processing_shader()
-
-	postfx_pipeline = sg.make_pipeline(
+init_passthrough :: proc() {
+	postfx_passthrough_shader = shader.load_post_processing_shader()
+	postfx_passthrough_pipeline = sg.make_pipeline(
 		{
-			shader = postfx_shader,
+			shader = postfx_passthrough_shader,
 			layout = {
 				buffers = {0 = {stride = c.int(size_of(Postfx_Vertex))}},
 				attrs = {
@@ -42,9 +49,35 @@ init_postfx :: proc() {
 				},
 			},
 			index_type = .UINT16,
-			label = "postfx-pipeline",
+			color_count = 1,
+			label = "postfx-passthrough-pipeline",
 		},
 	)
+	postfx_passthrough_inited = true
+}
+
+resize_postfx :: proc(width, height: i32) {
+	if !postfx_inited {
+		return
+	}
+	shutdown_offscreen(&postfx_targets[0])
+	shutdown_offscreen(&postfx_targets[1])
+	shutdown_offscreen(&offscreen)
+	postfx_targets[0] = create_offscreen(width, height)
+	postfx_targets[1] = create_offscreen(width, height)
+	offscreen = create_offscreen(width, height)
+}
+
+init_postfx :: proc(width, height: i32) {
+	if !postfx_passthrough_inited {
+		init_passthrough()
+	}
+	if postfx_inited {
+		return
+	}
+	postfx_targets[0] = create_offscreen(width, height)
+	postfx_targets[1] = create_offscreen(width, height)
+	offscreen = create_offscreen(width, height)
 
 	vertices := [4]Postfx_Vertex {
 		{position = {-1.0, 1.0}, uv = {0.0, 0.0}},
@@ -53,10 +86,15 @@ init_postfx :: proc() {
 		{position = {-1.0, -1.0}, uv = {0.0, 1.0}},
 	}
 	postfx_vb = sg.make_buffer(
+		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertices[:])},
+	)
+
+	indices := []u16{0, 1, 2, 0, 2, 3}
+	postfx_ib = sg.make_buffer(
 		{
-			usage = {vertex_buffer = true, immutable = true},
-			data = sg_range(vertices[:]),
-			label = "postfx-vb",
+			usage = {index_buffer = true, immutable = true},
+			data = sg_range(indices),
+			label = "postfx-ib",
 		},
 	)
 
@@ -66,40 +104,104 @@ init_postfx :: proc() {
 			mag_filter = .LINEAR,
 			wrap_u = .CLAMP_TO_EDGE,
 			wrap_v = .CLAMP_TO_EDGE,
-			label = "postfx-sampler",
 		},
 	)
 
+	effects = make([dynamic]Postfx_Effect)
 	postfx_inited = true
 }
 
 shutdown_postfx :: proc() {
+	if postfx_passthrough_inited {
+		sg.destroy_pipeline(postfx_passthrough_pipeline)
+		sg.destroy_shader(postfx_passthrough_shader)
+	}
 	if postfx_inited {
-		sg.destroy_pipeline(postfx_pipeline)
-		sg.destroy_shader(postfx_shader)
+		delete(effects)
 		sg.destroy_buffer(postfx_vb)
+		sg.destroy_buffer(postfx_ib)
 		sg.destroy_sampler(postfx_sampler)
+		shutdown_offscreen(&postfx_targets[0])
+		shutdown_offscreen(&postfx_targets[1])
 		postfx_inited = false
 	}
 }
 
-draw_offscreen :: proc() {
-	init_postfx()
+draw_postfx :: proc(offscreen: ^Offscreen) {
+	if !postfx_inited || len(effects) == 0 {
+		draw_fullscreen_quad(offscreen.color_tex_view)
+		return
+	}
 
-	indices := []u16{0, 1, 2, 0, 2, 3}
-	ib := sg.make_buffer(
-		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
-	)
-	defer sg.destroy_buffer(ib)
+	current_src := offscreen
+	ping: int = 0
+	pong: int = 1
 
-	sg.apply_pipeline(postfx_pipeline)
+	for effect, i in effects {
+		if !effect.enabled do continue
+
+		shader, ok := custom_shaders[effect.id]
+		if !ok do continue
+
+		is_last := i == len(effects) - 1
+
+		if is_last {
+			sg.apply_pipeline(shader.pipeline)
+			sg.apply_bindings(
+				{
+					vertex_buffers = {0 = postfx_vb},
+					index_buffer = postfx_ib,
+					views = {0 = current_src.color_tex_view},
+					samplers = {0 = postfx_sampler},
+				},
+			)
+			sg.draw(0, 6, 1)
+		} else {
+			pass_action := sg.Pass_Action{}
+			pass_action.colors[0] = {
+				load_action = .DONTCARE,
+			}
+
+			sg.begin_pass(
+				{
+					action = pass_action,
+					attachments = {
+						colors = {0 = postfx_targets[pong].color_att_view},
+						depth_stencil = postfx_targets[pong].depth_att_view,
+					},
+				},
+			)
+			sg.apply_pipeline(shader.pipeline)
+			sg.apply_bindings(
+				{
+					vertex_buffers = {0 = postfx_vb},
+					index_buffer = postfx_ib,
+					views = {0 = current_src.color_tex_view},
+					samplers = {0 = postfx_sampler},
+				},
+			)
+			sg.draw(0, 6, 1)
+			sg.end_pass()
+
+			current_src = &postfx_targets[pong]
+			ping, pong = pong, ping
+		}
+	}
+}
+
+draw_fullscreen_quad :: proc(tex_view: sg.View) {
+	sg.apply_pipeline(postfx_passthrough_pipeline)
 	sg.apply_bindings(
 		{
 			vertex_buffers = {0 = postfx_vb},
-			index_buffer = ib,
-			views = {shader.VIEW_screen_tex = offscreen.color_tex_view},
-			samplers = {shader.SMP_screen_smp = postfx_sampler},
+			index_buffer = postfx_ib,
+			views = {0 = tex_view},
+			samplers = {0 = postfx_sampler},
 		},
 	)
 	sg.draw(0, 6, 1)
+}
+
+add_post_processing :: proc(shader_id: u64) {
+	append(&effects, Postfx_Effect{enabled = true, id = shader_id})
 }

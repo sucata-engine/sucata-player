@@ -29,7 +29,7 @@ init_text_indices :: proc() {
 						buffer_index = 0,
 						offset = 0,
 					},
-					shader_text.ATTR_text_col = {format = .FLOAT4, buffer_index = 0, offset = 8},
+					shader_text.ATTR_text_color = {format = .FLOAT4, buffer_index = 0, offset = 8},
 					shader_text.ATTR_text_uv = {format = .FLOAT2, buffer_index = 0, offset = 24},
 				},
 			},
@@ -237,7 +237,7 @@ text :: proc(props: common.TextObjectProps) {
 	fixed := props.fixed
 	align := props.align
 	max_width := props.maxWidth
-	shader_name := props.shader
+	shader_id := props.shader
 	shader_args := props.shader_args
 	text := strings.clone(props.text)
 	defer delete(text)
@@ -257,30 +257,15 @@ text :: proc(props: common.TextObjectProps) {
 
 	text_batch_vertices := [dynamic]Vertex_Data{}
 	vertex_buffers := [8]sg.Buffer{}
-	has_vertex_buffer2 := false
 
-	if shader_name == "" {
-		if shader, ok := custom_shaders[shader_name]; ok {
-			sg.apply_pipeline(shader.pipeline)
+	if shader, ok := custom_shaders[shader_id]; ok {
+		sg.apply_pipeline(shader.pipeline)
 
-			shader_params_base := get_custom_shader_vertex_data(shader, shader_args)
-			shader_params := repeat_slice(shader_params_base, len(shader_params_base) * len(text))
-			defer delete(shader_params)
-			defer delete(shader_params_base)
+		shader_params_base := get_custom_shader_vertex_data(shader, shader_args)
+		shader_params := repeat_slice(shader_params_base, len(shader_params_base) * len(text))
+		defer delete(shader_params)
+		defer delete(shader_params_base)
 
-			if len(shader_params) != 0 {
-				vertex_buffers[1] = sg.make_buffer(
-					{
-						usage = {vertex_buffer = true, immutable = true},
-						size = uint(size_of(shader_params)),
-						data = sg_range(shader_params[:]),
-					},
-				)
-				has_vertex_buffer2 = true
-			}
-		} else {
-			sg.apply_pipeline(text_pipeline)
-		}
 	} else {
 		sg.apply_pipeline(text_pipeline)
 	}
@@ -357,7 +342,6 @@ text :: proc(props: common.TextObjectProps) {
 	vertex_buffers[0] = sg.make_buffer(
 		{
 			usage = {vertex_buffer = true, immutable = true},
-			size = uint(len(text_batch_vertices) * size_of(Vertex_Data)),
 			data = sg_range(text_batch_vertices[:]),
 		},
 	)
@@ -366,8 +350,8 @@ text :: proc(props: common.TextObjectProps) {
 	bindings := sg.Bindings {
 		vertex_buffers = vertex_buffers,
 		index_buffer = text_ib,
-		views = {shader_text.VIEW_tex = font.image},
-		samplers = {shader_text.SMP_smp = text_sampler},
+		views = {shader_text.VIEW_source_texture = font.image},
+		samplers = {shader_text.SMP_source_sampler = text_sampler},
 	}
 	sg.apply_bindings(bindings)
 
@@ -376,8 +360,5 @@ text :: proc(props: common.TextObjectProps) {
 	sg.draw(0, index_count, 1)
 
 	sg.destroy_buffer(vertex_buffers[0])
-	if has_vertex_buffer2 {
-		sg.destroy_buffer(vertex_buffers[1])
-	}
 	delete(text_batch_vertices)
 }
