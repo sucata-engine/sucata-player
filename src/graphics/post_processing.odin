@@ -170,7 +170,11 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 			{
 				vertex_buffers = {0 = vertex_buffer},
 				index_buffer = postfx_ib,
-				views = get_views_data(current_src.color_tex_view),
+				views = get_views_data_with_custom_shader(
+					current_src.color_tex_view,
+					shader,
+					effect.args,
+				),
 				samplers = get_samplers_data(false),
 			},
 		)

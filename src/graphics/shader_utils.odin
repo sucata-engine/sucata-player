@@ -251,6 +251,31 @@ get_views_data :: proc(image: sg.View) -> [32]sg.View {
 	return {0 = image}
 }
 
+get_views_data_with_custom_shader :: proc(
+	image: sg.View,
+	custom_shader: CustomShader,
+	custom_args: common.ShaderArgs,
+) -> [32]sg.View {
+	views := [32]sg.View{}
+
+	for view, i in custom_shader.views {
+		if strings.equal_fold(view.name, "screen_texture") {
+			views[i] = image
+		} else {
+			if value, ok := custom_args[view.name]; ok {
+				#partial switch v in value {
+				case string:
+					image := load_image(v)
+					views[i] = image.view
+					break
+				}
+			}
+		}
+	}
+
+	return views
+}
+
 get_samplers_data :: proc(tiled: bool) -> [12]sg.Sampler {
 	if tiled {
 		return {0 = quad_sampler_repeat}
