@@ -210,3 +210,25 @@ draw_fullscreen_quad :: proc(tex_view: sg.View) {
 add_post_processing :: proc(shader_id: u64) {
 	append(&effects, Postfx_Effect{enabled = true, id = shader_id})
 }
+
+remove_post_processing :: proc(shader_id: u64) {
+	for &effect, i in effects {
+		if effect.id == shader_id {
+			ordered_remove(&effects, i)
+			break
+		}
+	}
+}
+
+set_post_processing_args :: proc(
+	shader_id: u64,
+	field: string,
+	value: common.ShaderArgumentValue,
+) {
+	for &effect in effects {
+		if effect.id == shader_id {
+			effect.args[field] = value
+			return
+		}
+	}
+}
