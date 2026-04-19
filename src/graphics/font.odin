@@ -87,8 +87,8 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		return nil
 	}
 
-	bitmap_width: i32 = 1024
-	bitmap_height: i32 = 1024
+	bitmap_width: i32 = 2048
+	bitmap_height: i32 = 2048
 	bitmap := make([^]byte, bitmap_width * bitmap_height)
 
 	first_char: i32 = 32

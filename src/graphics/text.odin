@@ -55,8 +55,8 @@ init_text_indices :: proc() {
 
 	text_sampler = sg.make_sampler(
 		{
-			min_filter = .NEAREST,
-			mag_filter = .NEAREST,
+			min_filter = .LINEAR,
+			mag_filter = .LINEAR,
 			wrap_u = .CLAMP_TO_EDGE,
 			wrap_v = .CLAMP_TO_EDGE,
 		},
@@ -75,144 +75,6 @@ shutdown_text_buffers :: proc() {
 	}
 }
 
-calculate_text_width :: proc(text: string, font: ^Font, scale: [2]f32) -> f32 {
-	width: f32 = 0
-	i := 0
-	if font == nil {
-		return 0
-	}
-
-	for i < len(text) {
-		r, size := utf8.decode_rune(text[i:])
-		i += size
-
-		if r < 32 || r > 255 {
-			continue
-		}
-
-		char_index := int(r) - 32
-		if char_index < 0 || char_index >= len(font.char_data) {
-			continue
-		}
-		baked_char := font.char_data[char_index]
-		width += f32(baked_char.xadvance) * scale[0]
-	}
-	return width
-}
-
-calculate_alignment_offset :: proc(
-	line_width: f32,
-	max_width: f32,
-	align: common.TextAlign,
-) -> f32 {
-
-	if max_width <= 0 {
-		switch align {
-		case .Left:
-			return 0
-		case .Center:
-			return -line_width / 2
-		case .Right:
-			return -line_width
-		}
-		return 0
-	}
-
-	switch align {
-	case .Left:
-		return 0
-	case .Center:
-		return (max_width * 0.5) - (line_width * 0.5)
-	case .Right:
-		return max_width - line_width
-	}
-
-	return 0
-}
-
-wrap_text :: proc(text: string, font: ^Font, scale: [2]f32, max_width: f32) -> [dynamic]string {
-	lines := make([dynamic]string)
-
-	if max_width <= 0 {
-		append(&lines, text)
-		return lines
-	}
-
-	current_line: string
-	current_width: f32 = 0
-	word_start := 0
-	i := 0
-
-	for i < len(text) {
-		r, size := utf8.decode_rune(text[i:])
-		current_byte := i
-		i += size
-
-		if r == '\n' {
-			if i > word_start {
-				line_text := text[word_start:i]
-				append(&lines, line_text)
-			} else if len(current_line) > 0 {
-				append(&lines, current_line)
-			}
-			current_line = ""
-			current_width = 0
-			word_start = i + 1
-			continue
-		}
-
-		if r < 32 || r > 255 {
-			continue
-		}
-
-		char_index := int(r) - 32
-		if char_index < 0 || char_index >= len(font.char_data) {
-			continue
-		}
-		baked_char := font.char_data[char_index]
-		char_width := f32(baked_char.xadvance) * scale[0]
-
-		if current_width + char_width > max_width && current_width > 0 {
-			last_space := -1
-			for j := i - 1; j >= word_start; j -= 1 {
-				if text[j] == ' ' {
-					last_space = j
-					break
-				}
-			}
-
-			if last_space >= word_start {
-				append(&lines, text[word_start:last_space])
-				word_start = last_space + 1
-				current_width = 0
-
-				for k in word_start ..< i + 1 {
-					c := text[k]
-					if c >= 32 && c < 128 {
-						c_idx := int(c) - 32
-						if c_idx >= 0 && c_idx < len(font.char_data) {
-							bc := font.char_data[c_idx]
-							current_width += f32(bc.xadvance) * scale[0]
-						}
-					}
-				}
-			} else {
-				append(&lines, text[word_start:i])
-				word_start = i
-				current_width = char_width
-			}
-		} else {
-			current_width += char_width
-		}
-	}
-
-	if word_start < len(text) {
-		append(&lines, text[word_start:len(text)])
-	}
-
-	return lines
-}
-
 repeat_slice :: proc(base: []f32, total: int) -> []f32 {
 	result := make([]f32, total)
 	for i in 0 ..< total {
@@ -223,22 +85,11 @@ repeat_slice :: proc(base: []f32, total: int) -> []f32 {
 
 text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
-
+	shader_id := props.shader
 	font_path := strings.clone(props.font)
 	defer delete(font_path)
 	font_size := props.size
 	font := load_font(font_path, font_size)
-	position := props.position
-	color := props.color
-	z_index := props.zIndex
-	scale := props.scale
-	origin := props.origin
-	rotation := props.rotation
-	fixed := props.fixed
-	align := props.align
-	max_width := props.maxWidth
-	shader_id := props.shader
-	shader_args := props.shader_args
 	text := strings.clone(props.text)
 	defer delete(text)
 
@@ -246,119 +97,38 @@ text :: proc(props: common.TextObjectProps) {
 		return
 	}
 
-	position[1] += font_size / 2
+	mvp := get_mvp(props.fixed)
 
-	mvp: matrix[4, 4]f32
-	if props.fixed {
-		mvp = get_fixed_mvp()
-	} else {
-		mvp = get_view_projection_matrix(game_width, game_height)
-	}
-
-	text_batch_vertices := [dynamic]Vertex_Data{}
-	vertex_buffers := [8]sg.Buffer{}
-
-	if shader, ok := custom_shaders[shader_id]; ok {
-		sg.apply_pipeline(shader.pipeline)
-
-		shader_params_base := get_custom_shader_vertex_data(shader, shader_args)
-		shader_params := repeat_slice(shader_params_base, len(shader_params_base) * len(text))
-		defer delete(shader_params)
-		defer delete(shader_params_base)
-
+	custom_shader, has_custom_shader := custom_shaders[shader_id]
+	if has_custom_shader {
+		sg.apply_pipeline(custom_shader.pipeline)
 	} else {
 		sg.apply_pipeline(text_pipeline)
 	}
 
-	lines := wrap_text(text, font, scale, max_width)
-	defer delete(lines)
+	vertex_data := get_text_vertex_data(props, text, font, has_custom_shader, custom_shader)
 
-	line_height := font_size * scale[1]
-	current_y := position[1]
-
-	opacity := props.opacity.(f32) or_else color[3]
-	text_color := Vec4{color[0], color[1], color[2], opacity}
-
-	for line in lines {
-		if len(line) == 0 {
-			current_y += line_height
-			continue
-		}
-
-		line_width := calculate_text_width(line, font, scale)
-		alignment_offset := calculate_alignment_offset(line_width, max_width, align)
-
-		cursor_pos := [2]f32{position[0] + alignment_offset, current_y}
-
-		i := 0
-		for i < len(line) {
-			r, size := utf8.decode_rune(line[i:])
-			i += size
-
-			if r < 32 || r > 255 {
-				continue
-			}
-
-			char_index := int(r) - 32
-			if char_index < 0 || char_index >= len(font.char_data) {
-				continue
-			}
-
-			baked_char := font.char_data[char_index]
-
-			char_width := f32(baked_char.x1 - baked_char.x0)
-			char_height := f32(baked_char.y1 - baked_char.y0)
-			char_size := [2]f32{char_width, char_height}
-
-			char_pos := [2]f32 {
-				cursor_pos[0] + f32(baked_char.xoff),
-				cursor_pos[1] + f32(baked_char.yoff),
-			}
-
-			points := to_world_space_2d(char_pos, char_size, scale, origin, rotation)
-
-			uv_pos := to_uv_space_2d(
-				f32(baked_char.x0),
-				f32(baked_char.y0),
-				f32(baked_char.x1),
-				f32(baked_char.y1),
-				f32(font.bitmap_width),
-				f32(font.bitmap_height),
-			)
-
-			for j in 0 ..< 4 {
-				append(&text_batch_vertices, Vertex_Data{points[j], text_color, uv_pos[j]})
-			}
-
-			cursor_pos[0] += f32(baked_char.xadvance) * scale[0]
-		}
-		current_y += line_height
-	}
-
-	if len(text_batch_vertices) == 0 {
+	if len(vertex_data) == 0 {
 		return
 	}
 
-	vertex_buffers[0] = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, immutable = true},
-			data = sg_range(text_batch_vertices[:]),
-		},
+	vertex_buffers := sg.make_buffer(
+		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_data[:])},
 	)
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
 	bindings := sg.Bindings {
 		vertex_buffers = vertex_buffers,
 		index_buffer = text_ib,
-		views = {shader_text.VIEW_source_texture = font.image},
-		samplers = {shader_text.SMP_source_sampler = text_sampler},
+		views = get_views_data(font.image),
+		samplers = {0 = text_sampler},
 	}
 	sg.apply_bindings(bindings)
 
-	quad_count := len(text_batch_vertices) / 4
+	quad_count := len(text)
 	index_count := quad_count * 6
 	sg.draw(0, index_count, 1)
 
-	sg.destroy_buffer(vertex_buffers[0])
-	delete(text_batch_vertices)
+	sg.destroy_buffer(vertex_buffers)
+	delete(vertex_data)
 }

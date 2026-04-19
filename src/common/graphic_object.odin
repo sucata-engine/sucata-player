@@ -60,7 +60,7 @@ TextObjectProps :: struct {
 	rotation:    f32,
 	opacity:     Maybe(f32),
 	align:       TextAlign,
-	maxWidth:    f32,
+	max_width:   f32,
 	shader_args: ShaderArgs,
 }
 

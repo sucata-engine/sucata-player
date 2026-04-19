@@ -73,7 +73,7 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 			text        = text,
 			fixed       = fixed,
 			align       = text_align,
-			maxWidth    = max_width,
+			max_width   = max_width,
 			shader_args = shader_args,
 		}
 
