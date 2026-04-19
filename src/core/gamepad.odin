@@ -181,13 +181,6 @@ shutdown_gamepad :: proc() {
 	sdl3.QuitSubSystem({.GAMEPAD})
 }
 
-gamepad_is_connected :: proc(slot: int) -> bool {
-	if slot < 0 || slot >= MAX_GAMEPADS {
-		return false
-	}
-	return gamepads[slot].connected
-}
-
 gamepad_get_name :: proc(slot: int) -> string {
 	if slot < 0 || slot >= MAX_GAMEPADS || !gamepads[slot].connected {
 		return ""

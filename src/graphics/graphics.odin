@@ -38,5 +38,6 @@ shutdown_graphics :: proc() {
 	shutdown_postfx()
 	unload_fonts()
 	destroy_images()
+	destroy_shaders()
 	delete(indices)
 }

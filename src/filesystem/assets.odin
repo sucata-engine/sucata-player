@@ -166,14 +166,6 @@ unload_file_cache :: proc() {
 	file_cache = {}
 }
 
-list_assets :: proc() -> []string {
-	paths := make([]string, len(assets.entries))
-	for entry, i in assets.entries {
-		paths[i] = entry.path
-	}
-	return paths
-}
-
 find_assets_with_prefix :: proc(prefix: string) -> []string {
 	matching := make([dynamic]string)
 	for entry in assets.entries {

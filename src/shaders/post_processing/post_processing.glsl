@@ -14,14 +14,14 @@ void main() {
 @end
 
 @fs fs
-layout(binding=0) uniform texture2D screen_tex;
-layout(binding=0) uniform sampler   screen_smp;
+layout(binding=0) uniform texture2D screen_texture;
+layout(binding=0) uniform sampler   screen_sampler;
 
 in  vec2 texcoord;
 out vec4 frag_color;
 
 void main() {
-    frag_color = texture(sampler2D(screen_tex, screen_smp), texcoord);
+    frag_color = texture(sampler2D(screen_texture, screen_sampler), texcoord);
 }
 @end
 

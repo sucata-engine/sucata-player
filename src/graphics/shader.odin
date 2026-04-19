@@ -56,38 +56,6 @@ get_shader_vertex_size :: proc(attributes: [16]ShaderAttribute) -> int {
 	return size / 4
 }
 
-get_custom_shader_vertex_data :: proc(shader: CustomShader, props: common.ShaderArgs) -> []f32 {
-	vertex_size := shader.attributes_size
-
-	data := make([]f32, vertex_size)
-	parameters := shader.attributes
-	i := 0
-
-	for param in parameters {
-		if value, ok := props[param.name]; ok {
-			#partial switch v in value {
-			case f32:
-				data[i] = value.(f32)
-			case [2]f32:
-				data[i] = value.([2]f32)[0]
-				data[i + 1] = value.([2]f32)[1]
-			case [3]f32:
-				data[i] = value.([3]f32)[0]
-				data[i + 1] = value.([3]f32)[1]
-				data[i + 2] = value.([3]f32)[2]
-			case [4]f32:
-				data[i] = value.([4]f32)[0]
-				data[i + 1] = value.([4]f32)[1]
-				data[i + 2] = value.([4]f32)[2]
-				data[i + 3] = value.([4]f32)[3]
-			}
-		}
-		i += param.size / 4
-	}
-
-	return data
-}
-
 create_shader_from_schd :: proc(
 	schd_data: []byte,
 ) -> (

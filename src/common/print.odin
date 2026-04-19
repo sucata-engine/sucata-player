@@ -14,10 +14,6 @@ print_info :: proc(msg: string, args: ..any) {
 	fmt.printfln("\x1b[34m[INFO] %s\x1b[0m", fmt.tprintf(msg, ..args))
 }
 
-print_success :: proc(msg: string, args: ..any) {
-	fmt.printfln("\x1b[32m%s\x1b[0m", fmt.tprintf(msg, ..args))
-}
-
 print :: proc(msg: string, args: ..any) {
 	fmt.printfln(msg, ..args)
 }

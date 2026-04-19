@@ -37,12 +37,6 @@ create_timer :: proc(
 	return id
 }
 
-start_timer :: proc(id: u64) {
-	if timer := timers[id]; timer != nil {
-		timer.running = true
-	}
-}
-
 pause_timer :: proc(id: u64) {
 	if timer := timers[id]; timer != nil {
 		timer.running = false

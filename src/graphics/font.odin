@@ -152,14 +152,3 @@ unload_fonts :: proc() {
 	delete(loaded_fonts)
 	loaded_fonts = {}
 }
-
-unload_font :: proc(font_name: string) {
-	if font, exists := loaded_fonts[font_name]; exists {
-		sg.destroy_image(sg.query_view_image(font.image))
-		sg.destroy_view(font.image)
-		free(font.bitmap)
-		delete(font.char_data)
-		free(font)
-		delete_key(&loaded_fonts, font_name)
-	}
-}

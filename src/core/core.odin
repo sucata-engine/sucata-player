@@ -247,12 +247,6 @@ run_free :: proc() {
 	destroyQueue = {}
 }
 
-cleanup_scene :: proc() {
-	if scene != nil && len(scene) > 0 {
-		run_free()
-	}
-}
-
 get_scene_count :: proc() -> int {
 	if scene == nil {
 		return 0

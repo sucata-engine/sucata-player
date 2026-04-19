@@ -222,7 +222,9 @@ event_callback :: proc "c" (event: ^sapp.Event) {
 handle_window_resize :: proc(width, height: i32) {
 	if windowConfig.keep_aspect > 0 {
 		graphics.set_game_dimensions(windowConfig.width, windowConfig.height)
+		graphics.resize_postfx(windowConfig.width, windowConfig.height)
 	} else {
 		graphics.set_game_dimensions(width, height)
+		graphics.resize_postfx(width, height)
 	}
 }

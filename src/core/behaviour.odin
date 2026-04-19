@@ -21,9 +21,3 @@ call_behaviour :: proc(id: i64, method: string, state: i32) {
 
 	call_lua_method_with_self_ref(LUA_GLOBAL_STATE, table_ref, method, state)
 }
-
-destroy_behaviours :: proc() {
-	for behaviour, ref in behaviours {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, ref)
-	}
-}

@@ -23,20 +23,6 @@ add_handler :: proc(owner: u64, event: string, function_ref: i32) {
 	append(&event_handlers[event_key], handler)
 }
 
-remove_handler :: proc(owner: u64, event: string, function_ref: i32) {
-	event_key := event_name_to_u64(event)
-	if handlers, exists := event_handlers[event_key]; exists {
-		for i: int = 0; i < len(handlers); i += 1 {
-			handler := handlers[i]
-			if handler.owner == owner && handler.function == function_ref {
-				lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, handler.function)
-				ordered_remove(&event_handlers[event_key], i)
-				break
-			}
-		}
-	}
-}
-
 remove_handler_owner :: proc(owner: u64) {
 	for event in event_handlers {
 		handlers := &event_handlers[event]

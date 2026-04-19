@@ -196,6 +196,10 @@ get_text_vertex_data :: proc(
 	return vertex_data
 }
 
+get_post_processing_vertex_data :: proc(custom_shader: CustomShader) {
+
+}
+
 get_views_data :: proc(image: sg.View) -> [32]sg.View {
 	return {0 = image}
 }

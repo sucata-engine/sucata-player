@@ -75,14 +75,6 @@ shutdown_text_buffers :: proc() {
 	}
 }
 
-repeat_slice :: proc(base: []f32, total: int) -> []f32 {
-	result := make([]f32, total)
-	for i in 0 ..< total {
-		result[i] = base[i % len(base)]
-	}
-	return result
-}
-
 text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
 	shader_id := props.shader

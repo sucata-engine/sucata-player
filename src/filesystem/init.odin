@@ -109,23 +109,3 @@ get_executable :: proc(name: string) -> string {
 	}
 	return strings.clone(name)
 }
-
-get_sucata_path :: proc() -> string {
-	sucata_folder := get_sucata_folder()
-	sucata_executable := get_executable("sucata")
-	defer delete(sucata_folder)
-	defer delete(sucata_executable)
-
-	result, _ := filepath.join({sucata_folder, sucata_executable}, context.allocator)
-	return result
-}
-
-get_sucata_player_path :: proc() -> string {
-	sucata_folder := get_sucata_folder()
-	sucata_executable := get_executable("sucata-player")
-	defer delete(sucata_folder)
-	defer delete(sucata_executable)
-
-	result, _ := filepath.join({sucata_folder, sucata_executable}, context.allocator)
-	return result
-}

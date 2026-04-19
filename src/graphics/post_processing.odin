@@ -1,5 +1,6 @@
 package graphics
 
+import "../common"
 import shader "../shaders/post_processing"
 import "core:c"
 import "core:fmt"
@@ -13,6 +14,7 @@ Postfx_Vertex :: struct {
 Postfx_Effect :: struct {
 	id:      u64,
 	enabled: bool,
+	args:    common.ShaderArgs,
 }
 effects := [dynamic]Postfx_Effect{}
 
@@ -90,11 +92,7 @@ init_postfx :: proc(width, height: i32) {
 
 	indices := []u16{0, 1, 2, 0, 2, 3}
 	postfx_ib = sg.make_buffer(
-		{
-			usage = {index_buffer = true, immutable = true},
-			data = sg_range(indices),
-			label = "postfx-ib",
-		},
+		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
 
 	effects = make([dynamic]Postfx_Effect)

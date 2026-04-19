@@ -158,56 +158,6 @@ lua_table_to_map :: proc(
 	return result
 }
 
-get_table_array :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> []c.int {
-	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
-
-	if !lua.istable(L, -1) {
-		lua.pop(L, 1)
-		return nil
-	}
-
-	length := lua.objlen(L, -1)
-	if length == 0 {
-		lua.pop(L, 1)
-		return nil
-	}
-
-	table_indices := make([dynamic]c.int, 0, length)
-	defer delete(table_indices)
-
-	for i: lua.Integer = 1; i <= lua.Integer(length); i += 1 {
-		lua.rawgeti(L, -1, i)
-
-		if lua.istable(L, -1) {
-			table_ref := c.int(lua.L_ref(L, lua.REGISTRYINDEX))
-			append(&table_indices, table_ref)
-		} else {
-			lua.pop(L, 1)
-		}
-	}
-
-	lua.pop(L, 1)
-
-	return table_indices[:]
-}
-
-create_lua_table_with_extras :: proc(
-	L: ^lua.State,
-	table_index: c.int,
-	extra_fields: LuaTable,
-	ignored_fields: []string = nil,
-) -> i32 {
-	base_map := lua_table_to_map(L, table_index, ignored_fields)
-	defer delete_lua_table(base_map)
-
-	for key, value in extra_fields {
-		base_map[key] = value
-	}
-
-	return create_lua_table(L, base_map)
-}
-
 entity_IGNORED_FIELDS :: []string{"init", "draw", "update", "free"}
 
 create_lua_table :: proc(L: ^lua.State, data: LuaTable) -> i32 {

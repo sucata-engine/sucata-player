@@ -47,17 +47,6 @@ lua_namespaces :: []lua_common.LuaNamespace {
 	window.WINDOW_NAMESPACE,
 }
 
-load_file_as_cstring :: proc(path: string) -> (cstring, bool) {
-	data, ok := os.read_entire_file_from_path(path, context.allocator)
-	if ok != nil {
-		return "", false
-	}
-	temp := string(data)
-	s := strings.clone_to_cstring(temp)
-	delete(data)
-	return s, true
-}
-
 custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 	context = core.DEFAULT_CONTEXT
 
