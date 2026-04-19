@@ -173,6 +173,8 @@ frame_callback :: proc "c" () {
 	is_draw_step = false
 	sg.end_pass()
 
+	graphics.preprocess_postfx(&graphics.offscreen)
+
 	swapchain_action := sg.Pass_Action{}
 	swapchain_action.colors[0] = {
 		load_action = .CLEAR,
@@ -194,7 +196,7 @@ frame_callback :: proc "c" () {
 		sg.apply_viewport(x, y, w, h, true)
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
-	graphics.draw_postfx(&graphics.offscreen)
+	graphics.draw_postfx()
 	sg.end_pass()
 
 	sg.commit()

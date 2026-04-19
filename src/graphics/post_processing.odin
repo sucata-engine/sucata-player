@@ -3,7 +3,6 @@ package graphics
 import "../common"
 import shader "../shaders/post_processing"
 import "core:c"
-import "core:fmt"
 import sg "shared:sokol/gfx"
 
 Postfx_Vertex :: struct {
@@ -28,6 +27,8 @@ postfx_inited: bool
 postfx_passthrough_pipeline: sg.Pipeline
 postfx_passthrough_shader: sg.Shader
 postfx_passthrough_inited: bool
+
+postfx_final_src: sg.View
 
 init_passthrough :: proc() {
 	postfx_passthrough_shader = shader.load_post_processing_shader()
@@ -114,66 +115,79 @@ shutdown_postfx :: proc() {
 	}
 }
 
-draw_postfx :: proc(offscreen: ^Offscreen) {
+preprocess_postfx :: proc(src: ^Offscreen) {
 	if !postfx_inited || len(effects) == 0 {
-		draw_fullscreen_quad(offscreen.color_tex_view)
+		postfx_final_src = src.color_tex_view
 		return
 	}
 
-	current_src := offscreen
+	enabled_count := 0
+	for effect in effects {
+		if !effect.enabled do continue
+		if _, ok := custom_shaders[effect.id]; ok {
+			enabled_count += 1
+		}
+	}
+
+	if enabled_count == 0 {
+		postfx_final_src = src.color_tex_view
+		return
+	}
+
+	current_src := src
 	ping: int = 0
 	pong: int = 1
 
-	for effect, i in effects {
+	for effect in effects {
 		if !effect.enabled do continue
 
 		shader, ok := custom_shaders[effect.id]
 		if !ok do continue
 
-		is_last := i == len(effects) - 1
+		vertex_data := get_post_processing_vertex_data(shader, effect.args)
+		defer delete(vertex_data)
 
-		if is_last {
-			sg.apply_pipeline(shader.pipeline)
-			sg.apply_bindings(
-				{
-					vertex_buffers = {0 = postfx_vb},
-					index_buffer = postfx_ib,
-					views = get_views_data(current_src.color_tex_view),
-					samplers = get_samplers_data(false),
-				},
-			)
-			sg.draw(0, 6, 1)
-		} else {
-			pass_action := sg.Pass_Action{}
-			pass_action.colors[0] = {
-				load_action = .DONTCARE,
-			}
+		vertex_buffer := sg.make_buffer(
+			{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_data[:])},
+		)
 
-			sg.begin_pass(
-				{
-					action = pass_action,
-					attachments = {
-						colors = {0 = postfx_targets[pong].color_att_view},
-						depth_stencil = postfx_targets[pong].depth_att_view,
-					},
-				},
-			)
-			sg.apply_pipeline(shader.pipeline)
-			sg.apply_bindings(
-				{
-					vertex_buffers = {0 = postfx_vb},
-					index_buffer = postfx_ib,
-					views = get_views_data(current_src.color_tex_view),
-					samplers = get_samplers_data(false),
-				},
-			)
-			sg.draw(0, 6, 1)
-			sg.end_pass()
-
-			current_src = &postfx_targets[pong]
-			ping, pong = pong, ping
+		pass_action := sg.Pass_Action{}
+		pass_action.colors[0] = {
+			load_action = .DONTCARE,
 		}
+
+		sg.begin_pass(
+			{
+				action = pass_action,
+				attachments = {
+					colors = {0 = postfx_targets[pong].color_att_view},
+					depth_stencil = postfx_targets[pong].depth_att_view,
+				},
+			},
+		)
+		sg.apply_pipeline(shader.pipeline)
+		sg.apply_bindings(
+			{
+				vertex_buffers = {0 = vertex_buffer},
+				index_buffer = postfx_ib,
+				views = get_views_data(current_src.color_tex_view),
+				samplers = get_samplers_data(false),
+			},
+		)
+		sg.draw(0, 6, 1)
+		sg.end_pass()
+
+		sg.destroy_buffer(vertex_buffer)
+
+		current_src = &postfx_targets[pong]
+		ping, pong = pong, ping
 	}
+
+	postfx_final_src = current_src.color_tex_view
+}
+
+draw_postfx :: proc() {
+	draw_fullscreen_quad(postfx_final_src)
 }
 
 draw_fullscreen_quad :: proc(tex_view: sg.View) {

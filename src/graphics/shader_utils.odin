@@ -39,7 +39,7 @@ get_quad_vertex_data :: proc(
 			for attr in shader_params {
 				if strings.equal_fold(attr.name, "position") {
 					append(&vertex_data, ..points[i][:])
-				} else if strings.equal_fold(attr.name, "col") {
+				} else if strings.equal_fold(attr.name, "color") {
 					append(&vertex_data, ..quad_color[:])
 				} else if strings.equal_fold(attr.name, "uv") {
 					append(&vertex_data, ..uv_pos[i][:])
@@ -156,7 +156,7 @@ get_text_vertex_data :: proc(
 					for attr in shader_params {
 						if strings.equal_fold(attr.name, "position") {
 							append(&vertex_data, ..points[j][:])
-						} else if strings.equal_fold(attr.name, "col") {
+						} else if strings.equal_fold(attr.name, "color") {
 							append(&vertex_data, ..text_color[:])
 						} else if strings.equal_fold(attr.name, "uv") {
 							append(&vertex_data, ..uv_pos[j][:])
@@ -196,8 +196,55 @@ get_text_vertex_data :: proc(
 	return vertex_data
 }
 
-get_post_processing_vertex_data :: proc(custom_shader: CustomShader) {
+post_processing_position := [4][2]f32 {
+	[2]f32{-1.0, 1.0},
+	[2]f32{1.0, 1.0},
+	[2]f32{1.0, -1.0},
+	[2]f32{-1.0, -1.0},
+}
 
+post_processing_uv := [4][2]f32 {
+	[2]f32{0.0, 0.0},
+	[2]f32{1.0, 0.0},
+	[2]f32{1.0, 1.0},
+	[2]f32{0.0, 1.0},
+}
+
+get_post_processing_vertex_data :: proc(
+	custom_shader: CustomShader,
+	shader_args: common.ShaderArgs,
+) -> [dynamic]f32 {
+	vertex_data: [dynamic]f32
+	for i in 0 ..< 4 {
+		for attr in custom_shader.attributes {
+			if strings.equal_fold(attr.name, "position") {
+				append(&vertex_data, ..post_processing_position[i][:])
+			} else if strings.equal_fold(attr.name, "uv") {
+				append(&vertex_data, ..post_processing_uv[i][:])
+			} else {
+				if value, ok := shader_args[attr.name]; ok {
+					#partial switch v in value {
+					case f32:
+						append(&vertex_data, v)
+						break
+					case [2]f32:
+						v2 := v
+						append(&vertex_data, ..v2[:])
+						break
+					case [3]f32:
+						v3 := v
+						append(&vertex_data, ..v3[:])
+						break
+					case [4]f32:
+						v4 := v
+						append(&vertex_data, ..v4[:])
+						break
+					}
+				}
+			}
+		}
+	}
+	return vertex_data
 }
 
 get_views_data :: proc(image: sg.View) -> [32]sg.View {
