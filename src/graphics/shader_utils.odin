@@ -6,12 +6,13 @@ import "core:unicode/utf8"
 import sg "shared:sokol/gfx"
 
 get_quad_vertex_data :: proc(
+	dst: ^[dynamic]f32,
 	object: common.ObjectProp,
 	image: Image,
 	tiled: bool,
 	has_custom_shader: bool,
 	custom_shader: CustomShader,
-) -> [dynamic]f32 {
+) {
 	position := object.position
 	size := object.size
 	color := object.color
@@ -32,60 +33,54 @@ get_quad_vertex_data :: proc(
 		uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
 	}
 	if has_custom_shader {
-		vertex_data := [dynamic]f32{}
 		shader_params := custom_shader.attributes
-
 		for i in 0 ..< 4 {
 			for attr in shader_params {
-				if strings.equal_fold(attr.name, "position") {
-					append(&vertex_data, ..points[i][:])
-				} else if strings.equal_fold(attr.name, "color") {
-					append(&vertex_data, ..quad_color[:])
-				} else if strings.equal_fold(attr.name, "uv") {
-					append(&vertex_data, ..uv_pos[i][:])
-				} else {
+				if attr.size == 0 do break
+				switch attr.kind {
+				case .Position:
+					append(dst, ..points[i][:])
+				case .Color:
+					append(dst, ..quad_color[:])
+				case .UV:
+					append(dst, ..uv_pos[i][:])
+				case .Custom:
 					if value, ok := shader_args[attr.name]; ok {
 						#partial switch v in value {
 						case f32:
-							append(&vertex_data, v)
-							break
+							append(dst, v)
 						case [2]f32:
 							v2 := v
-							append(&vertex_data, ..v2[:])
-							break
+							append(dst, ..v2[:])
 						case [3]f32:
 							v3 := v
-							append(&vertex_data, ..v3[:])
-							break
+							append(dst, ..v3[:])
 						case [4]f32:
 							v4 := v
-							append(&vertex_data, ..v4[:])
-							break
+							append(dst, ..v4[:])
 						}
 					}
 				}
 			}
 		}
-		return vertex_data
+		return
 	}
 
-	vertex_data := [dynamic]f32{}
 	for i in 0 ..< 4 {
-		append(&vertex_data, ..points[i][:])
-		append(&vertex_data, ..quad_color[:])
-		append(&vertex_data, ..uv_pos[i][:])
+		append(dst, ..points[i][:])
+		append(dst, ..quad_color[:])
+		append(dst, ..uv_pos[i][:])
 	}
-	return vertex_data
 }
 
 get_text_vertex_data :: proc(
+	dst: ^[dynamic]f32,
 	props: common.TextObjectProps,
 	text: string,
 	font: ^Font,
 	has_custom_shader: bool,
 	custom_shader: CustomShader,
-) -> [dynamic]f32 {
-	vertex_data := [dynamic]f32{}
+) {
 	lines := wrap_text(text, font, props.scale, props.max_width)
 	defer delete(lines)
 
@@ -154,38 +149,36 @@ get_text_vertex_data :: proc(
 				if has_custom_shader {
 					shader_params := custom_shader.attributes
 					for attr in shader_params {
-						if strings.equal_fold(attr.name, "position") {
-							append(&vertex_data, ..points[j][:])
-						} else if strings.equal_fold(attr.name, "color") {
-							append(&vertex_data, ..text_color[:])
-						} else if strings.equal_fold(attr.name, "uv") {
-							append(&vertex_data, ..uv_pos[j][:])
-						} else {
+						if attr.size == 0 do break
+						switch attr.kind {
+						case .Position:
+							append(dst, ..points[j][:])
+						case .Color:
+							append(dst, ..text_color[:])
+						case .UV:
+							append(dst, ..uv_pos[j][:])
+						case .Custom:
 							if value, ok := props.shader_args[attr.name]; ok {
 								#partial switch v in value {
 								case f32:
-									append(&vertex_data, v)
-									break
+									append(dst, v)
 								case [2]f32:
 									v2 := v
-									append(&vertex_data, ..v2[:])
-									break
+									append(dst, ..v2[:])
 								case [3]f32:
 									v3 := v
-									append(&vertex_data, ..v3[:])
-									break
+									append(dst, ..v3[:])
 								case [4]f32:
 									v4 := v
-									append(&vertex_data, ..v4[:])
-									break
+									append(dst, ..v4[:])
 								}
 							}
 						}
 					}
 				} else {
-					append(&vertex_data, ..points[j][:])
-					append(&vertex_data, ..text_color[:])
-					append(&vertex_data, ..uv_pos[j][:])
+					append(dst, ..points[j][:])
+					append(dst, ..text_color[:])
+					append(dst, ..uv_pos[j][:])
 				}
 			}
 
@@ -193,7 +186,6 @@ get_text_vertex_data :: proc(
 		}
 		current_y += line_height
 	}
-	return vertex_data
 }
 
 post_processing_position := [4][2]f32 {

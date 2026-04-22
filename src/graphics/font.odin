@@ -9,7 +9,6 @@ import sg "shared:sokol/gfx"
 import stbt "vendor:stb/truetype"
 
 Font :: struct {
-	bitmap:        [^]byte,
 	char_data:     []stbt.bakedchar,
 	image:         sg.View,
 	bitmap_width:  i32,
@@ -121,6 +120,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 			data = {mip_levels = {0 = {ptr = bitmap, size = uint(bitmap_width * bitmap_height)}}},
 		},
 	)
+	free(bitmap)
 
 	path_cstr := strings.clone_to_cstring(font_name)
 	defer delete_cstring(path_cstr)
@@ -128,7 +128,6 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	view := sg.make_view({texture = {image = image}, label = path_cstr})
 
 	font := new(Font)
-	font.bitmap = bitmap
 	font.char_data = char_data
 	font.bitmap_width = bitmap_width
 	font.bitmap_height = bitmap_height
@@ -143,7 +142,6 @@ unload_fonts :: proc() {
 	for font_name, font in loaded_fonts {
 		sg.destroy_image(sg.query_view_image(font.image))
 		sg.destroy_view(font.image)
-		free(font.bitmap)
 		delete(font.char_data)
 		free(font)
 		delete_key(&loaded_fonts, font_name)

@@ -3,7 +3,6 @@ package graphics
 import "../common"
 import shader_text "../shaders/text"
 import "core:c"
-import "core:strings"
 import "core:unicode/utf8"
 import sg "shared:sokol/gfx"
 
@@ -77,35 +76,30 @@ shutdown_text_buffers :: proc() {
 
 text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
-	shader_id := props.shader
-	font_path := strings.clone(props.font)
-	defer delete(font_path)
-	font_size := props.size
-	font := load_font(font_path, font_size)
-	text := strings.clone(props.text)
-	defer delete(text)
+	font := load_font(props.font, props.size)
 
-	if (font == nil) {
+	if font == nil {
 		return
 	}
 
 	mvp := get_mvp(props.fixed)
 
-	custom_shader, has_custom_shader := custom_shaders[shader_id]
+	custom_shader, has_custom_shader := custom_shaders[props.shader]
 	if has_custom_shader {
 		sg.apply_pipeline(custom_shader.pipeline)
 	} else {
 		sg.apply_pipeline(text_pipeline)
 	}
 
-	vertex_data := get_text_vertex_data(props, text, font, has_custom_shader, custom_shader)
+	clear(&vertex_scratch)
+	get_text_vertex_data(&vertex_scratch, props, props.text, font, has_custom_shader, custom_shader)
 
-	if len(vertex_data) == 0 {
+	if len(vertex_scratch) == 0 {
 		return
 	}
 
 	vertex_buffers := sg.make_buffer(
-		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_data[:])},
+		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_scratch[:])},
 	)
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
@@ -117,10 +111,9 @@ text :: proc(props: common.TextObjectProps) {
 	}
 	sg.apply_bindings(bindings)
 
-	quad_count := len(text)
+	quad_count := len(props.text)
 	index_count := quad_count * 6
 	sg.draw(0, index_count, 1)
 
 	sg.destroy_buffer(vertex_buffers)
-	delete(vertex_data)
 }

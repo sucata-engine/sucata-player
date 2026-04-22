@@ -171,8 +171,18 @@ create_shader_attributes :: proc(json_data: json.Value) -> [16]ShaderAttribute {
 		fmt_type := get_shader_attr_type(type_str, base_type)
 		size := get_shader_attr_type_size(fmt_type)
 
+		kind: Shader_Attr_Kind
+		if strings.equal_fold(name, "position") {
+			kind = .Position
+		} else if strings.equal_fold(name, "color") {
+			kind = .Color
+		} else if strings.equal_fold(name, "uv") {
+			kind = .UV
+		}
+
 		attributes[i] = ShaderAttribute {
 			name   = name,
+			kind   = kind,
 			type   = fmt_type,
 			slot   = int(slot),
 			size   = size,

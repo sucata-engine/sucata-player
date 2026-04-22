@@ -7,6 +7,7 @@ import "core:strings"
 import "vendor:compress/lz4"
 
 assets: ^common.Asset_Archive = nil
+asset_index: map[string]int = {}
 
 file_cache: map[string][]byte = {}
 
@@ -41,6 +42,12 @@ load_assets :: proc(asset_path: string) -> bool {
 	assets.entries = entries
 	assets.path = asset_path
 
+	asset_index = make(map[string]int, len(entries))
+	for entry, i in assets.entries {
+		key := strings.to_lower(entry.path)
+		asset_index[key] = i
+	}
+
 	return true
 }
 
@@ -48,10 +55,10 @@ get_entry :: proc(path: string) -> ^common.Asset_Entry {
 	if assets == nil {
 		return nil
 	}
-	for &entry in assets.entries {
-		if strings.equal_fold(entry.path, path) {
-			return &entry
-		}
+	lower := strings.to_lower(path)
+	defer delete(lower)
+	if idx, ok := asset_index[lower]; ok {
+		return &assets.entries[idx]
 	}
 	return nil
 }
@@ -115,6 +122,12 @@ load_asset :: proc(path: string) -> (data: []byte, ok: bool) {
 }
 
 unload_assets :: proc() {
+	for key in asset_index {
+		delete(key)
+	}
+	delete(asset_index)
+	asset_index = {}
+
 	if assets != nil {
 		for &entry in assets.entries {
 			if entry.cache != nil {

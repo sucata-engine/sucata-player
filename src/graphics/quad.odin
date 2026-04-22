@@ -17,6 +17,7 @@ init_quad_indices :: proc() {
 	if quad_buffers_inited {
 		return
 	}
+	reserve(&vertex_scratch, 32 * 4096)
 	quad_shader = shader_quad.load_rect_shader()
 	quad_pipeline = sg.make_pipeline(
 		{
@@ -76,6 +77,8 @@ shutdown_quad_buffers :: proc() {
 		sg.destroy_sampler(quad_sampler)
 		sg.destroy_sampler(quad_sampler_repeat)
 		sg.destroy_shader(quad_shader)
+		delete(vertex_scratch)
+		vertex_scratch = {}
 		quad_buffers_inited = false
 	}
 }
@@ -97,24 +100,17 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	image := load_image(texture)
 
 	mvp := get_mvp(props.fixed)
-	batch_vertices := [dynamic]f32{}
+	clear(&vertex_scratch)
 
 	for quad in quads {
-		quad_vertex := get_quad_vertex_data(
-			quad,
-			image,
-			props.tiled,
-			has_custom_shader,
-			custom_shader,
-		)
-		append(&batch_vertices, ..quad_vertex[:])
+		get_quad_vertex_data(&vertex_scratch, quad, image, props.tiled, has_custom_shader, custom_shader)
 	}
-	if len(batch_vertices) == 0 {
+	if len(vertex_scratch) == 0 {
 		return
 	}
 
 	vertex_buffer := sg.make_buffer(
-		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(batch_vertices[:])},
+		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_scratch[:])},
 	)
 	state := sg.query_buffer_state(vertex_buffer)
 
@@ -139,5 +135,4 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	sg.draw(0, index_count, 1)
 
 	sg.destroy_buffer(vertex_buffer)
-	delete(batch_vertices)
 }

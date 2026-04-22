@@ -13,13 +13,23 @@ Vertex_Data :: struct {
 	uv:       Vec2,
 }
 
+Shader_Attr_Kind :: enum u8 {
+	Custom,
+	Position,
+	Color,
+	UV,
+}
+
 ShaderAttribute :: struct {
 	name:   string,
+	kind:   Shader_Attr_Kind,
 	type:   sg.Vertex_Format,
 	slot:   int,
 	offset: int,
 	size:   int,
 }
+
+vertex_scratch: [dynamic]f32
 
 ShaderView :: struct {
 	name: string,

@@ -39,13 +39,12 @@ load_image :: proc(_path: string) -> Image {
 		return images_loaded[DEFAULT_IMAGE_KEY]
 	}
 
-	file_path := strings.clone(_path)
-	if value, ok := images_loaded[file_path]; ok {
-		images_used[file_path] = true
-		delete(file_path)
+	if value, ok := images_loaded[_path]; ok {
+		images_used[_path] = true
 		return value
 	}
 
+	file_path := strings.clone(_path)
 	w, h: i32
 	pixels: [^]u8
 
