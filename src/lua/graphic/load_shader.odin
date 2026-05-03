@@ -19,7 +19,15 @@ LOAD_SHADER_FUNCTION :: lua_common.LuaFunction {
 
 		shader_path := strings.clone_from_cstring(lua.tostring(L, 1))
 
-		shader_id, ok := graphics.init_shader(shader_path)
+		shader_id := graphics.shader_name_to_32(shader_path)
+
+		if !core.is_game_started {
+			core.add_post_command(core.PostLoadShader{shader_path = shader_path})
+			lua.pushnumber(L, lua.Number(shader_id))
+			return 1
+		}
+
+		_, ok := graphics.init_shader(shader_path)
 
 		if ok {
 			lua.pushnumber(L, lua.Number(shader_id))

@@ -40,7 +40,7 @@ ObjectProp :: struct {
 GroupObjectProps :: struct {
 	z_index: i32,
 	texture: string,
-	shader:  u64,
+	shader:  u32,
 	fixed:   bool,
 	tiled:   bool,
 	quads:   ^[dynamic]ObjectProp,
@@ -51,7 +51,7 @@ TextObjectProps :: struct {
 	zIndex:      i32,
 	position:    [2]f32,
 	font:        string,
-	shader:      u64,
+	shader:      u32,
 	size:        f32,
 	color:       [4]f32,
 	scale:       [2]f32,

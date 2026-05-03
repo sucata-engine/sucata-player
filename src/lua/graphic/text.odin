@@ -65,7 +65,7 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 			zIndex      = i32(zIndex),
 			font        = font,
 			size        = font_size,
-			shader      = u64(shader),
+			shader      = u32(shader),
 			scale       = [2]f32{scale_x, scale_y},
 			origin      = [2]f32{origin_x, origin_y},
 			rotation    = rotation,

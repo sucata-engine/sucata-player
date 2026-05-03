@@ -18,11 +18,10 @@ CustomShader :: struct {
 	samplers:        [12]ShaderSampler,
 }
 
-next_shader_id: u64 = 1
-custom_shaders := map[u64]CustomShader{}
+custom_shaders := map[u32]CustomShader{}
 
-shader_name_to_64 :: #force_inline proc(shader_name: string) -> u64 {
-	return hash.fnv64a(transmute([]u8)shader_name)
+shader_name_to_32 :: #force_inline proc(shader_name: string) -> u32 {
+	return hash.fnv32(transmute([]u8)shader_name)
 }
 
 get_shader_from_path :: proc(shader_path: string) -> ([]byte, bool, bool) {
@@ -69,7 +68,13 @@ create_shader_from_schd :: proc(
 	return sg.make_shader(desc), attributes, views, samplers
 }
 
-init_shader :: proc(schd_path: string) -> (u64, bool) {
+init_shader :: proc(schd_path: string) -> (u32, bool) {
+	shader_id := shader_name_to_32(schd_path)
+
+	if _, exists := custom_shaders[shader_id]; exists {
+		return shader_id, true
+	}
+
 	schd_data, ok, is_asset := get_shader_from_path(schd_path)
 	defer {
 		if !is_asset {
@@ -115,7 +120,6 @@ init_shader :: proc(schd_path: string) -> (u64, bool) {
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
 
-	shader_id := next_shader_id
 	custom_shaders[shader_id] = CustomShader {
 		shader          = shader,
 		pipeline        = pipeline,
@@ -125,7 +129,6 @@ init_shader :: proc(schd_path: string) -> (u64, bool) {
 		views           = views,
 		samplers        = samplers,
 	}
-	next_shader_id += 1
 
 	return shader_id, true
 }

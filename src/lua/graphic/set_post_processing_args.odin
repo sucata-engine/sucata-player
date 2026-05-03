@@ -17,7 +17,7 @@ SET_POST_PROCESSING_ARGS_FUNCTION :: lua_common.LuaFunction {
 		if !lua_common.validate_number(L, 1, "set_post_processing_args") do return 0
 		if !lua_common.validate_string(L, 2, "set_post_processing_args") do return 0
 
-		shader_id := u64(lua.tonumber(L, 1))
+		shader_id := u32(lua.tonumber(L, 1))
 		field := strings.clone_from_cstring(lua.tostring(L, 2))
 		defer delete(field)
 

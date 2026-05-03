@@ -102,6 +102,8 @@ init_callback :: proc "c" () {
 	init_gamepad()
 
 	is_game_started = true
+	process_post_commands()
+
 	if scene != nil && len(scene) > 0 {
 		run_init()
 	}

@@ -35,19 +35,76 @@ get_default_system_font :: proc() -> string {
 	} else when ODIN_OS == .Linux {
 		linux_fonts := []string {
 			"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+			"/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+			"/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+			"/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf",
 			"/usr/share/fonts/TTF/DejaVuSans.ttf",
-			"/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/noto/NotoSans-Regular.ttf",
+			"/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+			"/usr/share/fonts/dejavu/DejaVuSans.ttf",
+			"/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf",
 			"/usr/share/fonts/liberation-sans-fonts/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+			"/usr/share/fonts/google-noto/NotoSans-Regular.ttf",
+			"/usr/share/fonts/truetype/DejaVuSans.ttf",
 		}
 		for font_path in linux_fonts {
 			if os.exists(font_path) {
 				return font_path
 			}
 		}
-		return "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+		search_dirs := []string{"/usr/share/fonts", "/usr/local/share/fonts"}
+		for dir in search_dirs {
+			if found, ok := find_first_font_in_dir(dir, 4); ok {
+				return found
+			}
+		}
+		return ""
 	} else {
 		return ""
 	}
+}
+
+@(private)
+find_first_font_in_dir :: proc(dir: string, max_depth: int) -> (string, bool) {
+	if max_depth < 0 do return "", false
+	if !os.is_dir(dir) do return "", false
+
+	handle, open_err := os.open(dir, os.O_RDONLY)
+	if open_err != os.ERROR_NONE do return "", false
+	defer os.close(handle)
+
+	entries, read_err := os.read_dir(handle, -1, context.allocator)
+	if read_err != os.ERROR_NONE do return "", false
+	defer os.file_info_slice_delete(entries, context.allocator)
+
+	is_font_file :: proc(name: string) -> bool {
+		return(
+			strings.has_suffix(name, ".ttf") ||
+			strings.has_suffix(name, ".TTF") ||
+			strings.has_suffix(name, ".otf") ||
+			strings.has_suffix(name, ".OTF") ||
+			strings.has_suffix(name, ".ttc") ||
+			strings.has_suffix(name, ".TTC") \
+		)
+	}
+
+	for entry in entries {
+		if os.is_dir(entry.fullpath) do continue
+		if is_font_file(entry.name) {
+			return strings.clone(entry.fullpath), true
+		}
+	}
+	for entry in entries {
+		if !os.is_dir(entry.fullpath) do continue
+		if found, ok := find_first_font_in_dir(entry.fullpath, max_depth - 1); ok {
+			return found, true
+		}
+	}
+	return "", false
 }
 
 loaded_fonts := map[string]^Font{}
@@ -76,7 +133,13 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	}
 
 	if !read_ok {
-		common.print_error("Font '%s' not found", font_path)
+		if from_system && font_path == "" {
+			common.print_error(
+				"No system font found. Install a font package (e.g. fonts-dejavu-core, fonts-liberation, fonts-noto) or pass a font file path explicitly.",
+			)
+		} else {
+			common.print_error("Font '%s' not found", font_path)
+		}
 		return nil
 	}
 	defer delete(ttf_data)

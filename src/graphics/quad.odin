@@ -3,7 +3,6 @@ package graphics
 import "../common"
 import shader_quad "../shaders/quad"
 import "core:c"
-import "core:strings"
 import sg "shared:sokol/gfx"
 
 quad_ib: sg.Buffer
@@ -103,7 +102,14 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	clear(&vertex_scratch)
 
 	for quad in quads {
-		get_quad_vertex_data(&vertex_scratch, quad, image, props.tiled, has_custom_shader, custom_shader)
+		get_quad_vertex_data(
+			&vertex_scratch,
+			quad,
+			image,
+			props.tiled,
+			has_custom_shader,
+			custom_shader,
+		)
 	}
 	if len(vertex_scratch) == 0 {
 		return

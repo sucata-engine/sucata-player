@@ -11,7 +11,7 @@ Postfx_Vertex :: struct {
 }
 
 Postfx_Effect :: struct {
-	id:      u64,
+	id:      u32,
 	enabled: bool,
 	args:    common.ShaderArgs,
 }
@@ -81,11 +81,14 @@ init_postfx :: proc(width, height: i32) {
 	postfx_targets[1] = create_offscreen(width, height)
 	offscreen = create_offscreen(width, height)
 
+	flip_y := !sg.query_features().origin_top_left
+	v_top: f32 = flip_y ? 1.0 : 0.0
+	v_bot: f32 = flip_y ? 0.0 : 1.0
 	vertices := [4]Postfx_Vertex {
-		{position = {-1.0, 1.0}, uv = {0.0, 0.0}},
-		{position = {1.0, 1.0}, uv = {1.0, 0.0}},
-		{position = {1.0, -1.0}, uv = {1.0, 1.0}},
-		{position = {-1.0, -1.0}, uv = {0.0, 1.0}},
+		{position = {-1.0, 1.0}, uv = {0.0, v_top}},
+		{position = {1.0, 1.0}, uv = {1.0, v_top}},
+		{position = {1.0, -1.0}, uv = {1.0, v_bot}},
+		{position = {-1.0, -1.0}, uv = {0.0, v_bot}},
 	}
 	postfx_vb = sg.make_buffer(
 		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertices[:])},
@@ -207,11 +210,11 @@ draw_fullscreen_quad :: proc(tex_view: sg.View) {
 	sg.draw(0, 6, 1)
 }
 
-add_post_processing :: proc(shader_id: u64) {
+add_post_processing :: proc(shader_id: u32) {
 	append(&effects, Postfx_Effect{enabled = true, id = shader_id})
 }
 
-remove_post_processing :: proc(shader_id: u64) {
+remove_post_processing :: proc(shader_id: u32) {
 	for &effect, i in effects {
 		if effect.id == shader_id {
 			ordered_remove(&effects, i)
@@ -221,7 +224,7 @@ remove_post_processing :: proc(shader_id: u64) {
 }
 
 set_post_processing_args :: proc(
-	shader_id: u64,
+	shader_id: u32,
 	field: string,
 	value: common.ShaderArgumentValue,
 ) {

@@ -19,7 +19,7 @@ ADD_POST_PROCESSING_FUNCTION :: lua_common.LuaFunction {
 
 		shader_id := lua.tonumber(L, 1)
 
-		graphics.add_post_processing(u64(shader_id))
+		graphics.add_post_processing(u32(shader_id))
 
 		return 0
 	},

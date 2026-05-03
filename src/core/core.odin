@@ -297,7 +297,7 @@ add_to_render_queue :: proc(props: common.GraphicObjectProps) {
 add_group_to_render_queue :: proc(
 	z_index: i32,
 	texture: string,
-	shader: u64,
+	shader: u32,
 	fixed: bool,
 	tiled: bool,
 	prop: common.ObjectProp,
