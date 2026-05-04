@@ -24,7 +24,7 @@ GET_KEEP_ASPECT_FUNCTION :: lua_common.LuaFunction {
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 
-		lua.pushboolean(L, b32(core.windowConfig.keep_aspect))
+		lua.pushnumber(L, lua.Number(core.windowConfig.keep_aspect))
 
 		return 1
 	},
