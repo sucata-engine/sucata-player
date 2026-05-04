@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 REMOVE_TAG_FUNCTION :: lua_common.LuaFunction {
 	name = "remove_tag",

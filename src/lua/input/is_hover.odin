@@ -3,7 +3,7 @@ package input
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 IS_HOVER_FUNCTION :: lua_common.LuaFunction {
 	name = "is_hover",

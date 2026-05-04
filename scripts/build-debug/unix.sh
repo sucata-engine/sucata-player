@@ -2,9 +2,9 @@
 
 set -e
 
-echo "Building Sucata for Unix..."
+echo "Building debug Sucata CLI for Unix..."
 
-echo "Building sucata-player..."
-odin build src/ -extra-linker-flags:"-L/opt/homebrew/lib" -debug -sanitize:address -out:sucata-player
+echo "Building debug sucata CLI..."
+odin build src/ -out:sucata-player -debug -sanitize:address -extra-linker-flags:"-llua5.4"
 
 echo "Done!"

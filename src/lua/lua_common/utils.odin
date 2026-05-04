@@ -3,7 +3,7 @@ package lua_common
 import "core:c"
 import "core:fmt"
 import "core:strings"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 delete_lua_table :: proc(table: LuaTable) {
 	for key, value in table {
@@ -25,7 +25,7 @@ get_table_number :: proc(
 	default_value: f64,
 ) -> f64 {
 	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
+	lua.gettable(L, table_index)
 
 	result := default_value
 	if lua.isnumber(L, -1) {
@@ -38,7 +38,7 @@ get_table_number :: proc(
 
 get_table_number_nil :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> Maybe(f32) {
 	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
+	lua.gettable(L, table_index)
 
 	if lua.isnumber(L, -1) {
 		result := f32(lua.tonumber(L, -1))
@@ -57,7 +57,7 @@ get_table_string :: proc(
 	default_value: string,
 ) -> string {
 	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
+	lua.gettable(L, table_index)
 
 	if lua.isstring(L, -1) {
 		lua_str := lua.tostring(L, -1)
@@ -76,7 +76,7 @@ get_table_boolean :: proc(
 	default_value: bool,
 ) -> bool {
 	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
+	lua.gettable(L, table_index)
 
 	result := default_value
 	if lua.isboolean(L, -1) {
@@ -89,7 +89,7 @@ get_table_boolean :: proc(
 
 get_table_ref :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> c.int {
 	lua.pushstring(L, field)
-	lua.gettable(L, lua.Index(table_index))
+	lua.gettable(L, table_index)
 
 	result: c.int = -1
 	if lua.isfunction(L, -1) || lua.istable(L, -1) || lua.isuserdata(L, -1) {
@@ -106,18 +106,18 @@ lua_table_to_map :: proc(
 	table_index: c.int,
 	ignored_fields: []string = nil,
 ) -> LuaTable {
-	index := lua.Index(table_index)
+	index := table_index
 	result := make(LuaTable)
 
 	if index < 0 {
 		index = lua.gettop(L) + index + 1
 	}
 
-	lua.L_checktype(L, c.int(index), lua.Type.TABLE)
+	lua.L_checktype(L, c.int(index), c.int(lua.Type.TABLE))
 
 	lua.pushnil(L)
 
-	for lua.next(L, c.int(index)) != false {
+	for lua.next(L, c.int(index)) != 0 {
 		if lua.type(L, -2) == lua.TSTRING {
 			key := strings.clone_from_cstring(lua.tostring(L, -2))
 
@@ -213,7 +213,7 @@ validate_arg_count :: proc(L: ^lua.State, expected: c.int, func_name: cstring) -
 }
 
 validate_number :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.isnumber(L, lua.Index(index)) {
+	if !lua.isnumber(L, index) {
 		error_msg := fmt.tprintf("%s expects argument %d to be of type number", func_name, index)
 		push_lua_error_msg(L, error_msg)
 		return false
@@ -222,7 +222,7 @@ validate_number :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool
 }
 
 validate_string :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.isstring(L, lua.Index(index)) {
+	if !lua.isstring(L, index) {
 		error_msg := fmt.tprintf("%s expects argument %d to be of type string", func_name, index)
 		push_lua_error_msg(L, error_msg)
 		return false
@@ -231,7 +231,7 @@ validate_string :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool
 }
 
 validate_function :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.isfunction(L, lua.Index(index)) {
+	if !lua.isfunction(L, index) {
 		error_msg := fmt.tprintf("%s expects argument %d to be of type function", func_name, index)
 		push_lua_error_msg(L, error_msg)
 		return false
@@ -240,7 +240,7 @@ validate_function :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bo
 }
 
 validate_table :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.istable(L, lua.Index(index)) {
+	if !lua.istable(L, index) {
 		error_msg := fmt.tprintf("%s expects argument %d to be of type table", func_name, index)
 		push_lua_error_msg(L, error_msg)
 		return false
@@ -249,7 +249,7 @@ validate_table :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool 
 }
 
 validate_table_or_number :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.istable(L, lua.Index(index)) && !lua.isnumber(L, lua.Index(index)) {
+	if !lua.istable(L, index) && !lua.isnumber(L, index) {
 		error_msg := fmt.tprintf(
 			"%s expects argument %d to be of type table or number",
 			func_name,
@@ -262,7 +262,7 @@ validate_table_or_number :: proc(L: ^lua.State, index: c.int, func_name: cstring
 }
 
 validate_boolean :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> bool {
-	if !lua.isboolean(L, lua.Index(index)) {
+	if !lua.isboolean(L, index) {
 		error_msg := fmt.tprintf("%s expects argument %d to be of type boolean", func_name, index)
 		push_lua_error_msg(L, error_msg)
 		return false
@@ -270,6 +270,6 @@ validate_boolean :: proc(L: ^lua.State, index: c.int, func_name: cstring) -> boo
 	return true
 }
 
-absindex :: proc(L: ^lua.State, i: lua.Index) -> lua.Index {
+absindex :: proc(L: ^lua.State, i: c.int) -> c.int {
 	return i if (i > 0 || i <= lua.REGISTRYINDEX) else lua.gettop(L) + i + 1
 }

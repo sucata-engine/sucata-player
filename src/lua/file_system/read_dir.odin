@@ -6,7 +6,7 @@ import "core:strings"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 READ_DIR_FUNCTION :: lua_common.LuaFunction {
 	name = "read_dir",

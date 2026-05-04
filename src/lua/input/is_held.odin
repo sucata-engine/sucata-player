@@ -3,7 +3,7 @@ package input
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 IS_HELD_FUNCTION :: lua_common.LuaFunction {
 	name = "is_held",
@@ -14,13 +14,13 @@ IS_HELD_FUNCTION :: lua_common.LuaFunction {
 		arg_count := lua.gettop(L)
 
 		for i in 1 ..= arg_count {
-			if !lua.isstring(L, lua.Index(i)) {
+			if !lua.isstring(L, i) {
 				lua.pushstring(L, "is_held expects all arguments to be strings")
 				lua.error(L)
 				return 0
 			}
 
-			key_name := string(lua.tostring(L, lua.Index(i)))
+			key_name := string(lua.tostring(L, i))
 
 			if core.is_down(key_name) {
 				lua.pushboolean(L, true)

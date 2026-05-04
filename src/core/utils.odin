@@ -2,16 +2,11 @@ package core
 
 import "../common"
 import "core:strings"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 	top := lua.gettop(L)
 	if function_ref <= 0 {
-		return false
-	}
-
-	if !lua.checkstack(L, 1) {
-		common.print_error("Lua stack overflow")
 		return false
 	}
 
@@ -23,7 +18,7 @@ call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 	}
 
 	result := lua.pcall(L, 0, 0, 0)
-	if result != .OK {
+	if result != 0 {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -33,7 +28,7 @@ call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 
 	lua.settop(L, top)
 
-	return result == .OK
+	return result == 0
 }
 
 call_lua_function_with_table_ref :: proc(
@@ -44,11 +39,6 @@ call_lua_function_with_table_ref :: proc(
 	top := lua.gettop(L)
 	if function_ref <= 0 || table_ref <= 0 {
 		common.print_error("Invalid function or table reference")
-		return false
-	}
-
-	if !lua.checkstack(L, 3) {
-		common.print_error("Lua stack overflow")
 		return false
 	}
 
@@ -65,7 +55,7 @@ call_lua_function_with_table_ref :: proc(
 	}
 
 	result := lua.pcall(L, 1, 0, 0)
-	if result != .OK {
+	if result != 0 {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -73,7 +63,7 @@ call_lua_function_with_table_ref :: proc(
 
 	lua.settop(L, top)
 
-	return result == .OK
+	return result == 0
 }
 
 call_lua_method_with_self_ref :: proc(
@@ -86,11 +76,6 @@ call_lua_method_with_self_ref :: proc(
 
 	if table_ref <= 0 || self_ref <= 0 {
 		common.print_error("Invalid table or self reference")
-		return false
-	}
-
-	if !lua.checkstack(L, 4) {
-		common.print_error("Lua stack overflow")
 		return false
 	}
 
@@ -117,7 +102,7 @@ call_lua_method_with_self_ref :: proc(
 
 	result := lua.pcall(L, 1, 0, 0)
 
-	if result != .OK {
+	if result != 0 {
 		msg := lua.tostring(L, -1)
 		common.print_error("%s", msg)
 		lua.pop(L, 1)
@@ -125,5 +110,5 @@ call_lua_method_with_self_ref :: proc(
 
 	lua.settop(L, top)
 
-	return result == .OK
+	return result == 0
 }

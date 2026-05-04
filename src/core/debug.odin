@@ -2,8 +2,8 @@ package core
 
 import common "../common"
 import "core:fmt"
+import lua "shared:lua55"
 import sg "shared:sokol/gfx"
-import lua "shared:luajit"
 
 draw_y: f32 = 10.0
 draw_info_text :: proc(text: string) {

@@ -6,7 +6,7 @@ import "../../graphics"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 SET_POST_PROCESSING_ARGS_FUNCTION :: lua_common.LuaFunction {
 	name = "set_post_processing_args",
@@ -33,7 +33,7 @@ SET_POST_PROCESSING_ARGS_FUNCTION :: lua_common.LuaFunction {
 			result := [4]f32{}
 
 			lua.pushnil(L)
-			for lua.next(L, 3) != false {
+			for lua.next(L, 3) != 0 {
 				if lua.type(L, -1) == lua.Type.NUMBER && count < 4 {
 					result[count] = f32(lua.tonumber(L, -1))
 					count += 1

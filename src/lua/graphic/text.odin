@@ -4,7 +4,7 @@ import common "../../common"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 TEXT_FUNCTION :: lua_common.LuaFunction {
 	name = "draw_text",

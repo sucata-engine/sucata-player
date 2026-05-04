@@ -2,7 +2,7 @@ package core
 
 import common "../common"
 import "core:hash"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 event_handlers: map[u64][dynamic]common.EventHandler = {}
 

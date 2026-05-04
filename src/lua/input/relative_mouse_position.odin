@@ -4,7 +4,7 @@ import "../../core"
 import "../../graphics"
 import "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 GET_RELATIVE_MOUSE_POSITION_FUNCTION :: lua_common.LuaFunction {
 	name = "get_relative_mouse_position",

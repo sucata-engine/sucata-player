@@ -1,7 +1,7 @@
 package core
 
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 init_queue: [dynamic]i32 = {}
 

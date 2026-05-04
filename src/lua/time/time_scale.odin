@@ -3,7 +3,7 @@ package timenamespace
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 GET_TIME_SCALE_FUNCTION :: lua_common.LuaFunction {
 	name = "get_time_scale",

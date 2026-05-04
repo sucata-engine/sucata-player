@@ -4,7 +4,7 @@ import common "../../common"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 LOAD_SCENE_FUNCTION :: lua_common.LuaFunction {
 	name = "load_scene",
@@ -16,7 +16,7 @@ LOAD_SCENE_FUNCTION :: lua_common.LuaFunction {
 
 		entities := [dynamic]^common.Entity{}
 
-		table_length := c.int(lua.objlen(L, 1))
+		table_length := c.int(lua.rawlen(L, 1))
 
 		for i in 1 ..= table_length {
 			lua.rawgeti(L, 1, lua.Integer(i))

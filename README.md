@@ -5,7 +5,6 @@ This is the Sucata Player that runs your sucata game, see [sucata-cli](https://c
 
 ## Shared Folder
 
-- luajit -> https://github.com/morikosm/luajit-odin/tree/master
 - sokol -> https://github.com/floooh/sokol-odin
 - http -> https://github.com/laytan/odin-http
 

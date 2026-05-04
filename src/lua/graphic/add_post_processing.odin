@@ -7,7 +7,7 @@ import "core:c"
 import "core:crypto"
 import "core:encoding/uuid"
 import "core:strings"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 ADD_POST_PROCESSING_FUNCTION :: lua_common.LuaFunction {
 	name = "add_post_processing",

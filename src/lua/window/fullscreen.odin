@@ -3,7 +3,7 @@ package window
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 SET_FULLSCREEN_FUNCTION :: lua_common.LuaFunction {
 	name = "set_fullscreen",

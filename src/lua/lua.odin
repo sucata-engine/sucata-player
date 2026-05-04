@@ -17,7 +17,7 @@ import "gamepad"
 import "graphic"
 import "input"
 import lua_common "lua_common"
-import lua "shared:luajit"
+import lua "shared:lua55"
 import timens "time"
 
 GC_Config :: struct {
@@ -106,6 +106,7 @@ custom_loader :: proc "c" (L: ^lua.State) -> c.int {
 		}
 	}
 
+	lua.pushnil(L)
 	return 1
 }
 
@@ -154,6 +155,15 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	L := lua.L_newstate()
 	core.LUA_GLOBAL_STATE = L
 
+	lua.atpanic(L, proc "c" (L: ^lua.State) -> c.int {
+		context = core.DEFAULT_CONTEXT
+		msg := lua.tostring(L, 1)
+		if msg != nil {
+			common.print_error("Lua panic: %s", msg)
+		}
+		return 0
+	})
+
 	lua.L_openlibs(L)
 
 	create_namespaces(L)
@@ -176,7 +186,7 @@ init_lua :: proc(path: string, entity_file: string = "") {
 		return
 	}
 
-	if lua.pcall(L, 0, lua.MULTRET, 0) != .OK {
+	if lua.pcall(L, 0, lua.MULTRET, 0) != 0 {
 		err := lua.tostring(L, -1)
 		common.print_error("Failed to execute Lua buffer: %s", err)
 		lua.pop(L, 1)
@@ -230,8 +240,7 @@ setup_garbage_collector :: proc(L: ^lua.State, config: GC_Config) {
 		lua.gc(L, lua.GCRESTART, 0)
 	}
 
-	lua.gc(L, lua.GCSETPAUSE, config.pause)
-	lua.gc(L, lua.GCSETSTEPMUL, config.step_mul)
+	lua.gc(L, lua.GCINC, config.pause, config.step_mul, 0)
 
 	common.print_info(
 		"Lua Garbage collector initialized - Pause: %d%%, StepMul: %d%%, Auto: %t",

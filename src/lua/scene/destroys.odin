@@ -3,7 +3,7 @@ package scene
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 DESTROYS_FUNCTION :: lua_common.LuaFunction {
 	name = "destroys",
@@ -13,7 +13,7 @@ DESTROYS_FUNCTION :: lua_common.LuaFunction {
 		if !lua_common.validate_arg_count(L, 1, "destroys") do return 0
 		if !lua_common.validate_table(L, 1, "destroys") do return 0
 
-		table_length := c.int(lua.objlen(L, 1))
+		table_length := c.int(lua.rawlen(L, 1))
 
 		lua.newtable(L)
 		undestroyed_ids_table := lua.gettop(L)
@@ -28,7 +28,7 @@ DESTROYS_FUNCTION :: lua_common.LuaFunction {
 					core.add_to_destroy_queue(entity)
 				} else {
 					lua.pushnumber(L, lua.Number(entity_id))
-					lua.rawseti(L, undestroyed_ids_table, c.int(i))
+					lua.rawseti(L, undestroyed_ids_table, lua.Integer(i))
 				}
 			}
 			lua.pop(L, 1)

@@ -3,7 +3,7 @@ package gamepad
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 IS_RELEASED_FUNCTION :: lua_common.LuaFunction {
 	name = "is_released",

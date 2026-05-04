@@ -3,7 +3,7 @@ package scene
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:luajit"
+import lua "shared:lua55"
 
 GET_ENTITIES_FUNCTION :: lua_common.LuaFunction {
 	name = "get_entities",
