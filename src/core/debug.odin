@@ -5,7 +5,7 @@ import "core:fmt"
 import sg "shared:sokol/gfx"
 import lua "vendor:lua/5.4"
 
-draw_y: f32 = 10.0
+draw_y: f32 = 16.0
 draw_info_text :: proc(text: string) {
 	add_to_render_queue(
 		common.TextObjectProps {

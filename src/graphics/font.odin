@@ -13,6 +13,9 @@ Font :: struct {
 	image:         sg.View,
 	bitmap_width:  i32,
 	bitmap_height: i32,
+	ascent:        f32,
+	descent:       f32,
+	line_gap:      f32,
 }
 
 get_default_system_font :: proc() -> string {
@@ -175,6 +178,10 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		return nil
 	}
 
+	ascent_i, descent_i, line_gap_i: i32
+	stbt.GetFontVMetrics(&font_info, &ascent_i, &descent_i, &line_gap_i)
+	v_scale := stbt.ScaleForPixelHeight(&font_info, font_size)
+
 	image := sg.make_image(
 		sg.Image_Desc {
 			width = bitmap_width,
@@ -195,6 +202,9 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	font.bitmap_width = bitmap_width
 	font.bitmap_height = bitmap_height
 	font.image = view
+	font.ascent = f32(ascent_i) * v_scale
+	font.descent = f32(descent_i) * v_scale
+	font.line_gap = f32(line_gap_i) * v_scale
 
 	loaded_fonts[font_name] = font
 

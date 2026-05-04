@@ -85,7 +85,7 @@ get_text_vertex_data :: proc(
 	defer delete(lines)
 
 	line_height := props.size * props.scale[1]
-	current_y := props.position[1]
+	current_y := props.position[1] + (font.ascent / 2) * props.scale[1]
 
 	opacity := props.opacity.(f32) or_else props.color[3]
 	text_color := Vec4{props.color[0], props.color[1], props.color[2], opacity}
