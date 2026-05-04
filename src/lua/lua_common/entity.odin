@@ -3,7 +3,7 @@ package lua_common
 import common "../../common"
 import "../../core"
 import "core:c"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int) -> [dynamic]i64 {
 	top := lua.gettop(L)

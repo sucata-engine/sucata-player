@@ -17,8 +17,8 @@ import "gamepad"
 import "graphic"
 import "input"
 import lua_common "lua_common"
-import lua "shared:lua55"
 import timens "time"
+import lua "vendor:lua/5.4"
 
 GC_Config :: struct {
 	pause:    c.int,
@@ -122,7 +122,7 @@ load_path :: proc() {
 
 	lua.getglobal(L, "package")
 
-	lua.getfield(L, -1, "loaders")
+	lua.getfield(L, -1, "searchers")
 	lua.pushcfunction(L, custom_loader)
 	lua.rawseti(L, -2, 2)
 	lua.pop(L, 1)

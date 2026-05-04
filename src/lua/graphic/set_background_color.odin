@@ -4,8 +4,8 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "shared:lua55"
 import sg "shared:sokol/gfx"
+import lua "vendor:lua/5.4"
 
 SET_BACKGROUND_FUNCTION :: lua_common.LuaFunction {
 	name = "set_background_color",

@@ -3,7 +3,7 @@ package lua_common
 import "../../common"
 import "core:c"
 import "core:strings"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs {
 	lua.getfield(L, table_index, "shader_args")

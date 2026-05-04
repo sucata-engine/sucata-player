@@ -2,7 +2,7 @@ package core
 
 import "../common"
 import "core:strings"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
 	top := lua.gettop(L)

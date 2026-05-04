@@ -3,7 +3,7 @@ package lua_common
 import "core:c"
 import "core:fmt"
 import "core:strings"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 delete_lua_table :: proc(table: LuaTable) {
 	for key, value in table {

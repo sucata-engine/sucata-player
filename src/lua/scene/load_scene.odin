@@ -4,7 +4,7 @@ import common "../../common"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 LOAD_SCENE_FUNCTION :: lua_common.LuaFunction {
 	name = "load_scene",

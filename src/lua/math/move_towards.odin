@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:math"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 MOVE_TOWARDS_FUNCTION :: lua_common.LuaFunction {
 	name = "move_towards",

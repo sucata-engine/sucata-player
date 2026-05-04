@@ -4,7 +4,7 @@ import core "../../core"
 import graphics "../../graphics"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 SCREEN_RELATIVE_FUNCTION :: lua_common.LuaFunction {
 	name = "screen_relative",

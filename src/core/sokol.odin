@@ -5,12 +5,12 @@ import "../filesystem"
 import "../graphics"
 import "base:runtime"
 import "core:strings"
-import lua "shared:lua55"
 import sapp "shared:sokol/app"
 import sg "shared:sokol/gfx"
 import sglue "shared:sokol/glue"
 import shelpers "shared:sokol/helpers"
 import st "shared:sokol/time"
+import lua "vendor:lua/5.4"
 
 delta_time: f64 = 0.016
 time_scale: f64 = 1.0

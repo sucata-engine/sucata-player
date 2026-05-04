@@ -3,7 +3,7 @@ package scene
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 ON_INIT_FUNCTION :: lua_common.LuaFunction {
 	name = "init",

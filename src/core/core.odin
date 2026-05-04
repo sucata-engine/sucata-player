@@ -5,8 +5,8 @@ import "../graphics"
 import "base:runtime"
 import "core:sort"
 import "core:strings"
-import lua "shared:lua55"
 import sapp "shared:sokol/app"
+import lua "vendor:lua/5.4"
 
 LUA_GLOBAL_STATE: ^lua.State
 DEFAULT_CONTEXT: runtime.Context

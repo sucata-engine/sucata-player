@@ -4,7 +4,7 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "shared:lua55"
+import lua "vendor:lua/5.4"
 
 SET_CURSOR_FUNCTION :: lua_common.LuaFunction {
 	name = "set_cursor",
