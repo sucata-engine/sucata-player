@@ -28,7 +28,13 @@ get_quad_vertex_data :: proc(
 
 	uv_pos: [4][2]f32
 	if tiled {
-		uv_pos = calculate_atlas_uv_tiled(atlas, f32(image.width), f32(image.height), size)
+		uv_pos = calculate_atlas_uv_tiled(
+			atlas,
+			f32(image.width),
+			f32(image.height),
+			size,
+			object.tile_size,
+		)
 	} else {
 		uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
 	}

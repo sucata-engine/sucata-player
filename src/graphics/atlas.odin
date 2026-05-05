@@ -27,6 +27,7 @@ calculate_atlas_uv_tiled :: proc(
 	img_width: f32,
 	img_height: f32,
 	quad_size: [2]f32,
+	tile_size: [2]f32,
 ) -> [4][2]f32 {
 	atlas_width := atlas.width
 	atlas_height := atlas.height
@@ -36,8 +37,11 @@ calculate_atlas_uv_tiled :: proc(
 	atlas_y := atlas.y
 
 	if atlas_height == 0.0 || atlas_width == 0.0 {
-		repeat_x := quad_size[0] / img_width
-		repeat_y := quad_size[1] / img_height
+		// no atlas: tile_size overrides the natural image size when > 0
+		ref_w := tile_size[0] > 0.0 ? tile_size[0] : img_width
+		ref_h := tile_size[1] > 0.0 ? tile_size[1] : img_height
+		repeat_x := quad_size[0] / ref_w
+		repeat_y := quad_size[1] / ref_h
 		return [4][2]f32{{0.0, 0.0}, {0.0, repeat_y}, {repeat_x, repeat_y}, {repeat_x, 0.0}}
 	}
 
@@ -48,8 +52,11 @@ calculate_atlas_uv_tiled :: proc(
 
 	tile_u := u1 - u0
 	tile_v := v1 - v0
-	repeat_x := quad_size[0] / atlas_width
-	repeat_y := quad_size[1] / atlas_height
+	// with atlas: tile_size overrides the cell size as the on-screen tile footprint
+	ref_w := tile_size[0] > 0.0 ? tile_size[0] : atlas_width
+	ref_h := tile_size[1] > 0.0 ? tile_size[1] : atlas_height
+	repeat_x := quad_size[0] / ref_w
+	repeat_y := quad_size[1] / ref_h
 
 	return [4][2]f32 {
 		{u0, v0},

@@ -44,6 +44,10 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		atlas_x := f32(lua_common.get_table_number(L, 1, "atlas_x", 0.0))
 		atlas_y := f32(lua_common.get_table_number(L, 1, "atlas_y", 0.0))
 
+		tile_width := f32(lua_common.get_table_number(L, 1, "tile_width", 0.0))
+		tile_height := f32(lua_common.get_table_number(L, 1, "tile_height", 0.0))
+		tile_size := f32(lua_common.get_table_number(L, 1, "tile_size", 0.0))
+
 		if scale != 1.0 && (scale_x == 1.0 && scale_y == 1.0) {
 			scale_x = scale
 			scale_y = scale
@@ -57,6 +61,11 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		if atlas_size != 0.0 && (atlas_width == 0.0 && atlas_height == 0.0) {
 			atlas_width = atlas_size
 			atlas_height = atlas_size
+		}
+
+		if tile_size != 0.0 && (tile_width == 0.0 && tile_height == 0.0) {
+			tile_width = tile_size
+			tile_height = tile_size
 		}
 
 		color_rgba := hex_to_rgba(color)
@@ -78,6 +87,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 				x = atlas_x,
 				y = atlas_y,
 			},
+			tile_size = [2]f32{tile_width, tile_height},
 			shader_args = shader_args,
 		}
 

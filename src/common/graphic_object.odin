@@ -34,6 +34,7 @@ ObjectProp :: struct {
 	rotation:    f32,
 	opacity:     Maybe(f32),
 	atlas:       AtlasProps,
+	tile_size:   [2]f32,
 	shader_args: ShaderArgs,
 }
 
