@@ -31,5 +31,6 @@ process_post_command :: proc(data: PostCommand) {
 	switch v in data {
 	case PostLoadShader:
 		graphics.init_shader(v.shader_path)
+		delete(v.shader_path)
 	}
 }

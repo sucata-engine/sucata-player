@@ -27,6 +27,8 @@ LOAD_SHADER_FUNCTION :: lua_common.LuaFunction {
 			return 1
 		}
 
+		defer delete(shader_path)
+
 		_, ok := graphics.init_shader(shader_path)
 
 		if ok {

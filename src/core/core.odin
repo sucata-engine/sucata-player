@@ -355,12 +355,15 @@ clear_render_queue :: proc() {
 
 			if obj.quads != nil {
 				for quad in obj.quads^ {
-					for _, shader in quad.shader_args {
+					for key, shader in quad.shader_args {
 						#partial switch v in shader {
 						case string:
 							delete(v)
 						}
+						delete(key)
 					}
+					shader_args := quad.shader_args
+					delete(shader_args)
 				}
 
 				delete(obj.quads^)
@@ -369,12 +372,15 @@ clear_render_queue :: proc() {
 		case common.TextObjectProps:
 			delete(obj.font)
 			delete(obj.text)
-			for _, shader in obj.shader_args {
+			for key, shader in obj.shader_args {
 				#partial switch v in shader {
 				case string:
 					delete(v)
 				}
+				delete(key)
 			}
+			shader_args := obj.shader_args
+			delete(shader_args)
 		}
 	}
 	clear(&renderQueue)
