@@ -29,6 +29,7 @@ calc_indices :: proc() {
 init_graphics :: proc() {
 	load_default_image()
 	calc_indices()
+	init_quad_indices()
 	init_postfx(game_width, game_height)
 }
 
