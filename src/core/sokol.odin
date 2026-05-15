@@ -104,9 +104,7 @@ init_callback :: proc "c" () {
 	is_game_started = true
 	process_post_commands()
 
-	if scene != nil && len(scene) > 0 {
-		run_init()
-	}
+	run_init()
 
 	flush_init_queue()
 }
