@@ -1,6 +1,6 @@
 # Sucata Player
 
-This is the Sucata Player that runs your sucata game, see [sucata-cli](https://github.com/sucataengine/sucata-cli) for more
+This is the Sucata Player that runs your sucata game, see [sucata-cli](https://github.com/sucata-engine/sucata-cli) for more
 
 
 ## Shared Folder
