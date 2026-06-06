@@ -54,8 +54,8 @@ init_text_indices :: proc() {
 
 	text_sampler = sg.make_sampler(
 		{
-			min_filter = .LINEAR,
-			mag_filter = .LINEAR,
+			min_filter = .NEAREST,
+			mag_filter = .NEAREST,
 			wrap_u = .CLAMP_TO_EDGE,
 			wrap_v = .CLAMP_TO_EDGE,
 		},
