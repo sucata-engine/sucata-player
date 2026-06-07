@@ -16,7 +16,7 @@ init_run_paths :: proc(file: string, default_file: string = "main.lua") {
 	}
 
 	filesystem.is_bundle = false
-	filesystem.src = filepath.dir(filesystem.file)
+	filesystem.src = strings.clone(filepath.dir(filesystem.file))
 	filesystem.build = strings.clone(filesystem.src)
 	filesystem.name = filepath.base(filesystem.src)
 
@@ -41,7 +41,7 @@ uninit_paths :: proc() {
 
 init_build_paths :: proc(assets_file: string) {
 	filesystem.file = strings.clone("main.lua")
-	filesystem.src = filepath.dir(assets_file)
+	filesystem.src = strings.clone(filepath.dir(assets_file))
 	filesystem.build = strings.clone(filesystem.src)
 	filesystem.name = filepath.base(filesystem.src)
 	filesystem.is_bundle = true
