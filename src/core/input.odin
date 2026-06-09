@@ -78,6 +78,28 @@ handle_input_event :: proc(event: ^sapp.Event) {
 			}
 			input_state.keys_down[code] = true
 		}
+		#partial switch event.key_code {
+		case .BACKSPACE:
+			input_state.last_char = 8
+		case .SPACE:
+			input_state.last_char = 32
+		case .ENTER:
+			input_state.last_char = 13
+		case .TAB:
+			input_state.last_char = 9
+		case .ESCAPE:
+			input_state.last_char = 27
+		case .UP:
+			input_state.last_char = 0xF700
+		case .DOWN:
+			input_state.last_char = 0xF701
+		case .LEFT:
+			input_state.last_char = 0xF702
+		case .RIGHT:
+			input_state.last_char = 0xF703
+		case .DELETE:
+			input_state.last_char = 127
+		}
 
 	case .KEY_UP:
 		code := int(event.key_code)
