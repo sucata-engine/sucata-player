@@ -112,6 +112,12 @@ init_callback :: proc "c" () {
 cleanup_callback :: proc "c" () {
 	context = DEFAULT_CONTEXT
 
+	if exit_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
+		call_lua_function(LUA_GLOBAL_STATE, exit_callback_ref)
+		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, exit_callback_ref)
+		exit_callback_ref = 0
+	}
+
 	run_free()
 	cleanup_event_handlers()
 	cleanup_tags()
