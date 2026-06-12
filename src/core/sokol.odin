@@ -107,6 +107,10 @@ init_callback :: proc "c" () {
 	run_init()
 
 	flush_init_queue()
+
+	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
+		call_lua_function(LUA_GLOBAL_STATE, init_callback_ref)
+	}
 }
 
 cleanup_callback :: proc "c" () {

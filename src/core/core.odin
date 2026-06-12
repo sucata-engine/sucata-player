@@ -28,12 +28,20 @@ destroyQueue: [dynamic]^common.Entity = {}
 VERSION :: "0.3.0"
 
 exit_callback_ref: i32 = 0
+init_callback_ref: i32 = 0
 
 set_exit_callback :: proc(func_ref: i32) {
 	if exit_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
 		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, exit_callback_ref)
 	}
 	exit_callback_ref = func_ref
+}
+
+set_init_callback :: proc(func_ref: i32) {
+	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
+		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, init_callback_ref)
+	}
+	init_callback_ref = func_ref
 }
 
 main :: proc() {
