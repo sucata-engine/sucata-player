@@ -13,7 +13,6 @@ run :: proc(assets_hash: string) {
 	file_path, _ := filepath.abs(os.args[0], context.allocator)
 	defer delete(file_path)
 	dir_path := filepath.dir(file_path)
-	defer delete(dir_path)
 	assets_path, _ := filepath.join({dir_path, DEFAULT_ASSETS_PATH}, context.allocator)
 
 	actual_assets_hash := get_assets_hash(assets_path)

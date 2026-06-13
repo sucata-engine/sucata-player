@@ -107,10 +107,6 @@ init_callback :: proc "c" () {
 	run_init()
 
 	flush_init_queue()
-
-	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
-		call_lua_function(LUA_GLOBAL_STATE, init_callback_ref)
-	}
 }
 
 cleanup_callback :: proc "c" () {
@@ -124,6 +120,7 @@ cleanup_callback :: proc "c" () {
 
 	run_free()
 	cleanup_event_handlers()
+	cleanup_behaviours()
 	cleanup_tags()
 	cleanup_timers()
 	cleanup_entities()
@@ -148,6 +145,12 @@ frame_callback :: proc "c" () {
 	context = DEFAULT_CONTEXT
 	context.temp_allocator = temp_allocator
 	defer reset_temp_arena()
+
+	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
+		call_lua_function(LUA_GLOBAL_STATE, init_callback_ref)
+		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, init_callback_ref)
+		init_callback_ref = 0
+	}
 
 	sapp.show_mouse(windowConfig.visible_mouse)
 	sapp.lock_mouse(windowConfig.lock_mouse)

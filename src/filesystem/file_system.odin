@@ -14,7 +14,6 @@ read_file :: proc(file_path: string) -> ([]u8, bool) {
 
 read_file_as_string :: proc(file_path: string) -> (string, bool) {
 	data, ok := read_file(file_path)
-	defer delete(data)
 	if !ok {
 		return "", false
 	}
