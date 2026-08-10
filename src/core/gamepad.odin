@@ -68,7 +68,7 @@ add_gamepad :: proc(joystick_id: sdl3.JoystickID) -> bool {
 	gamepads[slot].id = sdl3.GetGamepadID(gamepad)
 
 	name := sdl3.GetGamepadName(gamepad)
-	gamepads[slot].name = name != nil ? string(name) : "Unknown"
+	gamepads[slot].name = strings.clone(name != nil ? string(name) : "Unknown")
 	gamepads[slot].connected = true
 
 	for axis in sdl3.GamepadAxis {
