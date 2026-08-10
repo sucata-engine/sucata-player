@@ -5,6 +5,7 @@ import "../core"
 import "../filesystem"
 import "./audio"
 import cam "./camera"
+import dynlib "./dynlib"
 import "./file_system"
 import mathns "./math"
 import "./scene"
@@ -35,6 +36,7 @@ default_gc_config := GC_Config {
 lua_namespaces :: []lua_common.LuaNamespace {
 	audio.AUDIO_NAMESPACE,
 	cam.CAMERA_NAMESPACE,
+	dynlib.DYNLIB_NAMESPACE,
 	file_system.FILE_SYSTEM_NAMESPACE,
 	gamepad.GAMEPAD_NAMESPACE,
 	graphic.GRAPHIC_NAMESPACE,

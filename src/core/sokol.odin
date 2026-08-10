@@ -126,6 +126,7 @@ cleanup_callback :: proc "c" () {
 	cleanup_entities()
 	shutdown_gamepad()
 	audio_shutdown()
+	dynlib_shutdown()
 	graphics.shutdown_graphics()
 
 	sg.shutdown()

@@ -34,7 +34,7 @@ RenderGroupKey :: struct {
 }
 render_group_index: map[RenderGroupKey]int = {}
 
-VERSION :: "0.3.1"
+VERSION :: "0.3.2"
 
 exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0
