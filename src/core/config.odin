@@ -9,6 +9,7 @@ windowConfig := common.WindowConfig {
 	width           = 800,
 	height          = 600,
 	vsync           = 1,
+	max_fps         = 60,
 	fullscreen      = false,
 	title           = "Sucata",
 	lock_mouse      = false,
@@ -47,6 +48,12 @@ set_window_title :: proc(title: string) {
 
 set_window_vsync :: proc(vsync: i32) {
 	windowConfig.vsync = vsync
+}
+
+// max_fps <= 0 disables the cap, relying solely on the driver/compositor's
+// handling of vsync (which is not reliably throttled on every Linux setup).
+set_window_max_fps :: proc(max_fps: i32) {
+	windowConfig.max_fps = max_fps
 }
 
 set_window_size :: proc(width: i32, height: i32) {

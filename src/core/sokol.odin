@@ -5,12 +5,19 @@ import "../filesystem"
 import "../graphics"
 import "base:runtime"
 import "core:strings"
+import "core:time"
 import sapp "shared:sokol/app"
 import sg "shared:sokol/gfx"
 import sglue "shared:sokol/glue"
 import shelpers "shared:sokol/helpers"
 import st "shared:sokol/time"
 import lua "vendor:lua/5.4"
+
+BACKGROUND_FPS :: 15
+MINIMIZED_FPS :: 5
+
+is_window_focused: bool = true
+is_window_minimized: bool = false
 
 delta_time: f64 = 0.016
 time_scale: f64 = 1.0
@@ -141,11 +148,23 @@ cleanup_callback :: proc "c" () {
 	filesystem.uninit_paths()
 }
 
+get_target_fps :: proc() -> i32 {
+	if is_window_minimized {
+		return MINIMIZED_FPS
+	}
+	if !is_window_focused {
+		return BACKGROUND_FPS
+	}
+	return windowConfig.max_fps
+}
+
 elapsed_time := 0.0
 frame_callback :: proc "c" () {
 	context = DEFAULT_CONTEXT
 	context.temp_allocator = temp_allocator
 	defer reset_temp_arena()
+
+	frame_start_time := st.now()
 
 	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
 		call_lua_function(LUA_GLOBAL_STATE, init_callback_ref)
@@ -224,6 +243,15 @@ frame_callback :: proc "c" () {
 	if LUA_GLOBAL_STATE != nil {
 		lua.gc(LUA_GLOBAL_STATE, lua.GCSTEP, 5)
 	}
+
+	target_fps := get_target_fps()
+	if target_fps > 0 {
+		target_frame_seconds := 1.0 / f64(target_fps)
+		elapsed_seconds := st.sec(st.since(frame_start_time))
+		if elapsed_seconds < target_frame_seconds {
+			time.sleep(time.Duration((target_frame_seconds - elapsed_seconds) * f64(time.Second)))
+		}
+	}
 }
 
 event_callback :: proc "c" (event: ^sapp.Event) {
@@ -231,6 +259,17 @@ event_callback :: proc "c" (event: ^sapp.Event) {
 
 	if event.type == .RESIZED {
 		handle_window_resize(event.window_width, event.window_height)
+	}
+
+	#partial switch event.type {
+	case .FOCUSED:
+		is_window_focused = true
+	case .UNFOCUSED:
+		is_window_focused = false
+	case .ICONIFIED:
+		is_window_minimized = true
+	case .RESTORED:
+		is_window_minimized = false
 	}
 
 	handle_input_event(event)

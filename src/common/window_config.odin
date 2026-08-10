@@ -4,6 +4,7 @@ WindowConfig :: struct {
 	width:           i32,
 	height:          i32,
 	vsync:           i32,
+	max_fps:         i32,
 	title:           string,
 	fullscreen:      bool,
 	lock_mouse:      bool,
