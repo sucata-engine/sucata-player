@@ -5,14 +5,7 @@ import "core:c"
 import "core:strings"
 import lua "vendor:lua/5.4"
 
-get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs {
-	lua.getfield(L, table_index, "shader_args")
-
-	if lua.type(L, -1) != lua.Type.TABLE {
-		lua.pop(L, 1)
-		return common.ShaderArgs{}
-	}
-
+parse_shader_args_table :: proc(L: ^lua.State) -> common.ShaderArgs {
 	shader_args := common.ShaderArgs{}
 
 	lua.pushnil(L)
@@ -56,6 +49,18 @@ get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs 
 		lua.pop(L, 1)
 	}
 
+	return shader_args
+}
+
+get_shader_args :: proc(L: ^lua.State, table_index: c.int) -> common.ShaderArgs {
+	lua.getfield(L, table_index, "shader_args")
+
+	if lua.type(L, -1) != lua.Type.TABLE {
+		lua.pop(L, 1)
+		return common.ShaderArgs{}
+	}
+
+	shader_args := parse_shader_args_table(L)
 	lua.pop(L, 1)
 	return shader_args
 }

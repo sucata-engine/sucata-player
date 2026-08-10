@@ -25,6 +25,15 @@ global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
+RenderGroupKey :: struct {
+	texture: string,
+	z_index: i32,
+	shader:  u32,
+	fixed:   bool,
+	tiled:   bool,
+}
+render_group_index: map[RenderGroupKey]int = {}
+
 VERSION :: "0.3.1"
 
 exit_callback_ref: i32 = 0
@@ -260,6 +269,9 @@ run_free :: proc() {
 	delete(renderQueue)
 	renderQueue = {}
 
+	delete(render_group_index)
+	render_group_index = {}
+
 	delete(destroyQueue)
 	destroyQueue = {}
 }
@@ -323,24 +335,25 @@ add_group_to_render_queue :: proc(
 		common.print_error("Trying to render outside draw() function")
 		return
 	}
-	for i in 0 ..< len(renderQueue) {
-		#partial switch v in renderQueue[i] {
-		case common.GroupObjectProps:
-			if v.texture == texture &&
-			   v.z_index == z_index &&
-			   v.shader == shader &&
-			   v.fixed == fixed &&
-			   v.tiled == tiled {
 
-				append(renderQueue[i].(common.GroupObjectProps).quads, prop)
-				return
-			}
-		}
+	lookup_key := RenderGroupKey {
+		texture = texture,
+		z_index = z_index,
+		shader  = shader,
+		fixed   = fixed,
+		tiled   = tiled,
 	}
+	if index, ok := render_group_index[lookup_key]; ok {
+		group := renderQueue[index].(common.GroupObjectProps)
+		append(group.quads, prop)
+		return
+	}
+
 	quads := new([dynamic]common.ObjectProp)
 	append(quads, prop)
+	owned_texture := strings.clone(texture)
 	group_quads := common.GroupObjectProps {
-		texture = strings.clone(texture),
+		texture = owned_texture,
 		z_index = z_index,
 		shader  = shader,
 		fixed   = fixed,
@@ -348,6 +361,8 @@ add_group_to_render_queue :: proc(
 		quads   = quads,
 	}
 	append(&renderQueue, group_quads)
+	render_group_index[RenderGroupKey{texture = owned_texture, z_index = z_index, shader = shader, fixed = fixed, tiled = tiled}] =
+		len(renderQueue) - 1
 }
 
 add_to_destroy_queue :: proc(entity: ^common.Entity) {
@@ -401,6 +416,7 @@ clear_render_queue :: proc() {
 		}
 	}
 	clear(&renderQueue)
+	clear(&render_group_index)
 }
 
 draw_render_queue :: proc() {
