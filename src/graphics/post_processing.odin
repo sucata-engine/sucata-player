@@ -24,6 +24,9 @@ postfx_vb: sg.Buffer
 postfx_ib: sg.Buffer
 postfx_inited: bool
 
+POSTFX_EFFECT_STREAM_CAPACITY_BYTES :: 256 * 1024
+postfx_effect_vb: sg.Buffer
+
 postfx_passthrough_pipeline: sg.Pipeline
 postfx_passthrough_shader: sg.Shader
 postfx_passthrough_inited: bool
@@ -99,6 +102,13 @@ init_postfx :: proc(width, height: i32) {
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
 
+	postfx_effect_vb = sg.make_buffer(
+		{
+			usage = {vertex_buffer = true, stream_update = true},
+			size = POSTFX_EFFECT_STREAM_CAPACITY_BYTES,
+		},
+	)
+
 	effects = make([dynamic]Postfx_Effect)
 	postfx_inited = true
 }
@@ -112,6 +122,7 @@ shutdown_postfx :: proc() {
 		delete(effects)
 		sg.destroy_buffer(postfx_vb)
 		sg.destroy_buffer(postfx_ib)
+		sg.destroy_buffer(postfx_effect_vb)
 		shutdown_offscreen(&postfx_targets[0])
 		shutdown_offscreen(&postfx_targets[1])
 		postfx_inited = false
@@ -150,9 +161,12 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		vertex_data := get_post_processing_vertex_data(shader, effect.args)
 		defer delete(vertex_data)
 
-		vertex_buffer := sg.make_buffer(
-			{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_data[:])},
-		)
+		data := sg_range(vertex_data[:])
+		if sg.query_buffer_will_overflow(postfx_effect_vb, data.size) {
+			common.print_error("postfx vertex stream buffer overflow, dropping effect pass")
+			continue
+		}
+		vertex_offset := sg.append_buffer(postfx_effect_vb, data)
 
 		pass_action := sg.Pass_Action{}
 		pass_action.colors[0] = {
@@ -171,7 +185,8 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		sg.apply_pipeline(shader.pipeline)
 		sg.apply_bindings(
 			{
-				vertex_buffers = {0 = vertex_buffer},
+				vertex_buffers = {0 = postfx_effect_vb},
+				vertex_buffer_offsets = {0 = vertex_offset},
 				index_buffer = postfx_ib,
 				views = get_views_data_with_custom_shader(
 					current_src.color_tex_view,
@@ -183,8 +198,6 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		)
 		sg.draw(0, 6, 1)
 		sg.end_pass()
-
-		sg.destroy_buffer(vertex_buffer)
 
 		current_src = &postfx_targets[pong]
 		ping, pong = pong, ping

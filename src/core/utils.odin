@@ -1,7 +1,6 @@
 package core
 
 import "../common"
-import "core:strings"
 import lua "vendor:lua/5.4"
 
 call_lua_function :: proc(L: ^lua.State, function_ref: i32) -> bool {
@@ -69,7 +68,7 @@ call_lua_function_with_table_ref :: proc(
 call_lua_method_with_self_ref :: proc(
 	L: ^lua.State,
 	table_ref: i32,
-	field_name: string,
+	field_name: cstring,
 	self_ref: i32,
 ) -> bool {
 	top := lua.gettop(L)
@@ -86,10 +85,7 @@ call_lua_method_with_self_ref :: proc(
 		return false
 	}
 
-	field_cstring := strings.clone_to_cstring(field_name)
-	defer delete_cstring(field_cstring)
-
-	lua.getfield(L, -1, field_cstring)
+	lua.getfield(L, -1, field_name)
 
 	if !lua.isfunction(L, -1) {
 		lua.pop(L, 2)

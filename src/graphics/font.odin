@@ -110,7 +110,12 @@ find_first_font_in_dir :: proc(dir: string, max_depth: int) -> (string, bool) {
 	return "", false
 }
 
-loaded_fonts := map[string]^Font{}
+FontKey :: struct {
+	path: string,
+	size: f32,
+}
+
+loaded_fonts := map[FontKey]^Font{}
 
 load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	font_path := file_path
@@ -119,10 +124,8 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		font_path = get_default_system_font()
 		from_system = true
 	}
-	font_name := fmt.aprintf("%s_%f", font_path, font_size, allocator = context.allocator)
 
-	if font, exists := loaded_fonts[font_name]; exists {
-		delete(font_name)
+	if font, exists := loaded_fonts[FontKey{path = font_path, size = font_size}]; exists {
 		return font
 	}
 
@@ -174,7 +177,6 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	if result <= 0 {
 		free(bitmap)
 		delete(char_data)
-		delete(font_name)
 		return nil
 	}
 
@@ -192,10 +194,9 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	)
 	free(bitmap)
 
-	path_cstr := strings.clone_to_cstring(font_name)
-	defer delete_cstring(path_cstr)
+	label_cstr := fmt.ctprintf("%s_%f", font_path, font_size)
 
-	view := sg.make_view({texture = {image = image}, label = path_cstr})
+	view := sg.make_view({texture = {image = image}, label = label_cstr})
 
 	font := new(Font)
 	font.char_data = char_data
@@ -206,19 +207,19 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	font.descent = f32(descent_i) * v_scale
 	font.line_gap = f32(line_gap_i) * v_scale
 
-	loaded_fonts[font_name] = font
+	loaded_fonts[FontKey{path = strings.clone(font_path), size = font_size}] = font
 
 	return font
 }
 
 unload_fonts :: proc() {
-	for font_name, font in loaded_fonts {
+	for font_key, font in loaded_fonts {
 		sg.destroy_image(sg.query_view_image(font.image))
 		sg.destroy_view(font.image)
 		delete(font.char_data)
 		free(font)
-		delete_key(&loaded_fonts, font_name)
-		delete(font_name)
+		delete_key(&loaded_fonts, font_key)
+		delete(font_key.path)
 	}
 	delete(loaded_fonts)
 	loaded_fonts = {}

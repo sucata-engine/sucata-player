@@ -23,7 +23,7 @@ cleanup_behaviours :: proc() {
 	behaviours = {}
 }
 
-call_behaviour :: proc(id: i64, method: string, state: i32) {
+call_behaviour :: proc(id: i64, method: cstring, state: i32) {
 	table_ref, ok := behaviours[id]
 	if !ok {
 		return

@@ -6,11 +6,14 @@ import "core:c"
 import sg "shared:sokol/gfx"
 
 quad_ib: sg.Buffer
+quad_vb: sg.Buffer
 quad_buffers_inited: bool
 quad_shader: sg.Shader
 quad_pipeline: sg.Pipeline
 quad_sampler: sg.Sampler
 quad_sampler_repeat: sg.Sampler
+
+QUAD_STREAM_CAPACITY :: MAX_QUADS * 4
 
 init_quad_indices :: proc() {
 	if quad_buffers_inited {
@@ -52,6 +55,12 @@ init_quad_indices :: proc() {
 	quad_ib = sg.make_buffer(
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
+	quad_vb = sg.make_buffer(
+		{
+			usage = {vertex_buffer = true, stream_update = true},
+			size = QUAD_STREAM_CAPACITY * size_of(Vertex_Data) * 4,
+		},
+	)
 
 	quad_sampler = sg.make_sampler(
 		{
@@ -72,6 +81,7 @@ init_quad_indices :: proc() {
 shutdown_quad_buffers :: proc() {
 	if quad_buffers_inited {
 		sg.destroy_buffer(quad_ib)
+		sg.destroy_buffer(quad_vb)
 		sg.destroy_pipeline(quad_pipeline)
 		sg.destroy_sampler(quad_sampler)
 		sg.destroy_sampler(quad_sampler_repeat)
@@ -115,10 +125,12 @@ quad_group :: proc(props: common.GroupObjectProps) {
 		return
 	}
 
-	vertex_buffer := sg.make_buffer(
-		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_scratch[:])},
-	)
-	state := sg.query_buffer_state(vertex_buffer)
+	data := sg_range(vertex_scratch[:])
+	if sg.query_buffer_will_overflow(quad_vb, data.size) {
+		common.print_error("quad vertex stream buffer overflow, dropping draw")
+		return
+	}
+	vertex_offset := sg.append_buffer(quad_vb, data)
 
 	if has_custom_shader {
 		sg.apply_pipeline(custom_shader.pipeline)
@@ -129,7 +141,8 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
 	bindings := sg.Bindings {
-		vertex_buffers = {0 = vertex_buffer},
+		vertex_buffers = {0 = quad_vb},
+		vertex_buffer_offsets = {0 = vertex_offset},
 		index_buffer = quad_ib,
 		views = get_views_data(image.view),
 		samplers = get_samplers_data(props.tiled),
@@ -139,6 +152,4 @@ quad_group :: proc(props: common.GroupObjectProps) {
 	quad_count := len(quads)
 	index_count := quad_count * 6
 	sg.draw(0, index_count, 1)
-
-	sg.destroy_buffer(vertex_buffer)
 }

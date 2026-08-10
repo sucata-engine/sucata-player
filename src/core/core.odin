@@ -25,7 +25,7 @@ global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
-VERSION :: "0.3.0"
+VERSION :: "0.3.1"
 
 exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0

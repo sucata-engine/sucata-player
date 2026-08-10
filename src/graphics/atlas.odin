@@ -37,7 +37,6 @@ calculate_atlas_uv_tiled :: proc(
 	atlas_y := atlas.y
 
 	if atlas_height == 0.0 || atlas_width == 0.0 {
-		// no atlas: tile_size overrides the natural image size when > 0
 		ref_w := tile_size[0] > 0.0 ? tile_size[0] : img_width
 		ref_h := tile_size[1] > 0.0 ? tile_size[1] : img_height
 		repeat_x := quad_size[0] / ref_w
@@ -52,7 +51,6 @@ calculate_atlas_uv_tiled :: proc(
 
 	tile_u := u1 - u0
 	tile_v := v1 - v0
-	// with atlas: tile_size overrides the cell size as the on-screen tile footprint
 	ref_w := tile_size[0] > 0.0 ? tile_size[0] : atlas_width
 	ref_h := tile_size[1] > 0.0 ? tile_size[1] : atlas_height
 	repeat_x := quad_size[0] / ref_w

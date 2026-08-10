@@ -7,10 +7,13 @@ import "core:unicode/utf8"
 import sg "shared:sokol/gfx"
 
 text_ib: sg.Buffer
+text_vb: sg.Buffer
 text_shader: sg.Shader
 text_buffers_inited: bool
 text_pipeline: sg.Pipeline
 text_sampler: sg.Sampler
+
+TEXT_STREAM_CAPACITY :: MAX_QUADS * 4
 
 init_text_indices :: proc() {
 	if text_buffers_inited {
@@ -51,6 +54,12 @@ init_text_indices :: proc() {
 	text_ib = sg.make_buffer(
 		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
 	)
+	text_vb = sg.make_buffer(
+		{
+			usage = {vertex_buffer = true, stream_update = true},
+			size = TEXT_STREAM_CAPACITY * size_of(Vertex_Data) * 4,
+		},
+	)
 
 	text_sampler = sg.make_sampler(
 		{
@@ -67,6 +76,7 @@ init_text_indices :: proc() {
 shutdown_text_buffers :: proc() {
 	if text_buffers_inited {
 		sg.destroy_buffer(text_ib)
+		sg.destroy_buffer(text_vb)
 		sg.destroy_pipeline(text_pipeline)
 		sg.destroy_sampler(text_sampler)
 		sg.destroy_shader(text_shader)
@@ -98,13 +108,17 @@ text :: proc(props: common.TextObjectProps) {
 		return
 	}
 
-	vertex_buffers := sg.make_buffer(
-		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertex_scratch[:])},
-	)
+	data := sg_range(vertex_scratch[:])
+	if sg.query_buffer_will_overflow(text_vb, data.size) {
+		common.print_error("text vertex stream buffer overflow, dropping draw")
+		return
+	}
+	vertex_offset := sg.append_buffer(text_vb, data)
 	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
 
 	bindings := sg.Bindings {
-		vertex_buffers = vertex_buffers,
+		vertex_buffers = {0 = text_vb},
+		vertex_buffer_offsets = {0 = vertex_offset},
 		index_buffer = text_ib,
 		views = get_views_data(font.image),
 		samplers = {0 = text_sampler},
@@ -114,6 +128,4 @@ text :: proc(props: common.TextObjectProps) {
 	quad_count := len(props.text)
 	index_count := quad_count * 6
 	sg.draw(0, index_count, 1)
-
-	sg.destroy_buffer(vertex_buffers)
 }
