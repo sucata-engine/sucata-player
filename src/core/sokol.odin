@@ -162,6 +162,7 @@ frame_callback :: proc "c" () {
 
 	poll_gamepad_events()
 
+	process_pending_scene()
 	run_update()
 	process_hoverables()
 

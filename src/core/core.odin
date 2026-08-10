@@ -25,6 +25,10 @@ global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
+has_pending_scene: bool = false
+pending_scene_is_clear: bool = false
+pending_scene: [dynamic]^common.Entity = {}
+
 RenderGroupKey :: struct {
 	texture: string,
 	z_index: i32,
@@ -34,7 +38,7 @@ RenderGroupKey :: struct {
 }
 render_group_index: map[RenderGroupKey]int = {}
 
-VERSION :: "0.3.2"
+VERSION :: "0.3.3"
 
 exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0
@@ -63,15 +67,17 @@ get_entity_id :: proc() -> u64 {
 }
 
 load_scene :: proc(entities: [dynamic]^common.Entity) {
-	if scene != nil && len(scene) > 0 {
-		run_free()
+	if !is_game_started {
+		if scene != nil && len(scene) > 0 {
+			run_free()
+		}
+		scene = entities
+		return
 	}
 
-	scene = entities
-
-	if is_game_started {
-		run_init()
-	}
+	pending_scene = entities
+	pending_scene_is_clear = false
+	has_pending_scene = true
 }
 
 destroy :: proc(entity: ^common.Entity) -> bool {
@@ -305,10 +311,38 @@ get_scene :: proc() -> [dynamic]^common.Entity {
 }
 
 clear_scene :: proc() {
+	if !is_game_started {
+		if scene != nil && len(scene) > 0 {
+			run_free()
+		}
+		scene = {}
+		return
+	}
+
+	pending_scene = nil
+	pending_scene_is_clear = true
+	has_pending_scene = true
+}
+
+process_pending_scene :: proc() {
+	if !has_pending_scene {
+		return
+	}
+	has_pending_scene = false
+
 	if scene != nil && len(scene) > 0 {
 		run_free()
 	}
-	scene = {}
+
+	if pending_scene_is_clear {
+		pending_scene_is_clear = false
+		scene = {}
+		return
+	}
+
+	scene = pending_scene
+	pending_scene = nil
+	run_init()
 }
 
 quit :: proc() {

@@ -7,7 +7,7 @@ temp_allocator: mem.Allocator
 TEMP_ARENA_SIZE :: 4 * mem.Megabyte
 
 init_temp_arena :: proc() {
-	mem.dynamic_arena_init(&temp_arena, alignment = 64, block_size = TEMP_ARENA_SIZE)
+	mem.dynamic_arena_init(&temp_arena, minimum_alignment = 64, block_size = TEMP_ARENA_SIZE)
 	temp_allocator = mem.dynamic_arena_allocator(&temp_arena)
 }
 
