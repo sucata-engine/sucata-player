@@ -4,7 +4,7 @@
 
 `sucata-player` is the runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language (in the spirit of Love2D/Godot). This is the actual executable that loads and plays a Sucata game — analogous to the Love2D runtime or Godot's engine binary. It is driven by the sibling [sucata-cli](../sucata-cli/AGENT.md) tool during development, and gets cloned + bundled with a game's assets to produce standalone distributables.
 
-Key third-party dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/audio/app framework, shared Odin lib), [odin-http](https://github.com/laytan/odin-http) (shared Odin lib), miniaudio (audio), lz4 (asset compression), SDL3 (gamepad support), and Lua 5.4 (`vendor:lua/5.4` — note `lua51.dll` bundled for Windows distribution is a separate runtime concern from the Odin binding, which targets 5.4).
+Key third-party dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/audio/app framework, shared Odin lib), [odin-http](https://github.com/laytan/odin-http) (shared Odin lib), miniaudio (audio), lz4 (asset compression), SDL3 (gamepad support), and Lua 5.4 (`vendor:lua/5.4`, `lua54.dll` bundled for Windows distribution).
 
 ## Directory layout
 
@@ -22,7 +22,7 @@ sucata-player/
 │                         into $(odin root)/shared
 ├── assets/               sucata.png (engine/window icon)
 ├── licenses/             Third-party license texts (luajit, lua, lz4, miniaudio, odin, sdl, sokol*)
-├── lua51.dll, SDL3.dll   Windows runtime deps bundled for distribution
+├── lua54.dll, SDL3.dll   Windows runtime deps bundled for distribution
 ├── ols.json              Odin Language Server config
 ├── sucata-player         Compiled Linux binary (local build artifact, not source)
 └── README.md
