@@ -30,16 +30,18 @@ get_behaviours_refs_from_table_index :: proc(L: ^lua.State, table_index2: c.int)
 
 		if !lua.isnil(L, -1) {
 			pointer := lua.topointer(L, -1)
-			bhv_id := i64(uintptr(pointer))
+			ptr_id := i64(uintptr(pointer))
 
-			if !core.has_behaviour(bhv_id) {
-				ref := lua.L_ref(L, lua.REGISTRYINDEX)
-				core.add_behaviour(bhv_id, i32(ref))
-			} else {
+			index: i64
+			if core.has_behaviour(ptr_id) {
 				lua.pop(L, 1)
+				index = core.get_behaviour_index(ptr_id)
+			} else {
+				ref := lua.L_ref(L, lua.REGISTRYINDEX)
+				index = core.add_behaviour(L, ptr_id, i32(ref))
 			}
 
-			append(&refs, bhv_id)
+			append(&refs, index)
 		} else {
 			lua.pop(L, 1)
 		}

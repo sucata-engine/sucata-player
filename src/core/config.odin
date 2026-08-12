@@ -50,8 +50,6 @@ set_window_vsync :: proc(vsync: i32) {
 	windowConfig.vsync = vsync
 }
 
-// max_fps <= 0 disables the cap, relying solely on the driver/compositor's
-// handling of vsync (which is not reliably throttled on every Linux setup).
 set_window_max_fps :: proc(max_fps: i32) {
 	windowConfig.max_fps = max_fps
 }

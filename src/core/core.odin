@@ -11,6 +11,8 @@ import lua "vendor:lua/5.4"
 LUA_GLOBAL_STATE: ^lua.State
 DEFAULT_CONTEXT: runtime.Context
 
+LUA_TRACEBACK_REF: i32 = 0
+
 width: i32 = 800
 height: i32 = 600
 
@@ -20,6 +22,7 @@ is_draw_step: bool = false
 
 next_entity_id: u64 = 0
 scene: [dynamic]^common.Entity = {}
+scene_index: map[u64]int = {}
 global_scene: [dynamic]^common.Entity = [dynamic]^common.Entity{}
 global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
@@ -38,7 +41,30 @@ RenderGroupKey :: struct {
 }
 render_group_index: map[RenderGroupKey]int = {}
 
-VERSION :: "0.3.3"
+group_quads_pool: [dynamic]^[dynamic]common.ObjectProp = {}
+
+acquire_group_quads :: proc() -> ^[dynamic]common.ObjectProp {
+	if len(group_quads_pool) > 0 {
+		return pop(&group_quads_pool)
+	}
+	return new([dynamic]common.ObjectProp)
+}
+
+release_group_quads :: proc(quads: ^[dynamic]common.ObjectProp) {
+	clear(quads)
+	append(&group_quads_pool, quads)
+}
+
+cleanup_group_quads_pool :: proc() {
+	for quads in group_quads_pool {
+		delete(quads^)
+		free(quads)
+	}
+	delete(group_quads_pool)
+	group_quads_pool = {}
+}
+
+VERSION :: "1.0.0"
 
 exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0
@@ -66,12 +92,22 @@ get_entity_id :: proc() -> u64 {
 	return next_entity_id
 }
 
+rebuild_scene_index :: proc() {
+	clear(&scene_index)
+	for entity, i in scene {
+		if entity != nil {
+			scene_index[entity.id] = i
+		}
+	}
+}
+
 load_scene :: proc(entities: [dynamic]^common.Entity) {
 	if !is_game_started {
 		if scene != nil && len(scene) > 0 {
 			run_free()
 		}
 		scene = entities
+		rebuild_scene_index()
 		return
 	}
 
@@ -84,14 +120,22 @@ destroy :: proc(entity: ^common.Entity) -> bool {
 	if entity == nil {
 		return false
 	}
-	for i := 0; i < len(scene); i += 1 {
-		if scene[i] == entity {
-			ordered_remove(&scene, i)
-			free_obj(entity)
-			return true
-		}
+	idx, ok := scene_index[entity.id]
+	if !ok || idx >= len(scene) || scene[idx] != entity {
+		return false
 	}
-	return false
+
+	last_idx := len(scene) - 1
+	moved_entity := scene[last_idx]
+
+	unordered_remove(&scene, idx)
+	delete_key(&scene_index, entity.id)
+	if idx != last_idx {
+		scene_index[moved_entity.id] = idx
+	}
+
+	free_obj(entity)
+	return true
 }
 
 spawn :: proc(entity: ^common.Entity) -> u64 {
@@ -104,6 +148,7 @@ spawn :: proc(entity: ^common.Entity) -> u64 {
 
 	append(&scene, entity)
 	gObj := scene[len(scene) - 1]
+	scene_index[gObj.id] = len(scene) - 1
 	if is_game_started {
 		init(gObj)
 	}
@@ -200,7 +245,7 @@ init :: proc(entity: ^common.Entity) {
 	if entity.initiated {
 		return
 	}
-	run_entity_behaviour(entity, "init")
+	run_entity_behaviour(entity, .Init)
 	entity.initiated = true
 }
 
@@ -230,10 +275,11 @@ run_update :: proc() {
 }
 
 update :: proc(entity: ^common.Entity) {
-	run_entity_behaviour(entity, "tick")
+	run_entity_behaviour(entity, .Tick)
 }
 
 run_draw :: proc() {
+	graphics.invalidate_mvp_cache()
 	draw_debug_info()
 	if global_scene != nil {
 		for &entity in global_scene {
@@ -256,7 +302,7 @@ run_draw :: proc() {
 }
 
 draw :: proc(entity: ^common.Entity) {
-	run_entity_behaviour(entity, "draw")
+	run_entity_behaviour(entity, .Draw)
 }
 
 run_free :: proc() {
@@ -271,6 +317,9 @@ run_free :: proc() {
 	}
 	delete(scene)
 	scene = {}
+
+	delete(scene_index)
+	scene_index = {}
 
 	delete(renderQueue)
 	renderQueue = {}
@@ -294,7 +343,7 @@ free_obj :: proc(entity: ^common.Entity) {
 		return
 	}
 
-	run_entity_behaviour(entity, "free")
+	run_entity_behaviour(entity, .Free)
 	if entity.state > 0 {
 		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, entity.state)
 	}
@@ -342,6 +391,7 @@ process_pending_scene :: proc() {
 
 	scene = pending_scene
 	pending_scene = nil
+	rebuild_scene_index()
 	run_init()
 }
 
@@ -383,7 +433,7 @@ add_group_to_render_queue :: proc(
 		return
 	}
 
-	quads := new([dynamic]common.ObjectProp)
+	quads := acquire_group_quads()
 	append(quads, prop)
 	owned_texture := strings.clone(texture)
 	group_quads := common.GroupObjectProps {
@@ -432,8 +482,7 @@ clear_render_queue :: proc() {
 					delete(shader_args)
 				}
 
-				delete(obj.quads^)
-				free(obj.quads)
+				release_group_quads(obj.quads)
 			}
 		case common.TextObjectProps:
 			delete(obj.font)

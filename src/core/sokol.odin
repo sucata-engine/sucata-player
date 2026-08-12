@@ -4,6 +4,7 @@ import "../common"
 import "../filesystem"
 import "../graphics"
 import "base:runtime"
+import "core:c"
 import "core:strings"
 import "core:time"
 import sapp "shared:sokol/app"
@@ -31,6 +32,9 @@ clear_color := sg.Color {
 }
 last_frame_time: u64
 first_frame: bool = true
+
+GC_STEP_KB_MIN :: 5
+last_gc_kb: c.int = 0
 
 calc_time :: proc() {
 	current_time := st.now()
@@ -126,6 +130,7 @@ cleanup_callback :: proc "c" () {
 	}
 
 	run_free()
+	cleanup_group_quads_pool()
 	cleanup_event_handlers()
 	cleanup_behaviours()
 	cleanup_tags()
@@ -241,7 +246,11 @@ frame_callback :: proc "c" () {
 	process_destroy_queue()
 
 	if LUA_GLOBAL_STATE != nil {
-		lua.gc(LUA_GLOBAL_STATE, lua.GCSTEP, 5)
+		current_kb := lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT)
+		delta_kb := current_kb - last_gc_kb
+		step_kb := delta_kb > GC_STEP_KB_MIN ? delta_kb : GC_STEP_KB_MIN
+		lua.gc(LUA_GLOBAL_STATE, lua.GCSTEP, step_kb)
+		last_gc_kb = lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT)
 	}
 
 	target_fps := get_target_fps()

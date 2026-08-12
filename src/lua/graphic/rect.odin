@@ -19,8 +19,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		y: f32 = 0.0
 		width: f32 = 50.0
 		height: f32 = 50.0
-		color: string = "#ffffff"
-		color_owned := false
+		color_rgba: [4]f32 = {1, 1, 1, 1}
 		zIndex: f64 = 0.0
 		texture_path: string = ""
 		texture_owned := false
@@ -60,9 +59,8 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 				case "height":
 					if lua.isnumber(L, -1) do height = f32(lua.tonumber(L, -1))
 				case "color":
-					if lua.isstring(L, -1) {
-						color = strings.clone_from_cstring(lua.tostring(L, -1))
-						color_owned = true
+					if lua.type(L, -1) == lua.Type.TABLE {
+						color_rgba = parse_color_array(L, -1)
 					}
 				case "z_index":
 					if lua.isnumber(L, -1) do zIndex = f64(lua.tonumber(L, -1))
@@ -122,9 +120,6 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 			lua.pop(L, 1)
 		}
 
-		if !color_owned do color = strings.clone(color)
-		defer delete(color)
-
 		if !texture_owned do texture_path = strings.clone(texture_path)
 		defer delete(texture_path)
 
@@ -147,8 +142,6 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 			tile_width = tile_size
 			tile_height = tile_size
 		}
-
-		color_rgba := hex_to_rgba(color)
 
 		props := common.ObjectProp {
 			position = [2]f32{x, y},

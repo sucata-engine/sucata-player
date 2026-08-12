@@ -6,8 +6,13 @@ PostLoadShader :: struct {
 	shader_path: string,
 }
 
+PostPreloadTexture :: struct {
+	texture_path: string,
+}
+
 PostCommand :: union {
 	PostLoadShader,
+	PostPreloadTexture,
 }
 
 post_commands := [dynamic]PostCommand{}
@@ -32,5 +37,8 @@ process_post_command :: proc(data: PostCommand) {
 	case PostLoadShader:
 		graphics.init_shader(v.shader_path)
 		delete(v.shader_path)
+	case PostPreloadTexture:
+		graphics.preload_image(v.texture_path)
+		delete(v.texture_path)
 	}
 }

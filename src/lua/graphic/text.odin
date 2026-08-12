@@ -18,8 +18,7 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 		x: f32 = 0.0
 		y: f32 = 0.0
 		font_size: f32 = 16.0
-		color: string = "#ffffff"
-		color_owned := false
+		color_rgba: [4]f32 = {1, 1, 1, 1}
 		zIndex: f64 = 0.0
 		text: string = ""
 		text_owned := false
@@ -51,9 +50,8 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 				case "size":
 					if lua.isnumber(L, -1) do font_size = f32(lua.tonumber(L, -1))
 				case "color":
-					if lua.isstring(L, -1) {
-						color = strings.clone_from_cstring(lua.tostring(L, -1))
-						color_owned = true
+					if lua.type(L, -1) == lua.Type.TABLE {
+						color_rgba = parse_color_array(L, -1)
 					}
 				case "z_index":
 					if lua.isnumber(L, -1) do zIndex = f64(lua.tonumber(L, -1))
@@ -103,7 +101,6 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 			lua.pop(L, 1)
 		}
 
-		if !color_owned do color = strings.clone(color)
 		if !text_owned do text = strings.clone(text)
 		if !font_owned do font = strings.clone(font)
 		if !align_owned do align = strings.clone(align)
@@ -128,9 +125,6 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 		case "left":
 			text_align = .Left
 		}
-
-		color_rgba := hex_to_rgba(color)
-		defer delete(color)
 
 		props := common.TextObjectProps {
 			position    = [2]f32{x, y},

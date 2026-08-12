@@ -116,6 +116,7 @@ close_lua :: proc() {
 	if core.LUA_GLOBAL_STATE != nil {
 		lua.close(core.LUA_GLOBAL_STATE)
 		core.LUA_GLOBAL_STATE = nil
+		core.LUA_TRACEBACK_REF = 0
 	}
 }
 
@@ -167,6 +168,15 @@ init_lua :: proc(path: string, entity_file: string = "") {
 	})
 
 	lua.L_openlibs(L)
+
+	lua.getglobal(L, "debug")
+	lua.getfield(L, -1, "traceback")
+	if lua.isfunction(L, -1) {
+		core.LUA_TRACEBACK_REF = i32(lua.L_ref(L, lua.REGISTRYINDEX))
+	} else {
+		lua.pop(L, 1)
+	}
+	lua.pop(L, 1)
 
 	create_namespaces(L)
 	load_path()

@@ -26,6 +26,16 @@ set_camera_rotation :: proc(rotation: f32) {
 	camera.rotation = rotation
 }
 
+mvp_cache_dynamic: matrix[4, 4]f32
+mvp_cache_fixed: matrix[4, 4]f32
+mvp_cache_dynamic_valid: bool = false
+mvp_cache_fixed_valid: bool = false
+
+invalidate_mvp_cache :: proc() {
+	mvp_cache_dynamic_valid = false
+	mvp_cache_fixed_valid = false
+}
+
 get_view_projection_matrix :: proc(game_width, game_height: i32) -> matrix[4, 4]f32 {
 	projection := linalg.matrix_ortho3d_f32(0, f32(game_width), f32(game_height), 0, -1, 1)
 
@@ -41,7 +51,16 @@ get_view_projection_matrix :: proc(game_width, game_height: i32) -> matrix[4, 4]
 
 get_mvp :: proc(fixed: bool) -> matrix[4, 4]f32 {
 	if fixed {
-		return get_fixed_mvp()
+		if !mvp_cache_fixed_valid {
+			mvp_cache_fixed = get_fixed_mvp()
+			mvp_cache_fixed_valid = true
+		}
+		return mvp_cache_fixed
 	}
-	return get_view_projection_matrix(game_width, game_height)
+
+	if !mvp_cache_dynamic_valid {
+		mvp_cache_dynamic = get_view_projection_matrix(game_width, game_height)
+		mvp_cache_dynamic_valid = true
+	}
+	return mvp_cache_dynamic
 }

@@ -8,10 +8,15 @@ import stbi "vendor:stb/image"
 
 DEFAULT_IMAGE_KEY :: "__default__"
 
+HOT_TEXTURE_USE_THRESHOLD_DEFAULT :: 300
+hot_texture_use_threshold: int = HOT_TEXTURE_USE_THRESHOLD_DEFAULT
+
 Image :: struct {
-	width:  i32,
-	height: i32,
-	view:   sg.View,
+	width:     i32,
+	height:    i32,
+	view:      sg.View,
+	use_count: int,
+	hot:       bool,
 }
 
 images_loaded: map[string]Image = map[string]Image{}
@@ -41,6 +46,11 @@ load_image :: proc(_path: string) -> Image {
 
 	if value, ok := images_loaded[_path]; ok {
 		images_used[_path] = true
+		value.use_count += 1
+		if hot_texture_use_threshold > 0 && value.use_count >= hot_texture_use_threshold {
+			value.hot = true
+		}
+		images_loaded[_path] = value
 		return value
 	}
 
@@ -80,6 +90,15 @@ load_image :: proc(_path: string) -> Image {
 	return images_loaded[file_path]
 }
 
+preload_image :: proc(_path: string) {
+	if _path == "" {
+		return
+	}
+	image := load_image(_path)
+	image.hot = true
+	images_loaded[_path] = image
+}
+
 destroy_images :: proc() {
 	for file_path, value in images_loaded {
 		sg.destroy_image(sg.query_view_image(value.view))
@@ -104,10 +123,16 @@ destroy_image :: proc(file_path: string) {
 
 destroy_unused_images :: proc() {
 	for file_path, used in images_used {
-		if !used && file_path != DEFAULT_IMAGE_KEY {
-			destroy_image(file_path)
-		} else {
+		if used {
 			images_used[file_path] = false
+			continue
 		}
+		if file_path == DEFAULT_IMAGE_KEY {
+			continue
+		}
+		if image, ok := images_loaded[file_path]; ok && image.hot {
+			continue
+		}
+		destroy_image(file_path)
 	}
 }

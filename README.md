@@ -1,7 +1,8 @@
 # Sucata Player
 
-This is the Sucata Player that runs your sucata game, see [sucata-cli](https://github.com/sucata-engine/sucata-cli) for more
+The runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language. This is the executable that actually loads and plays a Sucata game — driven by the sibling [sucata-cli](https://github.com/sucata-engine/sucata-cli) tool during development, and cloned + bundled with a game's assets to produce standalone distributables via `sucata build`.
 
+Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/audio/app), [odin-http](https://github.com/laytan/odin-http), miniaudio (audio), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4.
 
 ## Shared Folder
 
