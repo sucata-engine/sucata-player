@@ -16,4 +16,4 @@ Pop-Location
 
 git clone https://github.com/laytan/odin-http.git
 Move-Item .\odin-http .\http
-Remove-Item -Recurse -Force odin-http
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue odin-http
