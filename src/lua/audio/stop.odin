@@ -1,5 +1,6 @@
 package audio
 
+import audio_engine "../../core/audio"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
@@ -15,7 +16,7 @@ STOP_FUNCTION :: lua_common.LuaFunction {
 
 		sound_id := lua.tonumber(L, 1)
 
-		core.stop_sound(u32(sound_id))
+		audio_engine.stop_sound(u32(sound_id))
 
 		return 0
 	},

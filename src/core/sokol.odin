@@ -3,6 +3,7 @@ package core
 import "../common"
 import "../filesystem"
 import "../graphics"
+import audio "./audio"
 import "base:runtime"
 import "core:c"
 import "core:strings"
@@ -104,10 +105,10 @@ init_callback :: proc "c" () {
 	graphics.init_graphics()
 	common.print_info("Sokol initialized with %s", sg.query_backend())
 
-	if audio_engine_init() {
-		common.print_info("Miniaudio initialized")
+	if audio.init() {
+		common.print_info("Audio engine initialized")
 	} else {
-		common.print_error("Failed to initialize Miniaudio")
+		common.print_error("Failed to initialize audio engine")
 	}
 
 	init_gamepad()
@@ -137,7 +138,7 @@ cleanup_callback :: proc "c" () {
 	cleanup_timers()
 	cleanup_entities()
 	shutdown_gamepad()
-	audio_shutdown()
+	audio.shutdown()
 	dynlib_shutdown()
 	graphics.shutdown_graphics()
 
@@ -182,7 +183,7 @@ frame_callback :: proc "c" () {
 
 	calc_time()
 	update_timers(delta_time)
-	audio_update()
+	audio.update()
 
 	poll_gamepad_events()
 

@@ -1,5 +1,6 @@
 package audio
 
+import audio_engine "../../core/audio"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
@@ -15,7 +16,7 @@ GET_PITCH_FUNCTION :: lua_common.LuaFunction {
 
 		sound_id := lua.tonumber(L, 1)
 
-		lua.pushnumber(L, lua.Number(core.get_sound_pitch(u32(sound_id))))
+		lua.pushnumber(L, lua.Number(audio_engine.get_sound_pitch(u32(sound_id))))
 
 		return 1
 	},
@@ -33,7 +34,7 @@ SET_PITCH_FUNCTION :: lua_common.LuaFunction {
 		sound_id := lua.tonumber(L, 1)
 		pitch := lua.tonumber(L, 2)
 
-		core.set_sound_pitch(u32(sound_id), f32(pitch))
+		audio_engine.set_sound_pitch(u32(sound_id), f32(pitch))
 
 		return 0
 	},

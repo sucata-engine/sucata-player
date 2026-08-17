@@ -64,7 +64,7 @@ cleanup_group_quads_pool :: proc() {
 	group_quads_pool = {}
 }
 
-VERSION :: "1.0.0"
+VERSION :: "1.1.0"
 
 exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0

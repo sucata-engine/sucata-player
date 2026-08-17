@@ -1,5 +1,6 @@
 package audio
 
+import audio_engine "../../core/audio"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
@@ -17,7 +18,7 @@ GET_GROUP_VOLUME_FUNCTION :: lua_common.LuaFunction {
 		group_id := strings.clone_from_cstring(lua.tostring(L, 1))
 		defer delete(group_id)
 
-		lua.pushnumber(L, lua.Number(core.get_group_volume(group_id)))
+		lua.pushnumber(L, lua.Number(audio_engine.get_group_volume(group_id)))
 
 		return 1
 	},
@@ -36,7 +37,7 @@ SET_GROUP_VOLUME_FUNCTION :: lua_common.LuaFunction {
 		defer delete(group_id)
 		volume := lua.tonumber(L, 2)
 
-		core.set_group_volume(group_id, f32(volume))
+		audio_engine.set_group_volume(group_id, f32(volume))
 
 		return 0
 	},

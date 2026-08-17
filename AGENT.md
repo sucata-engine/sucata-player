@@ -4,7 +4,7 @@
 
 `sucata-player` is the runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language (in the spirit of Love2D/Godot). This is the actual executable that loads and plays a Sucata game — analogous to the Love2D runtime or Godot's engine binary. It is driven by the sibling [sucata-cli](../sucata-cli/AGENT.md) tool during development, and gets cloned + bundled with a game's assets to produce standalone distributables.
 
-Key third-party dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/audio/app framework, shared Odin lib), [odin-http](https://github.com/laytan/odin-http) (shared Odin lib), miniaudio (audio), lz4 (asset compression), SDL3 (gamepad support), and Lua 5.4 (`vendor:lua/5.4`, `lua54.dll` bundled for Windows distribution).
+Key third-party dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app framework + `sokol/audio` raw PCM streaming, shared Odin lib), [odin-http](https://github.com/laytan/odin-http) (shared Odin lib), `vendor:stb/vorbis` (OGG decoding, bundled with the Odin toolchain), lz4 (asset compression), SDL3 (gamepad support), and Lua 5.4 (`vendor:lua/5.4`, `lua54.dll` bundled for Windows distribution). `sokol/audio` itself does no file decoding or mixing — that's all implemented in `src/core/audio/` (WAV decoding is hand-rolled there). **Audio formats: WAV and OGG Vorbis only, no MP3** — an MP3 decoder was tried (vendoring dr_mp3) and dropped for the extra vendored-native-lib complexity it added for one format.
 
 ## Directory layout
 
@@ -21,7 +21,7 @@ sucata-player/
 │   └── install-shared/   clones sokol-odin (as `sokol`) and odin-http (as `http`)
 │                         into $(odin root)/shared
 ├── assets/               sucata.png (engine/window icon)
-├── licenses/             Third-party license texts (luajit, lua, lz4, miniaudio, odin, sdl, sokol*)
+├── licenses/             Third-party license texts (luajit, lua, lz4, odin, sdl, sokol*, stb_vorbis)
 ├── lua54.dll, SDL3.dll   Windows runtime deps bundled for distribution
 ├── ols.json              Odin Language Server config
 ├── sucata-player         Compiled Linux binary (local build artifact, not source)
@@ -55,7 +55,9 @@ sucata-player/
 
 **Events** (`events.odin`): a simple pub/sub keyed by an FNV-64a hash of the event name, backing the Lua `sucata.events.on`/`sucata.events.emit` API.
 
-Other `core/` files worth knowing: `audio.odin` (miniaudio), `gamepad.odin`/`input.odin` (SDL3 + keyboard/mouse), `timer.odin`, `screen.odin`, `hover.odin`, `cursor.odin`, `icon.odin`, `config.odin` (`windowConfig`), `init_queue.odin` (one-shot deferred Lua callbacks, e.g. `on_init`), `arena.odin` (per-frame temp allocator, reset every frame), `post_commands.odin`, `tags.odin`.
+The `audio` subpackage (`src/core/audio/`, package `audio_engine`) is its own mixer built on top of the raw `shared:sokol/audio` PCM stream: file decoding (`decode.odin`, `wav.odin` — WAV and OGG Vorbis only), resampling/pitch, per-sound and per-group volume/pitch, looping, and mixing (`engine.odin`). It can't import `core` back (that would be a cycle, since `core/sokol.odin` imports it), so it keeps its own captured `runtime.Context` (`engine_context`) instead of using `core.DEFAULT_CONTEXT`.
+
+Other `core/` files worth knowing: `gamepad.odin`/`input.odin` (SDL3 + keyboard/mouse), `timer.odin`, `screen.odin`, `hover.odin`, `cursor.odin`, `icon.odin`, `config.odin` (`windowConfig`), `init_queue.odin` (one-shot deferred Lua callbacks, e.g. `on_init`), `arena.odin` (per-frame temp allocator, reset every frame), `post_commands.odin`, `tags.odin`.
 
 ## Lua API wiring (`src/lua/`)
 

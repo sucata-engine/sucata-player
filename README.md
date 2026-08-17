@@ -2,7 +2,7 @@
 
 The runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language. This is the executable that actually loads and plays a Sucata game — driven by the sibling [sucata-cli](https://github.com/sucata-engine/sucata-cli) tool during development, and cloned + bundled with a game's assets to produce standalone distributables via `sucata build`.
 
-Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/audio/app), [odin-http](https://github.com/laytan/odin-http), miniaudio (audio), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4.
+Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app + `sokol/audio` raw PCM streaming), [odin-http](https://github.com/laytan/odin-http), `vendor:stb/vorbis` (OGG decoding), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4. Audio mixing, resampling and WAV decoding are implemented directly in `src/core/audio/` on top of `sokol/audio`. Supported audio formats: **WAV and OGG Vorbis only — no MP3**.
 
 ## Shared Folder
 

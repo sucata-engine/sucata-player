@@ -1,5 +1,6 @@
 package audio
 
+import audio_engine "../../core/audio"
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
@@ -26,7 +27,7 @@ PLAY_FUNCTION :: lua_common.LuaFunction {
 			return 0
 		}
 
-		audio_id, ok := core.load_sound(audio_path, group)
+		audio_id, ok := audio_engine.load_sound(audio_path, group)
 		defer delete(audio_path)
 		defer delete(group)
 
@@ -39,7 +40,7 @@ PLAY_FUNCTION :: lua_common.LuaFunction {
 			return 0
 		}
 
-		core.play_sound(audio_id, volume, pitch, b32(loop))
+		audio_engine.play_sound(audio_id, volume, pitch, b32(loop))
 		lua.pushnumber(L, lua.Number(audio_id))
 
 		return 1
