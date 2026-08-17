@@ -105,6 +105,8 @@ init_callback :: proc "c" () {
 	graphics.init_graphics()
 	common.print_info("Sokol initialized with %s", sg.query_backend())
 
+	init_microui()
+
 	if audio.init() {
 		common.print_info("Audio engine initialized")
 	} else {
@@ -129,6 +131,8 @@ cleanup_callback :: proc "c" () {
 		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, exit_callback_ref)
 		exit_callback_ref = 0
 	}
+
+	shutdown_microui()
 
 	run_free()
 	cleanup_group_quads_pool()
@@ -209,7 +213,9 @@ frame_callback :: proc "c" () {
 	)
 
 	is_draw_step = true
+	microui_begin_frame()
 	run_draw()
+	microui_end_frame()
 	is_draw_step = false
 	sg.end_pass()
 
@@ -237,6 +243,7 @@ frame_callback :: proc "c" () {
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
 	graphics.draw_postfx()
+	microui_render(f32(sapp.width()), f32(sapp.height()))
 	sg.end_pass()
 
 	sg.commit()
@@ -283,6 +290,7 @@ event_callback :: proc "c" (event: ^sapp.Event) {
 	}
 
 	handle_input_event(event)
+	microui_handle_event(event)
 }
 
 handle_window_resize :: proc(width, height: i32) {

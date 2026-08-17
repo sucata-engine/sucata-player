@@ -19,6 +19,7 @@ import "graphic"
 import "input"
 import lua_common "lua_common"
 import timens "time"
+import "ui"
 import lua "vendor:lua/5.4"
 
 GC_Config :: struct {
@@ -46,6 +47,7 @@ lua_namespaces :: []lua_common.LuaNamespace {
 	input.INPUT_NAMESPACE,
 	mathns.MATH_NAMESPACE,
 	window.WINDOW_NAMESPACE,
+	ui.UI_NAMESPACE,
 }
 
 custom_loader :: proc "c" (L: ^lua.State) -> c.int {

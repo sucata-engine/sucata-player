@@ -1,0 +1,20 @@
+package ui
+
+import lua_common "../lua_common"
+
+UI_NAMESPACE :: lua_common.LuaNamespace {
+	name      = "ui",
+	functions = []lua_common.LuaFunction {
+		DRAW_WINDOW_FUNCTION,
+		END_WINDOW_FUNCTION,
+		DRAW_POPUP_FUNCTION,
+		POPUP_OPEN_FUNCTION,
+		END_POPUP_FUNCTION,
+		DRAW_LABEL_FUNCTION,
+		DRAW_TEXT_FUNCTION,
+		DRAW_BUTTON_FUNCTION,
+		DRAW_CHECKBOX_FUNCTION,
+		DRAW_SLIDER_FUNCTION,
+		DRAW_TEXTBOX_FUNCTION,
+	},
+}
