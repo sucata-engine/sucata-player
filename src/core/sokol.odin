@@ -81,6 +81,7 @@ init_sokol :: proc() {
 			logger = sapp.Logger(shelpers.logger(&DEFAULT_CONTEXT)),
 			swap_interval = windowConfig.vsync,
 			fullscreen = windowConfig.fullscreen,
+			high_dpi = true,
 			icon = icon_desc,
 			init_cb = init_callback,
 			frame_cb = frame_callback,
@@ -102,7 +103,8 @@ init_callback :: proc "c" () {
 		},
 	)
 	graphics.set_game_dimensions(windowConfig.width, windowConfig.height)
-	graphics.init_graphics()
+	render_width, render_height := scaled_render_size(windowConfig.width, windowConfig.height)
+	graphics.init_graphics(render_width, render_height)
 	common.print_info("Sokol initialized with %s", sg.query_backend())
 
 	init_microui()
@@ -296,9 +298,16 @@ event_callback :: proc "c" (event: ^sapp.Event) {
 handle_window_resize :: proc(width, height: i32) {
 	if windowConfig.keep_aspect > 0 {
 		graphics.set_game_dimensions(windowConfig.width, windowConfig.height)
-		graphics.resize_postfx(windowConfig.width, windowConfig.height)
+		render_width, render_height := scaled_render_size(windowConfig.width, windowConfig.height)
+		graphics.resize_postfx(render_width, render_height)
 	} else {
 		graphics.set_game_dimensions(width, height)
-		graphics.resize_postfx(width, height)
+		render_width, render_height := scaled_render_size(width, height)
+		graphics.resize_postfx(render_width, render_height)
 	}
+}
+
+scaled_render_size :: proc(width, height: i32) -> (i32, i32) {
+	scale := sapp.dpi_scale()
+	return i32(f32(width) * scale), i32(f32(height) * scale)
 }

@@ -109,7 +109,9 @@ handle_input_event :: proc(event: ^sapp.Event) {
 		}
 
 	case .CHAR:
-		input_state.last_char = event.char_code
+		if event.char_code != 127 {
+			input_state.last_char = event.char_code
+		}
 	}
 }
 
@@ -207,7 +209,8 @@ mouse_position :: proc() -> (f32, f32) {
 		return game_x, game_y
 	}
 
-	return mx, my
+	scale := sapp.dpi_scale()
+	return mx / scale, my / scale
 }
 
 mouse_scroll :: proc() -> (f32, f32) {return input_state.scroll[0], input_state.scroll[1]}

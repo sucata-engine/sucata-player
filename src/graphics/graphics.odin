@@ -26,11 +26,11 @@ calc_indices :: proc() {
 	}
 }
 
-init_graphics :: proc() {
+init_graphics :: proc(render_width, render_height: i32) {
 	load_default_image()
 	calc_indices()
 	init_quad_indices()
-	init_postfx(game_width, game_height)
+	init_postfx(render_width, render_height)
 }
 
 shutdown_graphics :: proc() {
