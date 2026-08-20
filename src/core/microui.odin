@@ -140,20 +140,31 @@ microui_ensure_root :: proc() {
 	}
 }
 
-microui_render :: proc(width, height: f32) {
+ui_dpi_scale :: proc() -> f32 {
+	scale := sapp.dpi_scale()
+	return scale > 0 ? scale : 1.0
+}
+
+microui_render :: proc() {
+	scale := ui_dpi_scale()
+	physical_width := sapp.widthf()
+	physical_height := sapp.heightf()
+	logical_width := physical_width / scale
+	logical_height := physical_height / scale
+
 	sgl.push_pipeline()
 	sgl.load_pipeline(mu_pipeline)
 
-	sgl.viewport(0, 0, i32(width), i32(height), true)
+	sgl.viewport(0, 0, i32(physical_width), i32(physical_height), true)
 	sgl.matrix_mode_projection()
 	sgl.load_identity()
-	sgl.ortho(0, width, height, 0, -1, 1)
+	sgl.ortho(0, logical_width, logical_height, 0, -1, 1)
 	sgl.matrix_mode_modelview()
 	sgl.load_identity()
 
 	sgl.enable_texture()
 	sgl.texture(mu_atlas_view, mu_atlas_sampler)
-	sgl.scissor_rect(0, 0, i32(width), i32(height), true)
+	sgl.scissor_rect(0, 0, i32(physical_width), i32(physical_height), true)
 
 	cmd: ^mu.Command
 	for mu.next_command(&mu_ctx, &cmd) {
@@ -168,11 +179,17 @@ microui_render :: proc(width, height: f32) {
 			microui_draw_icon(v.id, v.rect, v.color)
 
 		case ^mu.Command_Clip:
-			sgl.scissor_rect(v.rect.x, v.rect.y, v.rect.w, v.rect.h, true)
+			sgl.scissor_rect(
+				i32(f32(v.rect.x) * scale),
+				i32(f32(v.rect.y) * scale),
+				i32(f32(v.rect.w) * scale),
+				i32(f32(v.rect.h) * scale),
+				true,
+			)
 		}
 	}
 
-	sgl.scissor_rect(0, 0, i32(width), i32(height), true)
+	sgl.scissor_rect(0, 0, i32(physical_width), i32(physical_height), true)
 	sgl.disable_texture()
 
 	sgl.pop_pipeline()
@@ -219,20 +236,22 @@ microui_draw_icon :: proc(id: mu.Icon, rect: mu.Rect, color: mu.Color) {
 }
 
 microui_handle_event :: proc(event: ^sapp.Event) {
+	scale := ui_dpi_scale()
+
 	#partial switch event.type {
 	case .MOUSE_MOVE:
-		mu.input_mouse_move(&mu_ctx, i32(event.mouse_x), i32(event.mouse_y))
+		mu.input_mouse_move(&mu_ctx, i32(event.mouse_x / scale), i32(event.mouse_y / scale))
 
 	case .MOUSE_DOWN:
 		btn := microui_mouse_button(event.mouse_button)
 		if btn, ok := btn.?; ok {
-			mu.input_mouse_down(&mu_ctx, i32(event.mouse_x), i32(event.mouse_y), btn)
+			mu.input_mouse_down(&mu_ctx, i32(event.mouse_x / scale), i32(event.mouse_y / scale), btn)
 		}
 
 	case .MOUSE_UP:
 		btn := microui_mouse_button(event.mouse_button)
 		if btn, ok := btn.?; ok {
-			mu.input_mouse_up(&mu_ctx, i32(event.mouse_x), i32(event.mouse_y), btn)
+			mu.input_mouse_up(&mu_ctx, i32(event.mouse_x / scale), i32(event.mouse_y / scale), btn)
 		}
 
 	case .MOUSE_SCROLL:
@@ -401,8 +420,9 @@ microui_window_end :: proc() {
 MU_ROOT_ID :: "__sucata_ui_root__"
 
 microui_root_begin :: proc() -> bool {
-	width := f32(sapp.width())
-	height := f32(sapp.height())
+	scale := ui_dpi_scale()
+	width := sapp.widthf() / scale
+	height := sapp.heightf() / scale
 
 	open := mu.begin_window(
 		&mu_ctx,
