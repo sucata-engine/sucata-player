@@ -30,6 +30,29 @@ get_table_color :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> Ma
 	}
 }
 
+get_table_number_array :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> []i32 {
+	lua.pushstring(L, field)
+	lua.gettable(L, table_index)
+	defer lua.pop(L, 1)
+
+	if lua.type(L, -1) != lua.Type.TABLE {
+		return nil
+	}
+
+	n := int(lua.L_len(L, -1))
+	if n == 0 {
+		return nil
+	}
+
+	result := make([]i32, n)
+	for i in 1 ..= n {
+		lua.rawgeti(L, -1, lua.Integer(i))
+		if lua.isnumber(L, -1) do result[i - 1] = i32(lua.tonumber(L, -1))
+		lua.pop(L, 1)
+	}
+	return result
+}
+
 get_style_from_table :: proc(L: ^lua.State, table_index: c.int) -> core.Mu_Style {
 	style: core.Mu_Style
 	style.x = lua_common.get_table_number_nil(L, table_index, "x")

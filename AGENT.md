@@ -63,7 +63,7 @@ Other `core/` files worth knowing: `gamepad.odin`/`input.odin` (SDL3 + keyboard/
 
 ## Lua API wiring (`src/lua/`)
 
-One subpackage per module exposed to Lua games: `audio/`, `camera/`, `events/`, `file_system/`, `gamepad/`, `graphic/`, `input/`, `math/`, `scene/`, `time/`, `ui/`, `window/`. Inside each, one file per bound function, plus a `<module>.odin` that declares a `<MODULE>_NAMESPACE: lua_common.LuaNamespace{name, functions}` listing them all. (These modules are what's documented for game developers in the sibling `docs/` repo, under `docs/docs/references/sucata.*.md` — keep that documentation in sync with this directory when the API changes.)
+One subpackage per module exposed to Lua games: `audio/`, `camera/`, `events/`, `file_system/`, `gamepad/`, `graphic/`, `input/`, `math/`, `scene/`, `system/`, `time/`, `ui/`, `window/`. Inside each, one file per bound function, plus a `<module>.odin` that declares a `<MODULE>_NAMESPACE: lua_common.LuaNamespace{name, functions}` listing them all. (These modules are what's documented for game developers in the sibling `docs/` repo, under `docs/docs/references/sucata.*.md` — keep that documentation in sync with this directory when the API changes.)
 
 `ui/` (`sucata.ui`) is the odd one out: every bound function there takes exactly one table argument (see `lua/ui/utils.odin`'s `get_style_from_table`/`get_table_color` helpers), unlike the positional-arg style used elsewhere (e.g. `sucata.camera.set_camera_position(x, y)`).
 

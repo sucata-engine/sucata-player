@@ -9,6 +9,7 @@ import dynlib "./dynlib"
 import "./file_system"
 import mathns "./math"
 import "./scene"
+import "./system"
 import "./window"
 import "core:c"
 import "core:fmt"
@@ -48,6 +49,7 @@ lua_namespaces :: []lua_common.LuaNamespace {
 	mathns.MATH_NAMESPACE,
 	window.WINDOW_NAMESPACE,
 	ui.UI_NAMESPACE,
+	system.SYSTEM_NAMESPACE,
 }
 
 custom_loader :: proc "c" (L: ^lua.State) -> c.int {

@@ -541,6 +541,56 @@ microui_textbox :: proc(
 	return
 }
 
+microui_header :: proc(text: string, expanded: bool = false, style: Mu_Style = {}) -> bool {
+	if !microui_guard_draw_step() do return false
+	microui_ensure_root()
+
+	backup := microui_apply_style(style)
+	defer microui_restore_style(backup)
+
+	opt: mu.Options = {}
+	if expanded do opt += {.EXPANDED}
+
+	return .ACTIVE in mu.header(&mu_ctx, text, opt)
+}
+
+microui_treenode_begin :: proc(text: string, expanded: bool = false, style: Mu_Style = {}) -> bool {
+	if !microui_guard_draw_step() do return false
+	microui_ensure_root()
+
+	backup := microui_apply_style(style)
+	defer microui_restore_style(backup)
+
+	opt: mu.Options = {}
+	if expanded do opt += {.EXPANDED}
+
+	return .ACTIVE in mu.begin_treenode(&mu_ctx, text, opt)
+}
+
+microui_treenode_end :: proc() {
+	if !microui_guard_draw_step() do return
+	mu.end_treenode(&mu_ctx)
+}
+
+microui_layout_row :: proc(widths: []i32, height: i32 = 0) {
+	if !microui_guard_draw_step() do return
+	microui_ensure_root()
+
+	mu.layout_row(&mu_ctx, widths, height)
+}
+
+microui_layout_begin_column :: proc() {
+	if !microui_guard_draw_step() do return
+	microui_ensure_root()
+
+	mu.layout_begin_column(&mu_ctx)
+}
+
+microui_layout_end_column :: proc() {
+	if !microui_guard_draw_step() do return
+	mu.layout_end_column(&mu_ctx)
+}
+
 microui_key :: proc(key: sapp.Keycode) -> Maybe(mu.Key) {
 	#partial switch key {
 	case .LEFT_SHIFT, .RIGHT_SHIFT:
