@@ -245,7 +245,7 @@ frame_callback :: proc "c" () {
 		sg.apply_scissor_rect(x, y, w, h, true)
 	}
 	graphics.draw_postfx()
-	microui_render(f32(sapp.width()), f32(sapp.height()))
+	microui_render()
 	sg.end_pass()
 
 	sg.commit()
