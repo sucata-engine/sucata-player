@@ -1,7 +1,7 @@
 echo Building Sucata for Windows...
 
 echo Building sucata-player.exe...
-odin build src/ -out:sucata-player.exe -o:speed -extra-linker-flags:"/NODEFAULTLIB:libucrt.lib /NODEFAULTLIB:libucrtd.lib"
+odin build src/ -out:sucata-player.exe -o:speed
 
 echo Done!
 
