@@ -5,7 +5,7 @@ import "../filesystem"
 import "core:c"
 import "core:fmt"
 import "core:hash"
-import "core:os"
+import "core:strings"
 import sg "shared:sokol/gfx"
 
 CustomShader :: struct {
@@ -62,18 +62,37 @@ create_shader_from_schd :: proc(
 	[16]ShaderAttribute,
 	[32]ShaderView,
 	[12]ShaderSampler,
+	bool,
 ) {
 	backend := sg.query_backend()
-	desc, attributes, views, samplers := create_shader_desc_from_schd(backend, schd_data)
-	return sg.make_shader(desc), attributes, views, samplers
+	desc, attributes, views, samplers, ok := create_shader_desc_from_schd(backend, schd_data)
+	if !ok {
+		return {}, attributes, views, samplers, false
+	}
+	return sg.make_shader(desc), attributes, views, samplers, true
 }
 
-init_shader :: proc(schd_path: string) -> (u32, bool) {
-	shader_id := shader_name_to_32(schd_path)
+SHADER_BUILD_DIR :: ".sucata/shaders/"
+
+resolve_shader_path :: proc(shader_path: string) -> string {
+	if !strings.has_suffix(shader_path, ".glsl") {
+		return strings.clone(shader_path)
+	}
+
+	relative := strings.trim_prefix(shader_path, "src://")
+	relative = strings.trim_suffix(relative, ".glsl")
+	return fmt.aprintf("src://%s%s.schd", SHADER_BUILD_DIR, relative)
+}
+
+init_shader :: proc(shader_path: string) -> (u32, bool) {
+	shader_id := shader_name_to_32(shader_path)
 
 	if _, exists := custom_shaders[shader_id]; exists {
 		return shader_id, true
 	}
+
+	schd_path := resolve_shader_path(shader_path)
+	defer delete(schd_path)
 
 	schd_data, ok, is_asset := get_shader_from_path(schd_path)
 	defer {
@@ -83,13 +102,22 @@ init_shader :: proc(schd_path: string) -> (u32, bool) {
 	}
 	if !ok {
 		common.print_warning(
-			"Failed to read shader definition file: %s, unable to create the shader",
+			"Failed to read built shader %s for %s, run the game with sucata run or sucata build so the shader is compiled",
 			schd_path,
+			shader_path,
 		)
 		return 0, false
 	}
 
-	shader, attributes, views, samplers := create_shader_from_schd(schd_data)
+	shader, attributes, views, samplers, shader_ok := create_shader_from_schd(schd_data)
+	if !shader_ok {
+		common.print_warning(
+			"Shader %s has no program for the %v backend, build it again with sucata run or sucata build",
+			shader_path,
+			sg.query_backend(),
+		)
+		return 0, false
+	}
 
 	pipeline := sg.make_pipeline(
 		{

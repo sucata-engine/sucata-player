@@ -91,13 +91,13 @@ get_sucata_folder :: proc() -> string {
 	arg0 := os.args[0]
 
 	if filepath.is_abs(arg0) {
-		return filepath.dir(arg0)
+		return strings.clone(filepath.dir(arg0))
 	}
 
 	executable_path, ok := os.get_executable_path(context.allocator)
 	defer delete(executable_path)
 	if ok == nil && os.exists(executable_path) {
-		return filepath.dir(executable_path)
+		return strings.clone(filepath.dir(executable_path))
 	}
 
 	return strings.clone("")

@@ -153,8 +153,7 @@ find_program_in_schd :: proc(schd_data: json.Value, slang: string) -> json.Objec
 	return nil
 }
 
-create_shader_attributes :: proc(json_data: json.Value) -> [16]ShaderAttribute {
-	program := find_program_in_schd(json_data, "glsl430")
+create_shader_attributes :: proc(program: json.Object) -> [16]ShaderAttribute {
 	attributes: [16]ShaderAttribute
 	offset, i := 0, 0
 
@@ -194,10 +193,8 @@ create_shader_attributes :: proc(json_data: json.Value) -> [16]ShaderAttribute {
 	return attributes
 }
 
-create_shader_views :: proc(json_data: json.Value) -> [32]ShaderView {
+create_shader_views :: proc(program: json.Object) -> [32]ShaderView {
 	views: [32]ShaderView
-
-	program := find_program_in_schd(json_data, "glsl430")
 
 	views_val, ok := program["views"].(json.Array)
 	if !ok do return views
@@ -214,10 +211,8 @@ create_shader_views :: proc(json_data: json.Value) -> [32]ShaderView {
 	return views
 }
 
-create_shader_sampler :: proc(json_data: json.Value) -> [12]ShaderSampler {
+create_shader_sampler :: proc(program: json.Object) -> [12]ShaderSampler {
 	samplers: [12]ShaderSampler
-
-	program := find_program_in_schd(json_data, "glsl430")
 
 	samplers_val, ok := program["samplers"].(json.Array)
 	if !ok do return samplers
@@ -369,9 +364,12 @@ create_shader_desc_from_schd :: proc(
 	[16]ShaderAttribute,
 	[32]ShaderView,
 	[12]ShaderSampler,
+	bool,
 ) {
 	json_data, json_ok := json.parse(schd_data)
-	if json_ok != .None do panic("shader .schd JSON invalid")
+	if json_ok != .None {
+		return {}, {}, {}, {}, false
+	}
 	defer json.destroy_value(json_data)
 
 	slang_name := ""
@@ -386,9 +384,12 @@ create_shader_desc_from_schd :: proc(
 		slang_name = "wgsl"
 	}
 	program := find_program_in_schd(json_data, slang_name)
-	attributes := create_shader_attributes(json_data)
-	views := create_shader_views(json_data)
-	samplers := create_shader_sampler(json_data)
+	if program == nil {
+		return {}, {}, {}, {}, false
+	}
+	attributes := create_shader_attributes(program)
+	views := create_shader_views(program)
+	samplers := create_shader_sampler(program)
 
 	desc: sg.Shader_Desc
 	fill_shader_funcs(&desc, program)
@@ -428,5 +429,5 @@ create_shader_desc_from_schd :: proc(
 		)
 	}
 
-	return desc, attributes, views, samplers
+	return desc, attributes, views, samplers, true
 }
