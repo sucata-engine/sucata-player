@@ -10,7 +10,10 @@ cd $ODIN_SHARED
 rm -rf sokol
 rm -rf http
 
+SOKOL_ODIN_COMMIT=974cb5a1c91e33f5ca8ccb09532d13770918af2c
+
 git clone https://github.com/floooh/sokol-odin.git
+git -C sokol-odin checkout $SOKOL_ODIN_COMMIT
 mv ./sokol-odin/sokol .
 rm -rf sokol-odin
 

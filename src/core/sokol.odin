@@ -121,22 +121,17 @@ init_callback :: proc "c" () {
 	process_post_commands()
 
 	run_init()
-
-	flush_init_queue()
 }
 
 cleanup_callback :: proc "c" () {
 	context = DEFAULT_CONTEXT
 
-	if exit_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
-		call_lua_function(LUA_GLOBAL_STATE, exit_callback_ref)
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, exit_callback_ref)
-		exit_callback_ref = 0
-	}
-
 	shutdown_microui()
 
+	run_root(.Free)
 	run_free()
+	run_free_globals()
+	cleanup_root()
 	cleanup_group_quads_pool()
 	cleanup_event_handlers()
 	cleanup_behaviours()
@@ -193,7 +188,6 @@ frame_callback :: proc "c" () {
 
 	poll_gamepad_events()
 
-	process_pending_scene()
 	run_update()
 	process_hoverables()
 

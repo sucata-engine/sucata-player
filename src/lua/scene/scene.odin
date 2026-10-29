@@ -5,8 +5,6 @@ import lua_common "../lua_common"
 SCENE_NAMESPACE :: lua_common.LuaNamespace {
 	name      = "scene",
 	functions = []lua_common.LuaFunction {
-		ON_INIT_FUNCTION,
-		LOAD_SCENE_FUNCTION,
 		SPAWN_FUNCTION,
 		SPAWNS_FUNCTION,
 		FIND_BY_ID_FUNCTION,

@@ -146,3 +146,41 @@ call_lua_method_with_self_ref :: proc(
 
 	return result == 0
 }
+
+call_lua_method :: proc(L: ^lua.State, table_ref: i32, field_name: cstring) -> bool {
+	top := lua.gettop(L)
+
+	if table_ref <= 0 {
+		return false
+	}
+
+	msgh := push_error_handler(L)
+
+	lua.rawgeti(L, lua.REGISTRYINDEX, lua.Integer(table_ref))
+
+	if !lua.istable(L, -1) {
+		lua.settop(L, top)
+		return false
+	}
+
+	lua.getfield(L, -1, field_name)
+
+	if !lua.isfunction(L, -1) {
+		lua.settop(L, top)
+		return false
+	}
+
+	lua.remove(L, -2)
+
+	result := lua.pcall(L, 0, 0, msgh)
+
+	if result != 0 {
+		msg := lua.tostring(L, -1)
+		common.print_error("[root][%s] %s", field_name, msg)
+		lua.pop(L, 1)
+	}
+
+	lua.settop(L, top)
+
+	return result == 0
+}

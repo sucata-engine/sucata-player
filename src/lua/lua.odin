@@ -208,10 +208,16 @@ init_lua :: proc(path: string, entity_file: string = "") {
 		lua.pop(L, 1)
 	}
 
-	if lua.gettop(L) > 0 && lua.isstring(L, -1) {
+	if lua.gettop(L) > 0 && lua.istable(L, 1) {
+		lua.pushvalue(L, 1)
+		root_ref := i32(lua.L_ref(L, lua.REGISTRYINDEX))
+		core.set_root(L, root_ref)
+	} else if lua.gettop(L) > 0 && lua.isstring(L, -1) {
 		msg := lua.tostring(L, -1)
 		fmt.print(msg)
 	}
+
+	lua.settop(L, 0)
 
 	setup_garbage_collector(L, default_gc_config)
 }

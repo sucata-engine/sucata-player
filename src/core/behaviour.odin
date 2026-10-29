@@ -30,7 +30,7 @@ get_behaviour_index :: proc(ptr_id: i64) -> i64 {
 	return behaviour_index_by_ptr[ptr_id]
 }
 
-add_behaviour :: proc(L: ^lua.State, ptr_id: i64, table_ref: i32) -> i64 {
+make_behaviour_entry :: proc(L: ^lua.State, table_ref: i32) -> Behaviour_Entry {
 	entry := Behaviour_Entry {
 		table_ref = table_ref,
 	}
@@ -43,6 +43,12 @@ add_behaviour :: proc(L: ^lua.State, ptr_id: i64, table_ref: i32) -> i64 {
 		entry.has_free = behaviour_table_has_method(L, "free")
 	}
 	lua.pop(L, 1)
+
+	return entry
+}
+
+add_behaviour :: proc(L: ^lua.State, ptr_id: i64, table_ref: i32) -> i64 {
+	entry := make_behaviour_entry(L, table_ref)
 
 	append(&behaviour_entries, entry)
 	index := i64(len(behaviour_entries) - 1)
@@ -70,26 +76,29 @@ cleanup_behaviours :: proc() {
 	behaviour_index_by_ptr = {}
 }
 
+behaviour_method_name :: proc(entry: Behaviour_Entry, method: Behaviour_Method) -> (cstring, bool) {
+	switch method {
+	case .Init:
+		return "init", entry.has_init
+	case .Tick:
+		return "tick", entry.has_tick
+	case .Draw:
+		return "draw", entry.has_draw
+	case .Free:
+		return "free", entry.has_free
+	}
+	return nil, false
+}
+
 call_behaviour :: proc(index: i64, method: Behaviour_Method, state: i32) {
 	if index < 0 || int(index) >= len(behaviour_entries) {
 		return
 	}
 	entry := behaviour_entries[index]
 
-	field_name: cstring
-	switch method {
-	case .Init:
-		if !entry.has_init {return}
-		field_name = "init"
-	case .Tick:
-		if !entry.has_tick {return}
-		field_name = "tick"
-	case .Draw:
-		if !entry.has_draw {return}
-		field_name = "draw"
-	case .Free:
-		if !entry.has_free {return}
-		field_name = "free"
+	field_name, ok := behaviour_method_name(entry, method)
+	if !ok {
+		return
 	}
 
 	call_lua_method_with_self_ref(LUA_GLOBAL_STATE, entry.table_ref, field_name, state)

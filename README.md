@@ -6,7 +6,7 @@ Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app + 
 
 ## Shared Folder
 
-- sokol -> https://github.com/floooh/sokol-odin
+- sokol -> https://github.com/floooh/sokol-odin (pinned to commit `974cb5a` by `scripts/install-shared`, newer versions changed the gfx API)
 - http -> https://github.com/laytan/odin-http
 
 ## Setup project

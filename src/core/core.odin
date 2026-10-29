@@ -28,10 +28,6 @@ global_scene_map: map[string]^common.Entity = {}
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 destroyQueue: [dynamic]^common.Entity = {}
 
-has_pending_scene: bool = false
-pending_scene_is_clear: bool = false
-pending_scene: [dynamic]^common.Entity = {}
-
 RenderGroupKey :: struct {
 	texture: string,
 	z_index: i32,
@@ -64,17 +60,9 @@ cleanup_group_quads_pool :: proc() {
 	group_quads_pool = {}
 }
 
-VERSION :: "1.2.0"
+VERSION :: "1.3.0"
 
-exit_callback_ref: i32 = 0
 init_callback_ref: i32 = 0
-
-set_exit_callback :: proc(func_ref: i32) {
-	if exit_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
-		lua.L_unref(LUA_GLOBAL_STATE, lua.REGISTRYINDEX, exit_callback_ref)
-	}
-	exit_callback_ref = func_ref
-}
 
 set_init_callback :: proc(func_ref: i32) {
 	if init_callback_ref > 0 && LUA_GLOBAL_STATE != nil {
@@ -99,21 +87,6 @@ rebuild_scene_index :: proc() {
 			scene_index[entity.id] = i
 		}
 	}
-}
-
-load_scene :: proc(entities: [dynamic]^common.Entity) {
-	if !is_game_started {
-		if scene != nil && len(scene) > 0 {
-			run_free()
-		}
-		scene = entities
-		rebuild_scene_index()
-		return
-	}
-
-	pending_scene = entities
-	pending_scene_is_clear = false
-	has_pending_scene = true
 }
 
 destroy :: proc(entity: ^common.Entity) -> bool {
@@ -225,18 +198,17 @@ unload_global :: proc(entity: ^common.Entity) {
 }
 
 run_init :: proc() {
-	if scene != nil && len(scene) > 0 {
-		for &entity in scene {
-			if entity != nil && !entity.destroyed {
-				init(entity)
-			}
+	run_root(.Init)
+	for i := 0; i < len(global_scene); i += 1 {
+		global := global_scene[i]
+		if global != nil && !global.destroyed {
+			init(global)
 		}
 	}
-	if len(global_scene) > 0 {
-		for &global in global_scene {
-			if global != nil && !global.destroyed {
-				init(global)
-			}
+	for i := 0; i < len(scene); i += 1 {
+		entity := scene[i]
+		if entity != nil && !entity.destroyed {
+			init(entity)
 		}
 	}
 }
@@ -250,6 +222,7 @@ init :: proc(entity: ^common.Entity) {
 }
 
 run_update :: proc() {
+	run_root(.Tick)
 	if global_scene != nil && len(global_scene) > 0 {
 		for i := len(global_scene) - 1; i >= 0; i -= 1 {
 			if i >= len(global_scene) {
@@ -281,6 +254,7 @@ update :: proc(entity: ^common.Entity) {
 run_draw :: proc() {
 	graphics.invalidate_mvp_cache()
 	draw_debug_info()
+	run_root(.Draw)
 	if global_scene != nil {
 		for &entity in global_scene {
 			if entity != nil && !entity.destroyed && entity.initiated {
@@ -331,6 +305,23 @@ run_free :: proc() {
 	destroyQueue = {}
 }
 
+run_free_globals :: proc() {
+	if LUA_GLOBAL_STATE == nil {
+		return
+	}
+	for entity in global_scene {
+		free_obj(entity)
+	}
+	delete(global_scene)
+	global_scene = {}
+
+	for k in global_scene_map {
+		delete(k)
+	}
+	delete(global_scene_map)
+	global_scene_map = {}
+}
+
 get_scene_count :: proc() -> int {
 	if scene == nil {
 		return 0
@@ -361,38 +352,15 @@ get_scene :: proc() -> [dynamic]^common.Entity {
 
 clear_scene :: proc() {
 	if !is_game_started {
-		if scene != nil && len(scene) > 0 {
-			run_free()
-		}
-		scene = {}
-		return
-	}
-
-	pending_scene = nil
-	pending_scene_is_clear = true
-	has_pending_scene = true
-}
-
-process_pending_scene :: proc() {
-	if !has_pending_scene {
-		return
-	}
-	has_pending_scene = false
-
-	if scene != nil && len(scene) > 0 {
 		run_free()
-	}
-
-	if pending_scene_is_clear {
-		pending_scene_is_clear = false
-		scene = {}
 		return
 	}
 
-	scene = pending_scene
-	pending_scene = nil
-	rebuild_scene_index()
-	run_init()
+	for entity in scene {
+		if entity != nil && !entity.destroyed {
+			add_to_destroy_queue(entity)
+		}
+	}
 }
 
 quit :: proc() {
