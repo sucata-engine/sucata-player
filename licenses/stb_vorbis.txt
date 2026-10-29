@@ -1,6 +1,6 @@
 stb_vorbis - https://github.com/nothings/stb
-Used by sucata-player (via Odin's bundled vendor:stb/vorbis) to decode OGG
-Vorbis files for the audio engine.
+Used by sucata-player (compiled into Odin's bundled vendor:miniaudio library)
+to decode OGG Vorbis files for the audio engine.
 
 This software is available under 2 licenses -- choose whichever you prefer.
 -------------------------------------------------------------------------------

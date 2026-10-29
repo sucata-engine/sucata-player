@@ -6,7 +6,7 @@ import "core:c"
 import sg "shared:sokol/gfx"
 
 quad_ib: sg.Buffer
-quad_vb: sg.Buffer
+quad_stream: Vertex_Stream
 quad_buffers_inited: bool
 quad_shader: sg.Shader
 quad_pipeline: sg.Pipeline
@@ -53,14 +53,9 @@ init_quad_indices :: proc() {
 		},
 	)
 	quad_ib = sg.make_buffer(
-		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
+		{usage = {index_buffer = true}, data = sg_range(indices)},
 	)
-	quad_vb = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, stream_update = true},
-			size = QUAD_STREAM_CAPACITY * size_of(Vertex_Data) * 4,
-		},
-	)
+	init_vertex_stream(&quad_stream, QUAD_STREAM_CAPACITY * size_of(Vertex_Data) * 4)
 
 	quad_sampler = sg.make_sampler(
 		{
@@ -81,7 +76,8 @@ init_quad_indices :: proc() {
 shutdown_quad_buffers :: proc() {
 	if quad_buffers_inited {
 		sg.destroy_buffer(quad_ib)
-		sg.destroy_buffer(quad_vb)
+		destroy_vertex_stream(&quad_stream)
+		shutdown_draw_commands()
 		sg.destroy_pipeline(quad_pipeline)
 		sg.destroy_sampler(quad_sampler)
 		sg.destroy_sampler(quad_sampler_repeat)
@@ -92,7 +88,7 @@ shutdown_quad_buffers :: proc() {
 	}
 }
 
-quad_group :: proc(props: common.GroupObjectProps) {
+queue_quad_group :: proc(props: common.GroupObjectProps) {
 	init_quad_indices()
 
 	z_index := props.z_index
@@ -125,31 +121,19 @@ quad_group :: proc(props: common.GroupObjectProps) {
 		return
 	}
 
-	data := sg_range(vertex_scratch[:])
-	if sg.query_buffer_will_overflow(quad_vb, data.size) {
-		common.print_error("quad vertex stream buffer overflow, dropping draw")
-		return
-	}
-	vertex_offset := sg.append_buffer(quad_vb, data)
+	vertex_offset := stream_push(&quad_stream, vertex_scratch[:])
 
-	if has_custom_shader {
-		sg.apply_pipeline(custom_shader.pipeline)
-	} else {
-		sg.apply_pipeline(quad_pipeline)
-	}
-
-	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
-
-	bindings := sg.Bindings {
-		vertex_buffers = {0 = quad_vb},
-		vertex_buffer_offsets = {0 = vertex_offset},
-		index_buffer = quad_ib,
-		views = get_views_data(image.view),
-		samplers = get_samplers_data(props.tiled),
-	}
-	sg.apply_bindings(bindings)
-
-	quad_count := len(quads)
-	index_count := quad_count * 6
-	sg.draw(0, index_count, 1)
+	append(
+		&draw_commands,
+		Draw_Command {
+			pipeline = has_custom_shader ? custom_shader.pipeline : quad_pipeline,
+			mvp = mvp,
+			stream = &quad_stream,
+			vertex_offset = vertex_offset,
+			index_buffer = quad_ib,
+			views = get_views_data(image.view),
+			samplers = get_samplers_data(props.tiled),
+			index_count = len(quads) * 6,
+		},
+	)
 }

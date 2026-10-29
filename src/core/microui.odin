@@ -78,7 +78,7 @@ microui_upload_atlas :: proc() {
 			width = mu.DEFAULT_ATLAS_WIDTH,
 			height = mu.DEFAULT_ATLAS_HEIGHT,
 			pixel_format = .RGBA8,
-			data = {mip_levels = {0 = {ptr = &atlas_rgba[0], size = uint(len(atlas_rgba))}}},
+			data = {ptr = &atlas_rgba[0], size = uint(len(atlas_rgba))},
 		},
 	)
 	mu_atlas_view = sg.make_view({texture = {image = mu_atlas_image}})

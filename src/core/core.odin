@@ -474,11 +474,12 @@ draw_render_queue :: proc() {
 	for v in renderQueue {
 		switch obj in v {
 		case common.TextObjectProps:
-			graphics.text(obj)
+			graphics.queue_text(obj)
 		case common.GroupObjectProps:
-			graphics.quad_group(obj)
+			graphics.queue_quad_group(obj)
 		}
 	}
+	graphics.flush_draw_commands()
 }
 
 order_render_queue :: proc() {

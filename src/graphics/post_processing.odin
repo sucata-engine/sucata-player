@@ -25,7 +25,8 @@ postfx_ib: sg.Buffer
 postfx_inited: bool
 
 POSTFX_EFFECT_STREAM_CAPACITY_BYTES :: 256 * 1024
-postfx_effect_vb: sg.Buffer
+postfx_effect_stream: Vertex_Stream
+postfx_effect_offsets: [dynamic]c.int
 
 postfx_passthrough_pipeline: sg.Pipeline
 postfx_passthrough_shader: sg.Shader
@@ -94,20 +95,15 @@ init_postfx :: proc(width, height: i32) {
 		{position = {-1.0, -1.0}, uv = {0.0, v_bot}},
 	}
 	postfx_vb = sg.make_buffer(
-		{usage = {vertex_buffer = true, immutable = true}, data = sg_range(vertices[:])},
+		{usage = {vertex_buffer = true}, data = sg_range(vertices[:])},
 	)
 
 	indices := []u16{0, 1, 2, 0, 2, 3}
 	postfx_ib = sg.make_buffer(
-		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
+		{usage = {index_buffer = true}, data = sg_range(indices)},
 	)
 
-	postfx_effect_vb = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, stream_update = true},
-			size = POSTFX_EFFECT_STREAM_CAPACITY_BYTES,
-		},
-	)
+	init_vertex_stream(&postfx_effect_stream, POSTFX_EFFECT_STREAM_CAPACITY_BYTES)
 
 	effects = make([dynamic]Postfx_Effect)
 	postfx_inited = true
@@ -122,7 +118,9 @@ shutdown_postfx :: proc() {
 		delete(effects)
 		sg.destroy_buffer(postfx_vb)
 		sg.destroy_buffer(postfx_ib)
-		sg.destroy_buffer(postfx_effect_vb)
+		destroy_vertex_stream(&postfx_effect_stream)
+		delete(postfx_effect_offsets)
+		postfx_effect_offsets = {}
 		shutdown_offscreen(&postfx_targets[0])
 		shutdown_offscreen(&postfx_targets[1])
 		postfx_inited = false
@@ -148,10 +146,7 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		return
 	}
 
-	current_src := src
-	ping: int = 0
-	pong: int = 1
-
+	clear(&postfx_effect_offsets)
 	for effect in effects {
 		if !effect.enabled do continue
 
@@ -159,14 +154,24 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		if !ok do continue
 
 		vertex_data := get_post_processing_vertex_data(shader, effect.args)
-		defer delete(vertex_data)
+		append(&postfx_effect_offsets, stream_push(&postfx_effect_stream, vertex_data[:]))
+		delete(vertex_data)
+	}
+	stream_flush(&postfx_effect_stream)
 
-		data := sg_range(vertex_data[:])
-		if sg.query_buffer_will_overflow(postfx_effect_vb, data.size) {
-			common.print_error("postfx vertex stream buffer overflow, dropping effect pass")
-			continue
-		}
-		vertex_offset := sg.append_buffer(postfx_effect_vb, data)
+	current_src := src
+	ping: int = 0
+	pong: int = 1
+	effect_index := 0
+
+	for effect in effects {
+		if !effect.enabled do continue
+
+		shader, ok := custom_shaders[effect.id]
+		if !ok do continue
+
+		vertex_offset := postfx_effect_offsets[effect_index]
+		effect_index += 1
 
 		pass_action := sg.Pass_Action{}
 		pass_action.colors[0] = {
@@ -185,7 +190,7 @@ preprocess_postfx :: proc(src: ^Offscreen) {
 		sg.apply_pipeline(shader.pipeline)
 		sg.apply_bindings(
 			{
-				vertex_buffers = {0 = postfx_effect_vb},
+				vertex_buffers = {0 = postfx_effect_stream.buffer},
 				vertex_buffer_offsets = {0 = vertex_offset},
 				index_buffer = postfx_ib,
 				views = get_views_data_with_custom_shader(

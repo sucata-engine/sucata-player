@@ -29,7 +29,7 @@ load_default_image :: proc() {
 			width = 1,
 			height = 1,
 			pixel_format = .RGBA8,
-			data = {mip_levels = {0 = {ptr = &white_pixel[0], size = 4}}},
+			data = {ptr = &white_pixel[0], size = 4},
 		},
 	)
 	images_loaded[DEFAULT_IMAGE_KEY] = Image {
@@ -72,7 +72,7 @@ load_image :: proc(_path: string) -> Image {
 			width = w,
 			height = h,
 			pixel_format = .RGBA8,
-			data = {mip_levels = {0 = {ptr = pixels, size = uint(w * h * 4)}}},
+			data = {ptr = pixels, size = uint(w * h * 4)},
 		},
 	)
 

@@ -7,7 +7,7 @@ import "core:unicode/utf8"
 import sg "shared:sokol/gfx"
 
 text_ib: sg.Buffer
-text_vb: sg.Buffer
+text_stream: Vertex_Stream
 text_shader: sg.Shader
 text_buffers_inited: bool
 text_pipeline: sg.Pipeline
@@ -52,14 +52,9 @@ init_text_indices :: proc() {
 		},
 	)
 	text_ib = sg.make_buffer(
-		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
+		{usage = {index_buffer = true}, data = sg_range(indices)},
 	)
-	text_vb = sg.make_buffer(
-		{
-			usage = {vertex_buffer = true, stream_update = true},
-			size = TEXT_STREAM_CAPACITY * size_of(Vertex_Data) * 4,
-		},
-	)
+	init_vertex_stream(&text_stream, TEXT_STREAM_CAPACITY * size_of(Vertex_Data) * 4)
 
 	text_sampler = sg.make_sampler(
 		{
@@ -76,7 +71,7 @@ init_text_indices :: proc() {
 shutdown_text_buffers :: proc() {
 	if text_buffers_inited {
 		sg.destroy_buffer(text_ib)
-		sg.destroy_buffer(text_vb)
+		destroy_vertex_stream(&text_stream)
 		sg.destroy_pipeline(text_pipeline)
 		sg.destroy_sampler(text_sampler)
 		sg.destroy_shader(text_shader)
@@ -84,7 +79,7 @@ shutdown_text_buffers :: proc() {
 	}
 }
 
-text :: proc(props: common.TextObjectProps) {
+queue_text :: proc(props: common.TextObjectProps) {
 	init_text_indices()
 	font := load_font(props.font, props.size)
 
@@ -95,11 +90,6 @@ text :: proc(props: common.TextObjectProps) {
 	mvp := get_mvp(props.fixed)
 
 	custom_shader, has_custom_shader := custom_shaders[props.shader]
-	if has_custom_shader {
-		sg.apply_pipeline(custom_shader.pipeline)
-	} else {
-		sg.apply_pipeline(text_pipeline)
-	}
 
 	clear(&vertex_scratch)
 	get_text_vertex_data(&vertex_scratch, props, props.text, font, has_custom_shader, custom_shader)
@@ -108,24 +98,19 @@ text :: proc(props: common.TextObjectProps) {
 		return
 	}
 
-	data := sg_range(vertex_scratch[:])
-	if sg.query_buffer_will_overflow(text_vb, data.size) {
-		common.print_error("text vertex stream buffer overflow, dropping draw")
-		return
-	}
-	vertex_offset := sg.append_buffer(text_vb, data)
-	sg.apply_uniforms(0, {ptr = &mvp, size = size_of(mvp)})
+	vertex_offset := stream_push(&text_stream, vertex_scratch[:])
 
-	bindings := sg.Bindings {
-		vertex_buffers = {0 = text_vb},
-		vertex_buffer_offsets = {0 = vertex_offset},
-		index_buffer = text_ib,
-		views = get_views_data(font.image),
-		samplers = {0 = text_sampler},
-	}
-	sg.apply_bindings(bindings)
-
-	quad_count := len(props.text)
-	index_count := quad_count * 6
-	sg.draw(0, index_count, 1)
+	append(
+		&draw_commands,
+		Draw_Command {
+			pipeline = has_custom_shader ? custom_shader.pipeline : text_pipeline,
+			mvp = mvp,
+			stream = &text_stream,
+			vertex_offset = vertex_offset,
+			index_buffer = text_ib,
+			views = get_views_data(font.image),
+			samplers = {0 = text_sampler},
+			index_count = len(props.text) * 6,
+		},
+	)
 }

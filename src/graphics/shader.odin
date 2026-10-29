@@ -117,7 +117,7 @@ init_shader :: proc(schd_path: string) -> (u32, bool) {
 
 	indices := []u16{0, 1, 2, 0, 2, 3}
 	ib := sg.make_buffer(
-		{usage = {index_buffer = true, immutable = true}, data = sg_range(indices)},
+		{usage = {index_buffer = true}, data = sg_range(indices)},
 	)
 
 	custom_shaders[shader_id] = CustomShader {

@@ -6,7 +6,7 @@ Set-Location $OdinShared
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue sokol
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue odin-http
 
-$SokolOdinCommit = "974cb5a1c91e33f5ca8ccb09532d13770918af2c"
+$SokolOdinCommit = "49d76fd12201f33d16e3fbe78d2d508351507822"
 
 git clone https://github.com/floooh/sokol-odin.git
 git -C sokol-odin checkout $SokolOdinCommit

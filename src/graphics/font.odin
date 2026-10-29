@@ -189,7 +189,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 			width = bitmap_width,
 			height = bitmap_height,
 			pixel_format = .R8,
-			data = {mip_levels = {0 = {ptr = bitmap, size = uint(bitmap_width * bitmap_height)}}},
+			data = {ptr = bitmap, size = uint(bitmap_width * bitmap_height)},
 		},
 	)
 	free(bitmap)

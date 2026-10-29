@@ -2,11 +2,13 @@
 
 The runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language. This is the executable that actually loads and plays a Sucata game — driven by the sibling [sucata-cli](https://github.com/sucata-engine/sucata-cli) tool during development, and cloned + bundled with a game's assets to produce standalone distributables via `sucata build`.
 
-Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app + `sokol/audio` raw PCM streaming), [odin-http](https://github.com/laytan/odin-http), `vendor:stb/vorbis` (OGG decoding), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4. Audio mixing, resampling and WAV decoding are implemented directly in `src/core/audio/` on top of `sokol/audio`. Supported audio formats: **WAV and OGG Vorbis only — no MP3**.
+Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app), [miniaudio](https://miniaud.io) (`vendor:miniaudio`, audio playback, decoding and mixing), [odin-http](https://github.com/laytan/odin-http), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4. Supported audio formats: **WAV, MP3, OGG Vorbis and FLAC**.
+
+On macOS and Linux the miniaudio static library is not shipped with Odin; `scripts/install-shared/unix.sh` builds it (it runs `$(odin root)/vendor/miniaudio/src/build_miniaudio.sh`). On Windows it comes prebuilt with the compiler.
 
 ## Shared Folder
 
-- sokol -> https://github.com/floooh/sokol-odin (pinned to commit `974cb5a` by `scripts/install-shared`, newer versions changed the gfx API)
+- sokol -> https://github.com/floooh/sokol-odin (pinned to commit `49d76fd` by `scripts/install-shared`; update the commit there when moving to a newer sokol)
 - http -> https://github.com/laytan/odin-http
 
 ## Setup project

@@ -10,7 +10,7 @@ cd $ODIN_SHARED
 rm -rf sokol
 rm -rf http
 
-SOKOL_ODIN_COMMIT=974cb5a1c91e33f5ca8ccb09532d13770918af2c
+SOKOL_ODIN_COMMIT=49d76fd12201f33d16e3fbe78d2d508351507822
 
 git clone https://github.com/floooh/sokol-odin.git
 git -C sokol-odin checkout $SOKOL_ODIN_COMMIT
@@ -31,6 +31,20 @@ case "$(uname -s)" in
   *) echo "Unsupported OS for building sokol clibs: $(uname -s)" >&2; exit 1 ;;
 esac
 cd ..
+
+if [ "$(uname -s)" = "Darwin" ]; then
+  (
+    cd "$ODIN_ROOT/vendor/stb/src"
+    for f in stb_image stb_image_write stb_image_resize stb_truetype stb_rect_pack stb_vorbis stb_sprintf; do
+      cc -arch "$(uname -m)" -c -O2 -fPIC "$f.c" -o "$f.o" -mmacosx-version-min=11.0
+      rm -f "../lib/darwin/$f.a"
+      ar rcs "../lib/darwin/$f.a" "$f.o"
+      rm "$f.o"
+    done
+  )
+fi
+
+ODIN_ROOT="$ODIN_ROOT" sh "$ODIN_ROOT/vendor/miniaudio/src/build_miniaudio.sh"
 
 git clone https://github.com/laytan/odin-http.git
 mv ./odin-http ./http
