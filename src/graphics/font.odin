@@ -218,7 +218,6 @@ unload_fonts :: proc() {
 		sg.destroy_view(font.image)
 		delete(font.char_data)
 		free(font)
-		delete_key(&loaded_fonts, font_key)
 		delete(font_key.path)
 	}
 	delete(loaded_fonts)

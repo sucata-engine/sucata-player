@@ -94,37 +94,45 @@ preload_image :: proc(_path: string) {
 	if _path == "" {
 		return
 	}
-	image := load_image(_path)
-	image.hot = true
-	images_loaded[_path] = image
+	load_image(_path)
+	if image, ok := &images_loaded[_path]; ok {
+		image.hot = true
+	}
 }
 
 destroy_images :: proc() {
 	for file_path, value in images_loaded {
 		sg.destroy_image(sg.query_view_image(value.view))
 		sg.destroy_view(value.view)
-		delete_key(&images_loaded, file_path)
-		delete_key(&images_used, file_path)
-		delete(file_path)
+		if file_path != DEFAULT_IMAGE_KEY {
+			delete(file_path)
+		}
 	}
 	delete(images_loaded)
 	delete(images_used)
+	images_loaded = {}
+	images_used = {}
 }
 
 destroy_image :: proc(file_path: string) {
+	if file_path == DEFAULT_IMAGE_KEY {
+		return
+	}
 	if value, ok := images_loaded[file_path]; ok {
 		sg.destroy_image(sg.query_view_image(value.view))
 		sg.destroy_view(value.view)
-		delete_key(&images_loaded, file_path)
 		delete_key(&images_used, file_path)
-		delete(file_path)
+		owned_key, _ := delete_key(&images_loaded, file_path)
+		delete(owned_key)
 	}
 }
 
 destroy_unused_images :: proc() {
-	for file_path, used in images_used {
+	unused := make([dynamic]string, context.temp_allocator)
+
+	for file_path, &used in images_used {
 		if used {
-			images_used[file_path] = false
+			used = false
 			continue
 		}
 		if file_path == DEFAULT_IMAGE_KEY {
@@ -133,6 +141,10 @@ destroy_unused_images :: proc() {
 		if image, ok := images_loaded[file_path]; ok && image.hot {
 			continue
 		}
+		append(&unused, file_path)
+	}
+
+	for file_path in unused {
 		destroy_image(file_path)
 	}
 }
