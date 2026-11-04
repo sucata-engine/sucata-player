@@ -5,7 +5,7 @@ import "../../graphics"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 PRELOAD_TEXTURE_FUNCTION :: lua_common.LuaFunction {
 	name = "preload_texture",

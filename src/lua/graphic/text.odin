@@ -5,15 +5,15 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 TEXT_FUNCTION :: lua_common.LuaFunction {
-	name = "draw_text",
+	name = "_text_table",
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 
-		if !lua_common.validate_arg_count(L, 1, "draw_text") do return 0
-		if !lua_common.validate_table(L, 1, "draw_text") do return 0
+		if !lua_common.validate_arg_count(L, 1, "_text_table") do return 0
+		if !lua_common.validate_table(L, 1, "_text_table") do return 0
 
 		x: f32 = 0.0
 		y: f32 = 0.0
@@ -61,7 +61,10 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 						text_owned = true
 					}
 				case "font":
-					if lua.isstring(L, -1) {
+					if lua.type(L, -1) == lua.Type.NUMBER {
+						font = strings.clone(core.texture_path(u32(lua.tonumber(L, -1))))
+						font_owned = true
+					} else if lua.isstring(L, -1) {
 						font = strings.clone_from_cstring(lua.tostring(L, -1))
 						font_owned = true
 					}

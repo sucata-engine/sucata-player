@@ -13,7 +13,7 @@ import sg "shared:sokol/gfx"
 import sglue "shared:sokol/glue"
 import shelpers "shared:sokol/helpers"
 import st "shared:sokol/time"
-import lua "vendor:lua/5.4"
+import lua "../luajit"
 
 BACKGROUND_FPS :: 15
 MINIMIZED_FPS :: 5
@@ -22,7 +22,6 @@ is_window_focused: bool = true
 is_window_minimized: bool = false
 
 delta_time: f64 = 0.016
-time_scale: f64 = 1.0
 fps: u64 = 0.0
 
 clear_color := sg.Color {
@@ -120,7 +119,7 @@ init_callback :: proc "c" () {
 	is_game_started = true
 	process_post_commands()
 
-	run_init()
+	run_phase(.Init)
 }
 
 cleanup_callback :: proc "c" () {
@@ -128,19 +127,13 @@ cleanup_callback :: proc "c" () {
 
 	shutdown_microui()
 
-	run_root(.Free)
-	run_free()
-	run_free_globals()
-	cleanup_root()
+	run_phase(.Free)
+	cleanup_phases()
+	cleanup_render_queue()
 	cleanup_group_quads_pool()
-	cleanup_event_handlers()
-	cleanup_behaviours()
-	cleanup_tags()
-	cleanup_timers()
-	cleanup_entities()
+	cleanup_textures()
 	shutdown_gamepad()
 	audio.shutdown()
-	dynlib_shutdown()
 	graphics.shutdown_graphics()
 
 	sg.shutdown()
@@ -183,12 +176,13 @@ frame_callback :: proc "c" () {
 	sapp.lock_mouse(windowConfig.lock_mouse)
 
 	calc_time()
-	update_timers(delta_time)
+	sync_ffi_frame()
 	audio.update()
 
 	poll_gamepad_events()
+	sync_ffi_input()
 
-	run_update()
+	run_phase(.Tick)
 	process_hoverables()
 
 	elapsed_time += delta_time
@@ -247,14 +241,14 @@ frame_callback :: proc "c" () {
 
 	clear_input()
 	clear_gamepad_states()
-	process_destroy_queue()
+	run_phase(.Late)
 
 	if LUA_GLOBAL_STATE != nil {
-		current_kb := lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT)
+		current_kb := lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT, 0)
 		delta_kb := current_kb - last_gc_kb
 		step_kb := delta_kb > GC_STEP_KB_MIN ? delta_kb : GC_STEP_KB_MIN
 		lua.gc(LUA_GLOBAL_STATE, lua.GCSTEP, step_kb)
-		last_gc_kb = lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT)
+		last_gc_kb = lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT, 0)
 	}
 
 	target_fps := get_target_fps()

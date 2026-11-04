@@ -4,7 +4,7 @@ import core "../../core"
 import "../../graphics"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 ADD_POST_PROCESSING_FUNCTION :: lua_common.LuaFunction {
 	name = "add_post_processing",

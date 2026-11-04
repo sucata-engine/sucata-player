@@ -3,7 +3,7 @@ package lua_common
 import "../../common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 parse_shader_args_table :: proc(L: ^lua.State) -> common.ShaderArgs {
 	shader_args := common.ShaderArgs{}

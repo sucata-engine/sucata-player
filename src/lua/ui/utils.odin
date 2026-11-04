@@ -3,7 +3,7 @@ package ui
 import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 import mu "vendor:microui"
 
 get_table_color :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> Maybe(mu.Color) {
@@ -17,7 +17,7 @@ get_table_color :: proc(L: ^lua.State, table_index: c.int, field: cstring) -> Ma
 
 	rgba := [4]f32{0, 0, 0, 1}
 	for i in 1 ..= 4 {
-		lua.rawgeti(L, -1, lua.Integer(i))
+		lua.rawgeti(L, -1, c.int(i))
 		if lua.isnumber(L, -1) do rgba[i - 1] = f32(lua.tonumber(L, -1))
 		lua.pop(L, 1)
 	}
@@ -46,7 +46,7 @@ get_table_number_array :: proc(L: ^lua.State, table_index: c.int, field: cstring
 
 	result := make([]i32, n)
 	for i in 1 ..= n {
-		lua.rawgeti(L, -1, lua.Integer(i))
+		lua.rawgeti(L, -1, c.int(i))
 		if lua.isnumber(L, -1) do result[i - 1] = i32(lua.tonumber(L, -1))
 		lua.pop(L, 1)
 	}

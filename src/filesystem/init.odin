@@ -40,7 +40,7 @@ uninit_paths :: proc() {
 }
 
 init_build_paths :: proc(assets_file: string) {
-	filesystem.file = strings.clone("main.lua")
+	filesystem.file = strings.clone("src://main.lua")
 	filesystem.src = strings.clone(filepath.dir(assets_file))
 	filesystem.build = strings.clone(filesystem.src)
 	filesystem.name = filepath.base(filesystem.src)

@@ -103,12 +103,14 @@ destroy_images :: proc() {
 	for file_path, value in images_loaded {
 		sg.destroy_image(sg.query_view_image(value.view))
 		sg.destroy_view(value.view)
-		delete_key(&images_loaded, file_path)
-		delete_key(&images_used, file_path)
-		delete(file_path)
+		if file_path != DEFAULT_IMAGE_KEY {
+			delete(file_path)
+		}
 	}
 	delete(images_loaded)
 	delete(images_used)
+	images_loaded = {}
+	images_used = {}
 }
 
 destroy_image :: proc(file_path: string) {

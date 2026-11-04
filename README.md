@@ -2,7 +2,7 @@
 
 The runtime/engine core of [Sucata](https://sucata.dev), a 2D game engine written in [Odin](https://odin-lang.org/) with [Lua](https://www.lua.org/) as the scripting language. This is the executable that actually loads and plays a Sucata game — driven by the sibling [sucata-cli](https://github.com/sucata-engine/sucata-cli) tool during development, and cloned + bundled with a game's assets to produce standalone distributables via `sucata build`.
 
-Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app), [miniaudio](https://miniaud.io) (`vendor:miniaudio`, audio playback, decoding and mixing), [odin-http](https://github.com/laytan/odin-http), lz4 (asset compression), SDL3 (gamepad), and Lua 5.4. Supported audio formats: **WAV, MP3, OGG Vorbis and FLAC**.
+Key dependencies: [sokol](https://github.com/floooh/sokol-odin) (graphics/app), [miniaudio](https://miniaud.io) (`vendor:miniaudio`, audio playback, decoding and mixing), [odin-http](https://github.com/laytan/odin-http), lz4 (asset compression), SDL3 (gamepad), and LuaJIT 2.1. Supported audio formats: **WAV, MP3, OGG Vorbis and FLAC**.
 
 On macOS and Linux the miniaudio static library is not shipped with Odin; `scripts/install-shared/unix.sh` builds it (it runs `$(odin root)/vendor/miniaudio/src/build_miniaudio.sh`). On Windows it comes prebuilt with the compiler.
 
@@ -14,7 +14,7 @@ On macOS and Linux the miniaudio static library is not shipped with Odin; `scrip
 ## Setup project
 
 1. Install [odin](https://odin-lang.org/) version: dev-2026-04-nightly:a896fb2
-2. Install the shared libs, you can use `./scripts/install-shared/unix.sh` or `./scripts/install-shared/win.ps1`
+2. Install the shared libs, you can use `./scripts/install-shared/unix.sh` or `./scripts/install-shared/win.ps1` (it also builds LuaJIT through `scripts/install-luajit`; on Windows run it from a "x64 Native Tools Command Prompt for VS")
 3. Now you can edit!
 
 ## Build project
@@ -24,3 +24,7 @@ Just use the script for build a debug version:
 
 or release version:
 `./scripts/build-release/unix.sh` or `./scripts/build-release/win.ps1`
+
+## 2.0
+
+Scenes, entities and events moved from the core to embedded Lua addons, the scripting runtime is now LuaJIT with FFI fast paths. See [MIGRATION-2.0.md](MIGRATION-2.0.md).

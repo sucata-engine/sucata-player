@@ -20,3 +20,4 @@ Pop-Location
 git clone https://github.com/laytan/odin-http.git
 Move-Item .\odin-http .\http
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue odin-http
+& "$PSScriptRoot\..\install-luajit\win.cmd"

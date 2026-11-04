@@ -5,15 +5,15 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 RECT_FUNCTION :: lua_common.LuaFunction {
-	name = "draw_rect",
+	name = "_rect_table",
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 
-		if !lua_common.validate_arg_count(L, 1, "draw_rect") do return 0
-		if !lua_common.validate_table(L, 1, "draw_rect") do return 0
+		if !lua_common.validate_arg_count(L, 1, "_rect_table") do return 0
+		if !lua_common.validate_table(L, 1, "_rect_table") do return 0
 
 		x: f32 = 0.0
 		y: f32 = 0.0
@@ -65,7 +65,10 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 				case "z_index":
 					if lua.isnumber(L, -1) do zIndex = f64(lua.tonumber(L, -1))
 				case "texture":
-					if lua.isstring(L, -1) {
+					if lua.type(L, -1) == lua.Type.NUMBER {
+						texture_path = strings.clone(core.texture_path(u32(lua.tonumber(L, -1))))
+						texture_owned = true
+					} else if lua.isstring(L, -1) {
 						texture_path = strings.clone_from_cstring(lua.tostring(L, -1))
 						texture_owned = true
 					}

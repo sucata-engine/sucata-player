@@ -5,7 +5,7 @@ import "../../filesystem"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 OPEN_DIALOG_FUNCTION :: lua_common.LuaFunction {
 	name = "open_dialog",
@@ -31,7 +31,7 @@ OPEN_DIALOG_FUNCTION :: lua_common.LuaFunction {
 			filters_table := lua.gettop(L)
 
 			for i in 1 ..= filters_count {
-				lua.rawgeti(L, filters_table, lua.Integer(i))
+				lua.rawgeti(L, filters_table, c.int(i))
 				if lua.isstring(L, -1) {
 					append(&extensions, strings.clone_from_cstring(lua.tostring(L, -1)))
 				}
@@ -58,7 +58,7 @@ OPEN_DIALOG_FUNCTION :: lua_common.LuaFunction {
 				cpath := strings.clone_to_cstring(path)
 				defer delete(cpath)
 				lua.pushstring(L, cpath)
-				lua.rawseti(L, result_table, lua.Integer(i + 1))
+				lua.rawseti(L, result_table, c.int(i + 1))
 			}
 		} else {
 			cpath := strings.clone_to_cstring(paths[0])
