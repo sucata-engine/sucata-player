@@ -31,16 +31,17 @@ O prelude faz `ffi.cast` nela e valida o layout comparando `ffi.sizeof` com `siz
 | `sucata.gamepad.*` | leitura direta de `Ffi_Gamepad` (8 slots), sincronizado uma vez por frame |
 | `sucata.graphic.rect(...)` | chamada FFI, sem tabela; substitui `draw_rect` |
 | `sucata.graphic.text(...)` | chamada FFI, sem tabela; substitui `draw_text` |
-| `sucata.graphic.load_texture(path)` / `load_font(path)` | devolvem um handle inteiro |
+| `sucata.graphic.load_texture(path, r, g, b, a)` | handle de textura com tint |
+| `sucata.graphic.load_atlas(path, w, h, spacing, margin, r, g, b, a)` | tabela com um handle por frame, a partir de `1` |
+| `sucata.graphic.color(r, g, b, a)` | handle de cor sólida |
+| `sucata.graphic.load_font(path)` | handle de fonte |
 
 `draw_rect` e `draw_text` foram removidos. Tudo é por parâmetro, e os parâmetros finais são opcionais:
 
 ```lua
 sucata.graphic.rect(tex, x, y, w, h, z,
   rotation, scale_x, scale_y, origin_x, origin_y,
-  r, g, b, a, fixed,
-  atlas_x, atlas_y, atlas_w, atlas_h, atlas_spacing, atlas_margin,
-  tiled, tile_w, tile_h,
+  fixed, tiled, tile_w, tile_h,
   shader, shader_args)
 
 sucata.graphic.text(str, x, y, size, z,
@@ -50,8 +51,12 @@ sucata.graphic.text(str, x, y, size, z,
   shader, shader_args)
 ```
 
-- `tex` e `font` aceitam handle, caminho (`"src://..."`, guardado em cache) ou `nil` (sem textura / fonte padrão).
-- Padrões: `z = 0`, `rotation = 0`, `scale_y = scale_x = 1`, `origin_y = origin_x = 0`, cor branca, `atlas_h = atlas_w`,
+- O `rect` não tem cor nem atlas: o handle carrega a imagem, o tint e o frame. Uma cor diferente é outro handle,
+  criado uma vez no topo do arquivo. Frames do atlas contam da esquerda pra direita e de cima pra baixo.
+- `tex` aceita handle, caminho (`"src://..."`, vira um handle branco em cache) ou `nil` (retângulo branco).
+  `font` aceita handle, caminho ou `nil` (fonte padrão).
+- Handles da mesma imagem (frames e tints) caem no mesmo grupo do render queue, então continuam num draw call só.
+- Padrões: `z = 0`, `rotation = 0`, `scale_y = scale_x = 1`, `origin_y = origin_x = 0`, cor branca,
   `tile_h = tile_w`, `size = 16`, `align = "left"`.
 - Só com os 6 primeiros parâmetros (`rect`) ou 5 (`text`), a chamada vai direto pro C. Com mais, os valores são
   copiados para uma struct FFI reaproveitada, também sem lixo.

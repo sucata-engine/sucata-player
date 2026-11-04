@@ -18,27 +18,25 @@ Ffi_Screen :: struct {
 }
 
 Ffi_Quad :: struct {
-	tex:           u32,
-	z:             i32,
-	x, y, w, h:    f32,
-	rotation:      f32,
-	scale_x:       f32,
-	scale_y:       f32,
-	origin_x:      f32,
-	origin_y:      f32,
-	color:         [4]f32,
-	opacity:       f32,
-	fixed:         i32,
-	tiled:         i32,
-	shader:        u32,
-	tile_w:        f32,
-	tile_h:        f32,
-	atlas_w:       f32,
-	atlas_h:       f32,
-	atlas_spacing: f32,
-	atlas_margin:  f32,
-	atlas_x:       f32,
-	atlas_y:       f32,
+	tex:        u32,
+	z:          i32,
+	x, y, w, h: f32,
+	rotation:   f32,
+	scale_x:    f32,
+	scale_y:    f32,
+	origin_x:   f32,
+	origin_y:   f32,
+	fixed:      i32,
+	tiled:      i32,
+	shader:     u32,
+	tile_w:     f32,
+	tile_h:     f32,
+}
+
+Sprite :: struct {
+	image: u32,
+	color: [4]f32,
+	atlas: common.AtlasProps,
 }
 
 Ffi_Text :: struct {
@@ -109,6 +107,12 @@ ffi_gamepads: [MAX_GAMEPADS]Ffi_Gamepad
 
 textures: [dynamic]string = {}
 texture_handles: map[string]u32 = {}
+sprites: [dynamic]Sprite = {}
+sprite_handles: map[Sprite]u32 = {}
+
+NO_SPRITE :: Sprite {
+	color = {1, 1, 1, 1},
+}
 
 get_ffi_api :: proc() -> ^Ffi_Api {
 	ffi_api = Ffi_Api {
@@ -176,6 +180,23 @@ register_texture :: proc(path: string) -> u32 {
 	return handle
 }
 
+register_sprite :: proc(sprite: Sprite) -> u32 {
+	if handle, ok := sprite_handles[sprite]; ok {
+		return handle
+	}
+	append(&sprites, sprite)
+	handle := u32(len(sprites))
+	sprite_handles[sprite] = handle
+	return handle
+}
+
+get_sprite :: #force_inline proc(handle: u32) -> Sprite {
+	if handle == 0 || int(handle) > len(sprites) {
+		return NO_SPRITE
+	}
+	return sprites[handle - 1]
+}
+
 texture_path :: #force_inline proc(handle: u32) -> string {
 	if handle == 0 || int(handle) > len(textures) {
 		return ""
@@ -191,6 +212,10 @@ cleanup_textures :: proc() {
 	textures = {}
 	delete(texture_handles)
 	texture_handles = {}
+	delete(sprites)
+	sprites = {}
+	delete(sprite_handles)
+	sprite_handles = {}
 }
 
 ffi_opacity :: #force_inline proc "contextless" (value: f32) -> Maybe(f32) {
@@ -202,43 +227,40 @@ ffi_opacity :: #force_inline proc "contextless" (value: f32) -> Maybe(f32) {
 
 ffi_rect :: proc "c" (tex: u32, x, y, w, h: f32, z: i32) {
 	context = DEFAULT_CONTEXT
+	sprite := get_sprite(tex)
 	add_quad_to_render_queue(
 		z,
-		tex,
+		sprite.image,
 		0,
 		false,
 		false,
-		common.QuadProp{position = {x, y}, size = {w, h}, color = {1, 1, 1, 1}, scale = {1, 1}},
+		common.QuadProp {
+			position = {x, y},
+			size = {w, h},
+			color = sprite.color,
+			scale = {1, 1},
+			atlas = sprite.atlas,
+		},
 	)
 }
 
 ffi_rect_ex :: proc "c" (q: ^Ffi_Quad) {
 	context = DEFAULT_CONTEXT
-	color := q.color
-	if q.opacity >= 0 {
-		color[3] = q.opacity
-	}
+	sprite := get_sprite(q.tex)
 	add_quad_to_render_queue(
 		q.z,
-		q.tex,
+		sprite.image,
 		q.shader,
 		q.fixed != 0,
 		q.tiled != 0,
 		common.QuadProp {
 			position = {q.x, q.y},
 			size = {q.w, q.h},
-			color = color,
+			color = sprite.color,
 			scale = {q.scale_x, q.scale_y},
 			origin = {q.origin_x, q.origin_y},
 			rotation = q.rotation,
-			atlas = common.AtlasProps {
-				width = q.atlas_w,
-				height = q.atlas_h,
-				spacing = q.atlas_spacing,
-				margin = q.atlas_margin,
-				x = q.atlas_x,
-				y = q.atlas_y,
-			},
+			atlas = sprite.atlas,
 			tile_size = {q.tile_w, q.tile_h},
 		},
 	)

@@ -56,15 +56,10 @@ typedef struct {
   float rotation;
   float scale_x, scale_y;
   float origin_x, origin_y;
-  float color[4];
-  float opacity;
   int32_t fixed;
   int32_t tiled;
   uint32_t shader;
   float tile_w, tile_h;
-  float atlas_w, atlas_h;
-  float atlas_spacing, atlas_margin;
-  float atlas_x, atlas_y;
 } sucata_quad;
 
 typedef struct {
@@ -172,40 +167,94 @@ local runtime = {
 sucata._runtime = runtime
 
 local graphic = sucata.graphic
-local load_handle = graphic.load_texture
+local make_sprite = graphic._sprite
+local load_font = graphic.load_font
 local rect_table = graphic._rect_table
 local text_table = graphic._text_table
+graphic._sprite = nil
 graphic._rect_table = nil
 graphic._text_table = nil
 
-local handles = {}
+graphic.load_texture = function(path, r, g, b, a)
+  if type(path) ~= "string" then
+    error("load_texture: path must be a string", 2)
+  end
+  return make_sprite(path, r, g, b, a)
+end
 
-local function handle_of(value)
+graphic.color = function(r, g, b, a)
+  return make_sprite("", r, g, b, a)
+end
+
+graphic.load_atlas = function(path, cell_w, cell_h, spacing, margin, r, g, b, a)
+  if type(path) ~= "string" then
+    error("load_atlas: path must be a string", 2)
+  end
+  if type(cell_w) ~= "number" or cell_w <= 0 then
+    error("load_atlas: cell width must be a positive number", 2)
+  end
+  cell_h = cell_h or cell_w
+  spacing = spacing or 0
+  margin = margin or 0
+  return setmetatable({}, {
+    __index = function(frames, index)
+      if type(index) ~= "number" or index < 1 or index % 1 ~= 0 then
+        return nil
+      end
+      local handle = make_sprite(path, r, g, b, a, cell_w, cell_h, spacing, margin, index - 1)
+      rawset(frames, index, handle)
+      return handle
+    end,
+  })
+end
+
+local textures = {}
+local fonts = {}
+
+local function texture_of(value)
   if value == nil then
     return 0
   end
-  local handle = handles[value]
+  local handle = textures[value]
   if handle then
     return handle
   end
   if type(value) ~= "string" then
-    error("texture must be a handle from load_texture or a path", 3)
+    error("texture must be a handle from load_texture, load_atlas or color, or a path", 3)
   end
-  handle = load_handle(value)
-  handles[value] = handle
+  handle = make_sprite(value)
+  textures[value] = handle
+  return handle
+end
+
+local function font_of(value)
+  if value == nil then
+    return 0
+  end
+  if type(value) == "number" then
+    return value
+  end
+  local handle = fonts[value]
+  if handle then
+    return handle
+  end
+  if type(value) ~= "string" then
+    error("font must be a handle from load_font or a path", 3)
+  end
+  handle = load_font(value)
+  fonts[value] = handle
   return handle
 end
 
 local quad = ffi.new("sucata_quad")
 local rect_args = {}
 
-graphic.rect = function(tex, x, y, w, h, z, rotation, scale_x, scale_y, origin_x, origin_y, r, g, b, a, fixed,
-                        atlas_x, atlas_y, atlas_w, atlas_h, atlas_spacing, atlas_margin, tiled, tile_w, tile_h,
-                        shader, shader_args)
+graphic.rect = function(tex, x, y, w, h, z, rotation, scale_x, scale_y, origin_x, origin_y, fixed,
+                        tiled, tile_w, tile_h, shader, shader_args)
   if type(tex) ~= "number" then
-    tex = handle_of(tex)
+    tex = texture_of(tex)
   end
-  if rotation == nil and r == nil and fixed == nil and atlas_x == nil and tiled == nil and shader == nil then
+  if rotation == nil and scale_x == nil and origin_x == nil and fixed == nil and tiled == nil and shader == nil then
     c_rect(tex, x, y, w, h, z or 0)
     return
   end
@@ -216,10 +265,7 @@ graphic.rect = function(tex, x, y, w, h, z, rotation, scale_x, scale_y, origin_x
     t.texture, t.x, t.y, t.width, t.height, t.z_index = tex, x, y, w, h, z or 0
     t.rotation, t.scale_x, t.scale_y = rotation or 0, scale_x, scale_y or scale_x
     t.origin_x, t.origin_y = origin_x, origin_y or origin_x
-    t.color = { r or 1, g or 1, b or 1, a or 1 }
     t.fixed, t.tiled, t.shader = fixed == true, tiled == true, shader or 0
-    t.atlas_x, t.atlas_y, t.atlas_width, t.atlas_height = atlas_x or 0, atlas_y or 0, atlas_w or 0, atlas_h or atlas_w or 0
-    t.atlas_spacing, t.atlas_margin = atlas_spacing or 0, atlas_margin or 0
     t.tile_width, t.tile_height = tile_w or 0, tile_h or tile_w or 0
     t.shader_args = shader_args
     rect_table(t)
@@ -233,12 +279,7 @@ graphic.rect = function(tex, x, y, w, h, z, rotation, scale_x, scale_y, origin_x
   q.rotation = rotation or 0
   q.scale_x, q.scale_y = scale_x, scale_y or scale_x
   q.origin_x, q.origin_y = origin_x, origin_y or origin_x
-  q.color[0], q.color[1], q.color[2], q.color[3] = r or 1, g or 1, b or 1, a or 1
-  q.opacity = -1
   q.fixed = fixed and 1 or 0
-  q.atlas_x, q.atlas_y = atlas_x or 0, atlas_y or 0
-  q.atlas_w, q.atlas_h = atlas_w or 0, atlas_h or atlas_w or 0
-  q.atlas_spacing, q.atlas_margin = atlas_spacing or 0, atlas_margin or 0
   q.tiled = tiled and 1 or 0
   q.tile_w, q.tile_h = tile_w or 0, tile_h or tile_w or 0
   q.shader = shader or 0
@@ -267,7 +308,7 @@ graphic.text = function(str, x, y, size, z, r, g, b, a, fixed, font, align, max_
     t.text, t.x, t.y, t.size, t.z_index = str, x, y, size, z or 0
     t.color = { r or 1, g or 1, b or 1, a or 1 }
     t.fixed = fixed == true
-    t.font = font ~= nil and handle_of(font) or nil
+    t.font = font ~= nil and font_of(font) or nil
     t.align, t.max_width = align or "left", max_width or 0
     t.rotation, t.scale_x, t.scale_y = rotation or 0, scale_x, scale_y or scale_x
     t.origin_x, t.origin_y = origin_x, origin_y or origin_x
@@ -277,7 +318,7 @@ graphic.text = function(str, x, y, size, z, r, g, b, a, fixed, font, align, max_
     return
   end
   local t = text_struct
-  t.font = font ~= nil and handle_of(font) or 0
+  t.font = font_of(font)
   t.x, t.y, t.size, t.z = x, y, size, z or 0
   t.color[0], t.color[1], t.color[2], t.color[3] = r or 1, g or 1, b or 1, a or 1
   t.opacity = -1

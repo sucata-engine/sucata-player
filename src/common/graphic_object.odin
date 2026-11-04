@@ -13,6 +13,7 @@ AtlasProps :: struct {
 	margin:  f32,
 	x:       f32,
 	y:       f32,
+	linear:  bool,
 }
 
 ShaderArgumentValue :: union {

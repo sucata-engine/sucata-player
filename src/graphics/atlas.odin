@@ -1,18 +1,31 @@
 package graphics
 
 import "../common"
+import "core:math"
+
+atlas_frame :: #force_inline proc(atlas: common.AtlasProps, img_width: f32) -> (f32, f32) {
+	if !atlas.linear {
+		return atlas.x, atlas.y
+	}
+	step := atlas.width + atlas.spacing
+	columns := step > 0 ? math.floor((img_width - 2 * atlas.margin + atlas.spacing) / step) : 1
+	if columns < 1 {
+		columns = 1
+	}
+	return math.mod(atlas.x, columns), math.floor(atlas.x / columns)
+}
 
 calculate_atlas_uv :: proc(atlas: common.AtlasProps, width: f32, height: f32) -> [4][2]f32 {
 	atlas_width := atlas.width
 	atlas_height := atlas.height
 	atlas_spacing := atlas.spacing
 	atlas_margin := atlas.margin
-	atlas_x := atlas.x
-	atlas_y := atlas.y
 
 	if atlas_height == 0.0 || atlas_width == 0.0 {
 		return [4][2]f32{{0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}}
 	}
+
+	atlas_x, atlas_y := atlas_frame(atlas, width)
 
 	u0 := (atlas_margin + (atlas_x * (atlas_width + atlas_spacing))) / width
 	v0 := (atlas_margin + (atlas_y * (atlas_height + atlas_spacing))) / height
@@ -33,8 +46,7 @@ calculate_atlas_uv_tiled :: proc(
 	atlas_height := atlas.height
 	atlas_spacing := atlas.spacing
 	atlas_margin := atlas.margin
-	atlas_x := atlas.x
-	atlas_y := atlas.y
+	atlas_x, atlas_y := atlas_frame(atlas, img_width)
 
 	if atlas_height == 0.0 || atlas_width == 0.0 {
 		ref_w := tile_size[0] > 0.0 ? tile_size[0] : img_width
