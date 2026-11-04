@@ -315,20 +315,32 @@ local function rebuild()
     return a.seq < b.seq
   end)
   for _, phase in ipairs(PHASES) do
-    local fns = lists[phase]
-    for i = #fns, 1, -1 do
-      fns[i] = nil
-    end
+    local fns = {}
     for i = 1, #units do
       local fn = units[i].addon[phase]
       if type(fn) == "function" then
-        fns[#fns + 1] = { fn = fn, name = units[i].name }
+        fns[#fns + 1] = { fn = fn, name = units[i].name, unit = units[i].addon }
       end
     end
+    lists[phase] = fns
   end
 end
 
 local booted = false
+local init_started = false
+local inited = {}
+
+local function call_init(entry)
+  if inited[entry.unit] then
+    return false
+  end
+  inited[entry.unit] = true
+  local ok, err = xpcall(entry.fn, traceback, T.delta)
+  if not ok then
+    runtime.report("[" .. entry.name .. "][init]", err)
+  end
+  return true
+end
 
 local function load_module(name)
   local module = require(name)
@@ -353,14 +365,18 @@ local function use(addon, name)
   end
   registered[unit_table] = true
   next_seq = next_seq + 1
+  local unit_name = name or unit_table.name or "addon"
   units[#units + 1] = {
     addon = unit_table,
     order = unit_table.order or 0,
     seq = next_seq,
-    name = name or unit_table.name or "addon",
+    name = unit_name,
   }
   if booted then
     rebuild()
+  end
+  if init_started and type(unit_table.init) == "function" then
+    call_init({ fn = unit_table.init, name = unit_name, unit = unit_table })
   end
   return addon
 end
@@ -378,10 +394,21 @@ setmetatable(sucata, {
   end,
 })
 
+local function init_runner()
+  init_started = true
+  local fns = lists.init
+  for i = 1, #fns do
+    call_init(fns[i])
+  end
+end
+
 local function runner(phase)
-  local fns = lists[phase]
+  if phase == "init" then
+    return init_runner
+  end
   local where = "[" .. phase .. "]"
   return function()
+    local fns = lists[phase]
     local dt = T.delta
     for i = 1, #fns do
       local entry = fns[i]
