@@ -23,7 +23,7 @@ is_draw_step: bool = false
 renderQueue: [dynamic]common.GraphicObjectProps = {}
 
 RenderGroupKey :: struct {
-	texture: string,
+	texture: u32,
 	z_index: i32,
 	shader:  u32,
 	fixed:   bool,
@@ -31,18 +31,34 @@ RenderGroupKey :: struct {
 }
 render_group_index: map[RenderGroupKey]int = {}
 
-group_quads_pool: [dynamic]^[dynamic]common.ObjectProp = {}
+last_group_key: RenderGroupKey
+last_group_index := -1
 
-acquire_group_quads :: proc() -> ^[dynamic]common.ObjectProp {
+group_quads_pool: [dynamic]^[dynamic]common.QuadProp = {}
+group_args_pool: [dynamic]^[dynamic]common.ShaderArgs = {}
+
+acquire_group_quads :: proc() -> ^[dynamic]common.QuadProp {
 	if len(group_quads_pool) > 0 {
 		return pop(&group_quads_pool)
 	}
-	return new([dynamic]common.ObjectProp)
+	return new([dynamic]common.QuadProp)
 }
 
-release_group_quads :: proc(quads: ^[dynamic]common.ObjectProp) {
+release_group_quads :: proc(quads: ^[dynamic]common.QuadProp) {
 	clear(quads)
 	append(&group_quads_pool, quads)
+}
+
+acquire_group_args :: proc() -> ^[dynamic]common.ShaderArgs {
+	if len(group_args_pool) > 0 {
+		return pop(&group_args_pool)
+	}
+	return new([dynamic]common.ShaderArgs)
+}
+
+release_group_args :: proc(args: ^[dynamic]common.ShaderArgs) {
+	clear(args)
+	append(&group_args_pool, args)
 }
 
 cleanup_group_quads_pool :: proc() {
@@ -52,6 +68,24 @@ cleanup_group_quads_pool :: proc() {
 	}
 	delete(group_quads_pool)
 	group_quads_pool = {}
+	for args in group_args_pool {
+		delete(args^)
+		free(args)
+	}
+	delete(group_args_pool)
+	group_args_pool = {}
+}
+
+delete_shader_args :: proc(args: common.ShaderArgs) {
+	for key, value in args {
+		#partial switch v in value {
+		case string:
+			delete(v)
+		}
+		delete(key)
+	}
+	args := args
+	delete(args)
 }
 
 VERSION :: "2.0.0"
@@ -107,77 +141,115 @@ add_group_to_render_queue :: proc(
 	tiled: bool,
 	prop: common.ObjectProp,
 ) {
+	color := prop.color
+	if opacity, ok := prop.opacity.?; ok {
+		color[3] = opacity
+	}
+	handle := texture == "" ? 0 : register_texture(texture)
+	add_quad_to_render_queue(
+		z_index,
+		handle,
+		shader,
+		fixed,
+		tiled,
+		common.QuadProp {
+			position = prop.position,
+			size = prop.size,
+			scale = prop.scale,
+			origin = prop.origin,
+			color = color,
+			rotation = prop.rotation,
+			atlas = prop.atlas,
+			tile_size = prop.tile_size,
+		},
+		prop.shader_args,
+	)
+}
+
+add_quad_to_render_queue :: proc(
+	z_index: i32,
+	texture: u32,
+	shader: u32,
+	fixed: bool,
+	tiled: bool,
+	quad: common.QuadProp,
+	shader_args: common.ShaderArgs = nil,
+) {
 	if !is_draw_step {
 		common.print_error("Trying to render outside draw() function")
+		if shader_args != nil {
+			delete_shader_args(shader_args)
+		}
 		return
 	}
 
-	lookup_key := RenderGroupKey {
+	key := RenderGroupKey {
 		texture = texture,
 		z_index = z_index,
 		shader  = shader,
 		fixed   = fixed,
 		tiled   = tiled,
 	}
-	if index, ok := render_group_index[lookup_key]; ok {
-		group := renderQueue[index].(common.GroupObjectProps)
-		append(group.quads, prop)
-		return
+
+	index := last_group_index
+	if index < 0 || last_group_key != key {
+		found: bool
+		index, found = render_group_index[key]
+		if !found {
+			append(
+				&renderQueue,
+				common.GroupObjectProps {
+					texture = texture,
+					z_index = z_index,
+					shader = shader,
+					fixed = fixed,
+					tiled = tiled,
+					quads = acquire_group_quads(),
+				},
+			)
+			index = len(renderQueue) - 1
+			render_group_index[key] = index
+		}
+		last_group_key = key
+		last_group_index = index
 	}
 
-	quads := acquire_group_quads()
-	append(quads, prop)
-	owned_texture := strings.clone(texture)
-	group_quads := common.GroupObjectProps {
-		texture = owned_texture,
-		z_index = z_index,
-		shader  = shader,
-		fixed   = fixed,
-		tiled   = tiled,
-		quads   = quads,
+	group := &renderQueue[index].(common.GroupObjectProps)
+	append(group.quads, quad)
+
+	if shader_args != nil {
+		if group.args == nil {
+			group.args = acquire_group_args()
+		}
+		resize(group.args, len(group.quads) - 1)
+		append(group.args, shader_args)
 	}
-	append(&renderQueue, group_quads)
-	render_group_index[RenderGroupKey{texture = owned_texture, z_index = z_index, shader = shader, fixed = fixed, tiled = tiled}] =
-		len(renderQueue) - 1
 }
 
 clear_render_queue :: proc() {
 	for v in renderQueue {
 		switch obj in v {
 		case common.GroupObjectProps:
-			delete(obj.texture)
-
-			if obj.quads != nil {
-				for quad in obj.quads^ {
-					for key, shader in quad.shader_args {
-						#partial switch v in shader {
-						case string:
-							delete(v)
-						}
-						delete(key)
+			if obj.args != nil {
+				for args in obj.args^ {
+					if args != nil {
+						delete_shader_args(args)
 					}
-					shader_args := quad.shader_args
-					delete(shader_args)
 				}
-
+				release_group_args(obj.args)
+			}
+			if obj.quads != nil {
 				release_group_quads(obj.quads)
 			}
 		case common.TextObjectProps:
-			delete(obj.font)
-			delete(obj.text)
-			for key, shader in obj.shader_args {
-				#partial switch v in shader {
-				case string:
-					delete(v)
-				}
-				delete(key)
+			if obj.shader_args != nil {
+				delete_shader_args(obj.shader_args)
 			}
-			shader_args := obj.shader_args
-			delete(shader_args)
 		}
 	}
 	clear(&renderQueue)
 	clear(&render_group_index)
+	last_group_index = -1
 }
 
 draw_render_queue :: proc() {
@@ -186,7 +258,7 @@ draw_render_queue :: proc() {
 		case common.TextObjectProps:
 			graphics.queue_text(obj)
 		case common.GroupObjectProps:
-			graphics.queue_quad_group(obj)
+			graphics.queue_quad_group(obj, texture_path(obj.texture))
 		}
 	}
 	graphics.flush_draw_commands()

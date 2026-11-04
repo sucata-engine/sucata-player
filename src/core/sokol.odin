@@ -33,8 +33,6 @@ clear_color := sg.Color {
 last_frame_time: u64
 first_frame: bool = true
 
-GC_STEP_KB_MIN :: 5
-last_gc_kb: c.int = 0
 
 calc_time :: proc() {
 	current_time := st.now()
@@ -243,13 +241,6 @@ frame_callback :: proc "c" () {
 	clear_gamepad_states()
 	run_phase(.Late)
 
-	if LUA_GLOBAL_STATE != nil {
-		current_kb := lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT, 0)
-		delta_kb := current_kb - last_gc_kb
-		step_kb := delta_kb > GC_STEP_KB_MIN ? delta_kb : GC_STEP_KB_MIN
-		lua.gc(LUA_GLOBAL_STATE, lua.GCSTEP, step_kb)
-		last_gc_kb = lua.gc(LUA_GLOBAL_STATE, lua.GCCOUNT, 0)
-	}
 
 	target_fps := get_target_fps()
 	if target_fps > 0 {

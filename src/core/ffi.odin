@@ -162,9 +162,7 @@ sync_ffi_input :: proc() {
 
 ffi_is_hover :: proc "c" (id: [^]u8, len: uint, x, y, w, h: f32, z: i32, fixed: i32) -> i32 {
 	context = DEFAULT_CONTEXT
-	name := string(id[:len])
-	add_hoverable(name, x, y, w, h, z, fixed != 0)
-	return name == hover ? 1 : 0
+	return add_hoverable(string(id[:len]), x, y, w, h, z, fixed != 0) ? 1 : 0
 }
 
 register_texture :: proc(path: string) -> u32 {
@@ -204,37 +202,35 @@ ffi_opacity :: #force_inline proc "contextless" (value: f32) -> Maybe(f32) {
 
 ffi_rect :: proc "c" (tex: u32, x, y, w, h: f32, z: i32) {
 	context = DEFAULT_CONTEXT
-	add_group_to_render_queue(
+	add_quad_to_render_queue(
 		z,
-		texture_path(tex),
+		tex,
 		0,
 		false,
 		false,
-		common.ObjectProp {
-			position = {x, y},
-			size = {w, h},
-			color = {1, 1, 1, 1},
-			scale = {1, 1},
-		},
+		common.QuadProp{position = {x, y}, size = {w, h}, color = {1, 1, 1, 1}, scale = {1, 1}},
 	)
 }
 
 ffi_rect_ex :: proc "c" (q: ^Ffi_Quad) {
 	context = DEFAULT_CONTEXT
-	add_group_to_render_queue(
+	color := q.color
+	if q.opacity >= 0 {
+		color[3] = q.opacity
+	}
+	add_quad_to_render_queue(
 		q.z,
-		texture_path(q.tex),
+		q.tex,
 		q.shader,
 		q.fixed != 0,
 		q.tiled != 0,
-		common.ObjectProp {
+		common.QuadProp {
 			position = {q.x, q.y},
 			size = {q.w, q.h},
-			color = q.color,
+			color = color,
 			scale = {q.scale_x, q.scale_y},
 			origin = {q.origin_x, q.origin_y},
 			rotation = q.rotation,
-			opacity = ffi_opacity(q.opacity),
 			atlas = common.AtlasProps {
 				width = q.atlas_w,
 				height = q.atlas_h,
@@ -252,8 +248,7 @@ ffi_text :: proc "c" (str: [^]u8, len: uint, x, y, size: f32, z: i32) {
 	context = DEFAULT_CONTEXT
 	add_to_render_queue(
 		common.TextObjectProps {
-			text = strings.clone(string(str[:len])),
-			font = strings.clone(""),
+			text = strings.clone(string(str[:len]), temp_allocator),
 			position = {x, y},
 			size = size,
 			zIndex = z,
@@ -274,8 +269,8 @@ ffi_text_ex :: proc "c" (str: [^]u8, len: uint, t: ^Ffi_Text) {
 	}
 	add_to_render_queue(
 		common.TextObjectProps {
-			text = strings.clone(string(str[:len])),
-			font = strings.clone(texture_path(t.font)),
+			text = strings.clone(string(str[:len]), temp_allocator),
+			font = texture_path(t.font),
 			position = {t.x, t.y},
 			size = t.size,
 			zIndex = t.z,

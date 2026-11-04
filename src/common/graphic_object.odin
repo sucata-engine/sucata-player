@@ -38,13 +38,25 @@ ObjectProp :: struct {
 	shader_args: ShaderArgs,
 }
 
+QuadProp :: struct {
+	position:  [2]f32,
+	size:      [2]f32,
+	scale:     [2]f32,
+	origin:    [2]f32,
+	color:     [4]f32,
+	rotation:  f32,
+	atlas:     AtlasProps,
+	tile_size: [2]f32,
+}
+
 GroupObjectProps :: struct {
 	z_index: i32,
-	texture: string,
+	texture: u32,
 	shader:  u32,
 	fixed:   bool,
 	tiled:   bool,
-	quads:   ^[dynamic]ObjectProp,
+	quads:   ^[dynamic]QuadProp,
+	args:    ^[dynamic]ShaderArgs,
 }
 
 TextObjectProps :: struct {

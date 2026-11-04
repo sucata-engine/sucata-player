@@ -21,9 +21,7 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 		color_rgba: [4]f32 = {1, 1, 1, 1}
 		zIndex: f64 = 0.0
 		text: string = ""
-		text_owned := false
 		font: string = ""
-		font_owned := false
 		scale: f32 = 1.0
 		scale_x: f32 = 1.0
 		scale_y: f32 = 1.0
@@ -57,16 +55,13 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 					if lua.isnumber(L, -1) do zIndex = f64(lua.tonumber(L, -1))
 				case "text":
 					if lua.isstring(L, -1) {
-						text = strings.clone_from_cstring(lua.tostring(L, -1))
-						text_owned = true
+						text = strings.clone_from_cstring(lua.tostring(L, -1), core.temp_allocator)
 					}
 				case "font":
 					if lua.type(L, -1) == lua.Type.NUMBER {
-						font = strings.clone(core.texture_path(u32(lua.tonumber(L, -1))))
-						font_owned = true
+						font = core.texture_path(u32(lua.tonumber(L, -1)))
 					} else if lua.isstring(L, -1) {
-						font = strings.clone_from_cstring(lua.tostring(L, -1))
-						font_owned = true
+						font = strings.clone_from_cstring(lua.tostring(L, -1), core.temp_allocator)
 					}
 				case "scale":
 					if lua.isnumber(L, -1) do scale = f32(lua.tonumber(L, -1))
@@ -104,8 +99,6 @@ TEXT_FUNCTION :: lua_common.LuaFunction {
 			lua.pop(L, 1)
 		}
 
-		if !text_owned do text = strings.clone(text)
-		if !font_owned do font = strings.clone(font)
 		if !align_owned do align = strings.clone(align)
 		defer delete(align)
 

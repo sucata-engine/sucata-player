@@ -1,12 +1,11 @@
 package core
 
 import "../graphics"
+import "core:hash"
 import "core:math"
-import "core:sort"
-import "core:strings"
 
 Hoverable :: struct {
-	id:      string,
+	id:      u64,
 	x:       f32,
 	y:       f32,
 	width:   f32,
@@ -16,44 +15,27 @@ Hoverable :: struct {
 }
 
 hoverables: [dynamic]Hoverable
-hover := ""
+hover: u64 = 0
 
-add_hoverable :: proc(id: string, x, y, width, height: f32, z_index: i32, fixed: bool) {
-	id_clone := strings.clone(id)
-	hoverable := Hoverable {
-		id      = id_clone,
-		x       = x,
-		y       = y,
-		width   = width,
-		height  = height,
-		z_index = z_index,
-		fixed   = fixed,
-	}
-	append_elem(&hoverables, hoverable)
+hover_id :: #force_inline proc(id: string) -> u64 {
+	value := hash.fnv64a(transmute([]u8)id)
+	return value == 0 ? 1 : value
 }
 
-set_hoverable :: proc(id: string) {
-	hover = strings.clone(id)
+add_hoverable :: proc(id: string, x, y, width, height: f32, z_index: i32, fixed: bool) -> bool {
+	key := hover_id(id)
+	append(
+		&hoverables,
+		Hoverable{id = key, x = x, y = y, width = width, height = height, z_index = z_index, fixed = fixed},
+	)
+	return key == hover
 }
 
 process_hoverables :: proc() {
 	if len(hoverables) <= 0 {
+		hover = 0
 		return
 	}
-	if hover != "" {
-		delete(hover)
-		hover = ""
-	}
-
-	_hoverables := hoverables[:]
-	sort.quick_sort_proc(_hoverables, proc(a, b: Hoverable) -> int {
-		if a.z_index > b.z_index {
-			return -1
-		} else if a.z_index < b.z_index {
-			return 1
-		}
-		return 0
-	})
 
 	mouse_x, mouse_y := mouse_position()
 
@@ -69,32 +51,23 @@ process_hoverables :: proc() {
 	world_mouse_x := (mouse_x + graphics.camera.position.x) / graphics.camera.zoom
 	world_mouse_y := (mouse_y + graphics.camera.position.y) / graphics.camera.zoom
 
-	for hoverable in _hoverables {
-		if hoverable.fixed {
-			if mouse_x >= hoverable.x &&
-			   mouse_x <= hoverable.x + hoverable.width &&
-			   mouse_y >= hoverable.y &&
-			   mouse_y <= hoverable.y + hoverable.height {
-				set_hoverable(hoverable.id)
-				break
-			}
-		} else {
-			if world_mouse_x >= hoverable.x &&
-			   world_mouse_x <= hoverable.x + hoverable.width &&
-			   world_mouse_y >= hoverable.y &&
-			   world_mouse_y <= hoverable.y + hoverable.height {
-				set_hoverable(hoverable.id)
-				break
+	best: u64 = 0
+	best_z: i32 = min(i32)
+	for h in hoverables {
+		px := h.fixed ? mouse_x : world_mouse_x
+		py := h.fixed ? mouse_y : world_mouse_y
+		if px >= h.x && px <= h.x + h.width && py >= h.y && py <= h.y + h.height {
+			if best == 0 || h.z_index > best_z {
+				best = h.id
+				best_z = h.z_index
 			}
 		}
 	}
+	hover = best
 
-	clear_hoverables()
+	clear(&hoverables)
 }
 
 clear_hoverables :: proc() {
-	for hoverable in hoverables {
-		delete(hoverable.id)
-	}
 	clear(&hoverables)
 }

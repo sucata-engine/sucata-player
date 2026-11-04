@@ -22,6 +22,15 @@ to_world_space_2d :: proc(
 	}
 
 	transformed_vertices: [4][2]f32
+
+	if rotation == 0 {
+		left := position[0] - origin_offset[0]
+		top := position[1] - origin_offset[1]
+		right := left + scaled_size[0]
+		bottom := top + scaled_size[1]
+		return [4][2]f32{{left, top}, {left, bottom}, {right, bottom}, {right, top}}
+	}
+
 	cos_r := math.cos(rotation)
 	sin_r := math.sin(rotation)
 

@@ -98,15 +98,22 @@ return {
 No Windows, rode `scripts\install-luajit\win.cmd` num "x64 Native Tools Command Prompt for VS".
 Ele gera `src\luajit\lib\windows\lua51.lib` e copia `lua51.dll` para a raiz.
 
-## Benchmark (Linux x86_64, Xvfb + llvmpipe, mediana de 150 frames)
+## Benchmark (Mac, 600 frames, `test/bench/run.sh`)
 
-| Entidades | Versão | tick (ms) | draw Lua (ms) | frame (ms) |
-|---|---|---|---|---|
-| 10.000 | 1.3.0 (Lua 5.4, `draw_rect`) | 2,52 | 12,99 | 36,4 |
-| 10.000 | 2.0.0 (`draw_rect`, antes de ser removido) | 0,69 | 6,21 | 30,0 |
-| 10.000 | 2.0.0 (`rect`) | 1,15 | 1,12 | 21,8 |
-| 20.000 | 1.3.0 (Lua 5.4, `draw_rect`) | 5,55 | 28,75 | 59,3 |
-| 20.000 | 2.0.0 (`rect`) | 2,16 | 2,23 | 24,6 |
+Com 4.096 entidades as duas versões desenham a mesma coisa:
 
-O frame inclui renderização por software (llvmpipe), que não mudou; numa GPU real a parte Lua pesa mais
-no total. RSS máximo ficou praticamente igual (~161–165 MB em 20k entidades).
+| 4.096 entidades | 1.3 | 2.0 | Diferença |
+|---|---|---|---|
+| Draw no Lua, por frame | 3,26 ms | 0,32 ms | −90% |
+| CPU total | 3,41 s | 1,61 s | −53% |
+| RAM pico | 60 MB | 66 MB | ≈ igual |
+
+Com 10.000 entidades a 1.3 só desenhava 4.096 sprites (bug corrigido na 2.0), e mesmo assim:
+
+| 10.000 entidades | 1.3 (4.096 desenhados) | 2.0 (10.000 desenhados) | Diferença |
+|---|---|---|---|
+| Draw no Lua, por frame | 7,9 ms | 0,79 ms | −90% |
+| CPU total | 6,5 s | 2,7 s | −59% |
+| RAM pico | 73 MB | 72 MB | ≈ igual |
+
+`BENCH_CLOCK=cpu` faz a 2.0 medir tick e draw com `os.clock`, o mesmo relógio da 1.3.

@@ -88,52 +88,66 @@ shutdown_quad_buffers :: proc() {
 	}
 }
 
-queue_quad_group :: proc(props: common.GroupObjectProps) {
+queue_quad_group :: proc(props: common.GroupObjectProps, texture: string) {
 	init_quad_indices()
 
-	z_index := props.z_index
-	texture := props.texture
-	shader_id := props.shader
-	fixed := props.fixed
-	quads := props.quads
-
+	quads := props.quads^
 	if len(quads) == 0 {
 		return
 	}
 
-	custom_shader, has_custom_shader := custom_shaders[shader_id]
+	custom_shader, has_custom_shader := custom_shaders[props.shader]
 	image := load_image(texture)
-
 	mvp := get_mvp(props.fixed)
-	clear(&vertex_scratch)
 
-	for quad in quads {
-		get_quad_vertex_data(
-			&vertex_scratch,
-			quad,
-			image,
-			props.tiled,
-			has_custom_shader,
-			custom_shader,
+	vertex_offset: c.int
+	floats_per_quad: int
+
+	if has_custom_shader {
+		clear(&vertex_scratch)
+		args := props.args != nil ? props.args^ : nil
+		for quad, i in quads {
+			quad_args: common.ShaderArgs
+			if i < len(args) {
+				quad_args = args[i]
+			}
+			append_custom_quad_vertices(&vertex_scratch, quad, quad_args, image, props.tiled, custom_shader)
+		}
+		if len(vertex_scratch) == 0 {
+			return
+		}
+		floats_per_quad = len(vertex_scratch) / len(quads)
+		vertex_offset = stream_push(&quad_stream, vertex_scratch[:])
+	} else {
+		floats_per_quad = QUAD_FLOATS
+		start := len(quad_stream.data)
+		resize(&quad_stream.data, start + len(quads) * QUAD_FLOATS)
+		dst := quad_stream.data[start:]
+		for quad, i in quads {
+			write_quad_vertices(dst[i * QUAD_FLOATS:], quad, image, props.tiled)
+		}
+		vertex_offset = c.int(start * size_of(f32))
+	}
+
+	pipeline := has_custom_shader ? custom_shader.pipeline : quad_pipeline
+	views := get_views_data(image.view)
+	samplers := get_samplers_data(props.tiled)
+	bytes_per_quad := c.int(floats_per_quad * size_of(f32))
+
+	for first := 0; first < len(quads); first += MAX_QUADS {
+		count := min(MAX_QUADS, len(quads) - first)
+		append(
+			&draw_commands,
+			Draw_Command {
+				pipeline = pipeline,
+				mvp = mvp,
+				stream = &quad_stream,
+				vertex_offset = vertex_offset + c.int(first) * bytes_per_quad,
+				index_buffer = quad_ib,
+				views = views,
+				samplers = samplers,
+				index_count = count * 6,
+			},
 		)
 	}
-	if len(vertex_scratch) == 0 {
-		return
-	}
-
-	vertex_offset := stream_push(&quad_stream, vertex_scratch[:])
-
-	append(
-		&draw_commands,
-		Draw_Command {
-			pipeline = has_custom_shader ? custom_shader.pipeline : quad_pipeline,
-			mvp = mvp,
-			stream = &quad_stream,
-			vertex_offset = vertex_offset,
-			index_buffer = quad_ib,
-			views = get_views_data(image.view),
-			samplers = get_samplers_data(props.tiled),
-			index_count = len(quads) * 6,
-		},
-	)
 }

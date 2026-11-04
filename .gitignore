@@ -1,6 +1,7 @@
 *.pdb
 *.lua
 !src/lua/runtime/*.lua
+!test/bench/*.lua
 *.exe
 *.ignore
 *.bin
