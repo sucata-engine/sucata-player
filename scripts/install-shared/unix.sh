@@ -37,7 +37,8 @@ cd ..
 if [ "$(uname -s)" = "Darwin" ]; then
   (
     cd "$ODIN_ROOT/vendor/stb/src"
-    for f in stb_image stb_image_write stb_image_resize stb_truetype stb_rect_pack stb_vorbis stb_sprintf; do
+    for c in *.c; do
+      f="${c%.c}"
       cc -arch "$(uname -m)" -c -O2 -fPIC "$f.c" -o "$f.o" -mmacosx-version-min=11.0
       rm -f "../lib/darwin/$f.a"
       ar rcs "../lib/darwin/$f.a" "$f.o"
