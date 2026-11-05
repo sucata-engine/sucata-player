@@ -42,6 +42,26 @@ if jit and os.getenv("BENCH_CLOCK") ~= "cpu" then
     CLOCK = "wall"
   end
 end
+local jit_info = "off"
+local traces, aborts, abort_at = 0, 0, {}
+if jit then
+  local status = { jit.status() }
+  jit_info = (status[1] and "on" or "off") .. " " .. jit.arch .. " " .. table.concat(status, " ", 2)
+  if os.getenv("BENCH_JIT") == "1" then
+    local util = require("jit.util")
+    jit.attach(function(what, tr, func, pc, otr, oex)
+      if what == "stop" then
+        traces = traces + 1
+      elseif what == "abort" then
+        aborts = aborts + 1
+        local info = util.funcinfo(func, pc)
+        local key = tostring(info.loc) .. " erro=" .. tostring(otr)
+        abort_at[key] = (abort_at[key] or 0) + 1
+      end
+    end, "trace")
+  end
+end
+
 local tick_start, draw_start = 0, 0
 local ticks, draws, frame_times = {}, {}, {}
 local probe_first = {
@@ -78,6 +98,14 @@ return {
     if frames == FRAMES then
       print(string.format("RESULT versao=%s relogio=%s entidades=%d tick_ms=%.3f draw_ms=%.3f frame_ms=%.3f lua_kb_pico=%.0f",
         sucata.meta.VERSION, CLOCK, N, median(ticks), median(draws), median(frame_times), lua_peak))
+      print("JIT " .. jit_info)
+      if os.getenv("BENCH_JIT") == "1" then
+        print(string.format("JIT traces=%d aborts=%d", traces, aborts))
+        local list = {}
+        for key, count in pairs(abort_at) do list[#list + 1] = { key, count } end
+        table.sort(list, function(x, y) return x[2] > y[2] end)
+        for i = 1, math.min(8, #list) do print("JIT abort " .. list[i][2] .. "x " .. list[i][1]) end
+      end
       sucata.window.quit()
     end
   end,

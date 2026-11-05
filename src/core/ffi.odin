@@ -110,7 +110,7 @@ texture_handles: map[string]u32 = {}
 sprites: [dynamic]Sprite = {}
 sprite_handles: map[Sprite]u32 = {}
 
-NO_SPRITE :: Sprite {
+no_sprite := Sprite {
 	color = {1, 1, 1, 1},
 }
 
@@ -190,11 +190,11 @@ register_sprite :: proc(sprite: Sprite) -> u32 {
 	return handle
 }
 
-get_sprite :: #force_inline proc(handle: u32) -> Sprite {
+get_sprite :: #force_inline proc "contextless" (handle: u32) -> ^Sprite {
 	if handle == 0 || int(handle) > len(sprites) {
-		return NO_SPRITE
+		return &no_sprite
 	}
-	return sprites[handle - 1]
+	return &sprites[handle - 1]
 }
 
 texture_path :: #force_inline proc(handle: u32) -> string {

@@ -32,7 +32,7 @@ while kill -0 "$PID" 2>/dev/null; do
 done
 END=$(now)
 
-grep "RESULT\|ERROR" "$OUT" || { echo "sem RESULT, log em $OUT"; exit 1; }
+grep "RESULT\|ERROR\|^JIT" "$OUT" || { echo "sem RESULT, log em $OUT"; exit 1; }
 awk -v peak="$PEAK" -v sum="$SUM" -v count="$COUNT" -v cpu="$CPU" -v start="$START" -v end="$END" 'BEGIN {
   wall = end - start
   printf "PROCESSO ram_pico_mb=%.1f ram_media_mb=%.1f cpu_s=%.2f tempo_s=%.2f cpu_medio=%.0f%%\n",

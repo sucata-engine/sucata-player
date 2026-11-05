@@ -45,7 +45,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		tile_width: f32 = 0.0
 		tile_height: f32 = 0.0
 		tile_size: f32 = 0.0
-		sprite: core.Sprite
+		sprite: ^core.Sprite
 		has_sprite := false
 
 		lua.pushnil(L)
