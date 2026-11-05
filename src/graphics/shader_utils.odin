@@ -5,77 +5,81 @@ import "core:strings"
 import "core:unicode/utf8"
 import sg "shared:sokol/gfx"
 
-get_quad_vertex_data :: proc(
-	dst: ^[dynamic]f32,
-	object: common.ObjectProp,
-	image: Image,
-	tiled: bool,
-	has_custom_shader: bool,
-	custom_shader: CustomShader,
-) {
-	position := object.position
-	size := object.size
-	color := object.color
-	scale := object.scale
-	origin := object.origin
-	rotation := object.rotation
-	atlas := object.atlas
-	shader_args := object.shader_args
-	opacity := object.opacity.(f32) or_else color[3]
+QUAD_FLOATS :: 4 * (size_of(Vertex_Data) / size_of(f32))
 
-	points := to_world_space_2d(position, size, scale, origin, rotation)
-	quad_color := Vec4{color[0], color[1], color[2], opacity}
-
-	uv_pos: [4][2]f32
+quad_uv :: #force_inline proc(object: common.QuadProp, image: Image, tiled: bool) -> [4][2]f32 {
 	if tiled {
-		uv_pos = calculate_atlas_uv_tiled(
-			atlas,
+		return calculate_atlas_uv_tiled(
+			object.atlas,
 			f32(image.width),
 			f32(image.height),
-			size,
+			object.size,
 			object.tile_size,
 		)
-	} else {
-		uv_pos = calculate_atlas_uv(atlas, f32(image.width), f32(image.height))
 	}
-	if has_custom_shader {
-		shader_params := custom_shader.attributes
-		for i in 0 ..< 4 {
-			for attr in shader_params {
-				if attr.size == 0 do break
-				switch attr.kind {
-				case .Position:
-					append(dst, ..points[i][:])
-				case .Color:
-					append(dst, ..quad_color[:])
-				case .UV:
-					append(dst, ..uv_pos[i][:])
-				case .Custom:
-					if value, ok := shader_args[attr.name]; ok {
-						#partial switch v in value {
-						case f32:
-							append(dst, v)
-						case [2]f32:
-							v2 := v
-							append(dst, ..v2[:])
-						case [3]f32:
-							v3 := v
-							append(dst, ..v3[:])
-						case [4]f32:
-							v4 := v
-							append(dst, ..v4[:])
-						}
+	if object.atlas.width == 0 || object.atlas.height == 0 {
+		return [4][2]f32{{0, 0}, {0, 1}, {1, 1}, {1, 0}}
+	}
+	return calculate_atlas_uv(object.atlas, f32(image.width), f32(image.height))
+}
+
+write_quad_vertices :: #force_inline proc(dst: []f32, object: common.QuadProp, image: Image, tiled: bool) {
+	points := to_world_space_2d(object.position, object.size, object.scale, object.origin, object.rotation)
+	uv := quad_uv(object, image, tiled)
+	color := object.color
+	for i in 0 ..< 4 {
+		v := dst[i * 8:]
+		v[0] = points[i][0]
+		v[1] = points[i][1]
+		v[2] = color[0]
+		v[3] = color[1]
+		v[4] = color[2]
+		v[5] = color[3]
+		v[6] = uv[i][0]
+		v[7] = uv[i][1]
+	}
+}
+
+append_custom_quad_vertices :: proc(
+	dst: ^[dynamic]f32,
+	object: common.QuadProp,
+	shader_args: common.ShaderArgs,
+	image: Image,
+	tiled: bool,
+	custom_shader: CustomShader,
+) {
+	points := to_world_space_2d(object.position, object.size, object.scale, object.origin, object.rotation)
+	uv_pos := quad_uv(object, image, tiled)
+	quad_color := Vec4{object.color[0], object.color[1], object.color[2], object.color[3]}
+	shader_params := custom_shader.attributes
+	for i in 0 ..< 4 {
+		for attr in shader_params {
+			if attr.size == 0 do break
+			switch attr.kind {
+			case .Position:
+				append(dst, ..points[i][:])
+			case .Color:
+				append(dst, ..quad_color[:])
+			case .UV:
+				append(dst, ..uv_pos[i][:])
+			case .Custom:
+				if value, ok := shader_args[attr.name]; ok {
+					#partial switch v in value {
+					case f32:
+						append(dst, v)
+					case [2]f32:
+						v2 := v
+						append(dst, ..v2[:])
+					case [3]f32:
+						v3 := v
+						append(dst, ..v3[:])
+					case [4]f32:
+						v4 := v
+						append(dst, ..v4[:])
 					}
 				}
 			}
 		}
-		return
-	}
-
-	for i in 0 ..< 4 {
-		append(dst, ..points[i][:])
-		append(dst, ..quad_color[:])
-		append(dst, ..uv_pos[i][:])
 	}
 }
 

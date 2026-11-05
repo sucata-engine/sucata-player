@@ -5,15 +5,15 @@ import core "../../core"
 import lua_common "../lua_common"
 import "core:c"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 RECT_FUNCTION :: lua_common.LuaFunction {
-	name = "draw_rect",
+	name = "_rect_table",
 	func_ptr = proc "c" (L: ^lua.State) -> c.int {
 		context = core.DEFAULT_CONTEXT
 
-		if !lua_common.validate_arg_count(L, 1, "draw_rect") do return 0
-		if !lua_common.validate_table(L, 1, "draw_rect") do return 0
+		if !lua_common.validate_arg_count(L, 1, "_rect_table") do return 0
+		if !lua_common.validate_table(L, 1, "_rect_table") do return 0
 
 		x: f32 = 0.0
 		y: f32 = 0.0
@@ -45,6 +45,8 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 		tile_width: f32 = 0.0
 		tile_height: f32 = 0.0
 		tile_size: f32 = 0.0
+		sprite: ^core.Sprite
+		has_sprite := false
 
 		lua.pushnil(L)
 		for lua.next(L, 1) != 0 {
@@ -65,7 +67,12 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 				case "z_index":
 					if lua.isnumber(L, -1) do zIndex = f64(lua.tonumber(L, -1))
 				case "texture":
-					if lua.isstring(L, -1) {
+					if lua.type(L, -1) == lua.Type.NUMBER {
+						sprite = core.get_sprite(u32(lua.tonumber(L, -1)))
+						texture_path = strings.clone(core.texture_path(sprite.image))
+						texture_owned = true
+						has_sprite = true
+					} else if lua.isstring(L, -1) {
 						texture_path = strings.clone_from_cstring(lua.tostring(L, -1))
 						texture_owned = true
 					}
@@ -143,6 +150,19 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 			tile_height = tile_size
 		}
 
+		atlas := common.AtlasProps {
+			width   = atlas_width,
+			height  = atlas_height,
+			spacing = atlas_spacing,
+			margin  = atlas_margin,
+			x       = atlas_x,
+			y       = atlas_y,
+		}
+		if has_sprite {
+			color_rgba = sprite.color
+			atlas = sprite.atlas
+		}
+
 		props := common.ObjectProp {
 			position = [2]f32{x, y},
 			size = [2]f32{width, height},
@@ -151,14 +171,7 @@ RECT_FUNCTION :: lua_common.LuaFunction {
 			origin = [2]f32{origin_x, origin_y},
 			rotation = rotation,
 			opacity = opacity,
-			atlas = common.AtlasProps {
-				width = atlas_width,
-				height = atlas_height,
-				spacing = atlas_spacing,
-				margin = atlas_margin,
-				x = atlas_x,
-				y = atlas_y,
-			},
+			atlas = atlas,
 			tile_size = [2]f32{tile_width, tile_height},
 			shader_args = shader_args,
 		}

@@ -1,5 +1,7 @@
 *.pdb
 *.lua
+!src/lua/runtime/*.lua
+!test/bench/*.lua
 *.exe
 *.ignore
 *.bin
@@ -28,3 +30,5 @@ build/*
 dev.cmd
 dev.sh
 release/*
+src/luajit/lib/
+lua51.dll

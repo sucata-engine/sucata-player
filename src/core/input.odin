@@ -116,72 +116,6 @@ handle_input_event :: proc(event: ^sapp.Event) {
 }
 
 
-is_down :: proc(btn: string) -> bool {
-	keycode := string_to_keycode(btn)
-	if keycode != .INVALID {
-		if key_down(keycode) {
-			return true
-		}
-	}
-	mouse_btn := string_to_mouse(btn)
-	if mouse_btn != .INVALID {
-		if mouse_down(mouse_btn) {
-			return true
-		}
-	}
-	return false
-}
-is_pressed :: proc(btn: string) -> bool {
-	keycode := string_to_keycode(btn)
-	if keycode != .INVALID {
-		if key_pressed(keycode) {
-			return true
-		}
-	}
-	mouse_btn := string_to_mouse(btn)
-	if mouse_btn != .INVALID {
-		if mouse_pressed(mouse_btn) {
-			return true
-		}
-	}
-	return false
-}
-is_released :: proc(btn: string) -> bool {
-	keycode := string_to_keycode(btn)
-	if keycode != .INVALID {
-		if key_released(keycode) {
-			return true
-		}
-	}
-	mouse_btn := string_to_mouse(btn)
-	if mouse_btn != .INVALID {
-		if mouse_released(mouse_btn) {
-			return true
-		}
-	}
-	return false
-}
-
-key_down :: proc(k: sapp.Keycode) -> bool {
-	return input_state.keys_down[int(k)]
-}
-key_pressed :: proc(k: sapp.Keycode) -> bool {
-	return input_state.keys_pressed[int(k)]
-}
-key_released :: proc(k: sapp.Keycode) -> bool {
-	return input_state.keys_released[int(k)]
-}
-
-mouse_down :: proc(btn: sapp.Mousebutton) -> bool {
-	return (0 <= int(btn) && int(btn) < 3) && input_state.btn_down[int(btn)]
-}
-mouse_pressed :: proc(btn: sapp.Mousebutton) -> bool {
-	return (0 <= int(btn) && int(btn) < 3) && input_state.btn_pressed[int(btn)]
-}
-mouse_released :: proc(btn: sapp.Mousebutton) -> bool {
-	return (0 <= int(btn) && int(btn) < 3) && input_state.btn_released[int(btn)]
-}
-
 mouse_position :: proc() -> (f32, f32) {
 	mx := input_state.mouse_pos[0]
 	my := input_state.mouse_pos[1]
@@ -213,111 +147,63 @@ mouse_position :: proc() -> (f32, f32) {
 	return mx / scale, my / scale
 }
 
-mouse_scroll :: proc() -> (f32, f32) {return input_state.scroll[0], input_state.scroll[1]}
-
-string_to_mouse :: proc(s: string) -> sapp.Mousebutton {
-	sv := strings.to_lower(s)
-	defer delete(sv)
-
-	switch sv {
-	case "mouse_left":
-		return .LEFT
-	case "mouse_right":
-		return .RIGHT
-	case "mouse_middle":
-		return .MIDDLE
-	}
-
-	return .INVALID
+Key_Name :: struct {
+	name: string,
+	code: sapp.Keycode,
 }
 
-string_to_keycode :: proc(s: string) -> sapp.Keycode {
-	sv := strings.to_lower(s)
-	defer delete(sv)
+Mouse_Name :: struct {
+	name: string,
+	button: sapp.Mousebutton,
+}
 
-	switch sv {
-	case "a":
-		return .A
-	case "b":
-		return .B
-	case "c":
-		return .C
-	case "d":
-		return .D
-	case "e":
-		return .E
-	case "f":
-		return .F
-	case "g":
-		return .G
-	case "h":
-		return .H
-	case "i":
-		return .I
-	case "j":
-		return .J
-	case "k":
-		return .K
-	case "l":
-		return .L
-	case "m":
-		return .M
-	case "n":
-		return .N
-	case "o":
-		return .O
-	case "p":
-		return .P
-	case "q":
-		return .Q
-	case "r":
-		return .R
-	case "s":
-		return .S
-	case "t":
-		return .T
-	case "u":
-		return .U
-	case "v":
-		return .V
-	case "w":
-		return .W
-	case "x":
-		return .X
-	case "y":
-		return .Y
-	case "z":
-		return .Z
+KEY_NAMES := [?]Key_Name {
+	{"a", .A},
+	{"b", .B},
+	{"c", .C},
+	{"d", .D},
+	{"e", .E},
+	{"f", .F},
+	{"g", .G},
+	{"h", .H},
+	{"i", .I},
+	{"j", .J},
+	{"k", .K},
+	{"l", .L},
+	{"m", .M},
+	{"n", .N},
+	{"o", .O},
+	{"p", .P},
+	{"q", .Q},
+	{"r", .R},
+	{"s", .S},
+	{"t", .T},
+	{"u", .U},
+	{"v", .V},
+	{"w", .W},
+	{"x", .X},
+	{"y", .Y},
+	{"z", .Z},
+	{"space", .SPACE},
+	{" ", .SPACE},
+	{"escape", .ESCAPE},
+	{"esc", .ESCAPE},
+	{"enter", .ENTER},
+	{"return", .ENTER},
+	{"shift", .LEFT_SHIFT},
+	{"ctrl", .LEFT_CONTROL},
+	{"control", .LEFT_CONTROL},
+	{"alt", .LEFT_ALT},
+	{"apostrophe", .APOSTROPHE},
+	{"tab", .TAB},
+	{"up", .UP},
+	{"down", .DOWN},
+	{"left", .LEFT},
+	{"right", .RIGHT},
+}
 
-	case "space", " ":
-		return .SPACE
-
-	case "escape", "esc":
-		return .ESCAPE
-
-	case "enter", "return":
-		return .ENTER
-
-	case "shift":
-		return .LEFT_SHIFT
-	case "ctrl", "control":
-		return .LEFT_CONTROL
-	case "alt":
-		return .LEFT_ALT
-	case "apostrophe":
-		return .APOSTROPHE
-	case "tab":
-		return .TAB
-
-	case "up":
-		return .UP
-	case "down":
-		return .DOWN
-	case "left":
-		return .LEFT
-	case "right":
-		return .RIGHT
-	}
-
-	return .INVALID
+MOUSE_NAMES := [?]Mouse_Name {
+	{"mouse_left", .LEFT},
+	{"mouse_right", .RIGHT},
+	{"mouse_middle", .MIDDLE},
 }

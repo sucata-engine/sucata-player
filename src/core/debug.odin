@@ -2,7 +2,7 @@ package core
 
 import "core:fmt"
 import sg "shared:sokol/gfx"
-import lua "vendor:lua/5.4"
+import lua "../luajit"
 
 draw_debug_info :: proc() {
 	if !windowConfig.draw_debug_info {
@@ -24,9 +24,8 @@ draw_debug_info :: proc() {
 		frame_stats.total.views.alive +
 		frame_stats.total.shaders.alive
 
-	if microui_window_begin("Debug Info", 10, 10, 260, 190) {
+	if microui_window_begin("Debug Info", 10, 10, 260, 170) {
 		microui_label(fmt.tprintf("FPS: %d", fps))
-		microui_label(fmt.tprintf("Entities: %d", get_scene_count()))
 		microui_label(fmt.tprintf("Draw Calls: %d", draw_calls))
 		microui_label(fmt.tprintf("Frame Time: %.2f ms", frame_time_ms))
 		microui_label(fmt.tprintf("Lua Memory: %.2f/%.2f KB", lua_memory_kb, lua_bmemory_kb))

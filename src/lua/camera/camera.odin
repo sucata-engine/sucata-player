@@ -2,7 +2,7 @@ package lua_camera
 
 import "../lua_common"
 import "core:c"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 CAMERA_NAMESPACE :: lua_common.LuaNamespace {
 	name      = "camera",

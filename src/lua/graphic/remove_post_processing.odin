@@ -7,7 +7,7 @@ import "core:c"
 import "core:crypto"
 import "core:encoding/uuid"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 REMOVE_POST_PROCESSING_FUNCTION :: lua_common.LuaFunction {
 	name = "remove_post_processing",

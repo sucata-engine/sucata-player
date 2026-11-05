@@ -3,7 +3,7 @@ package lua_common
 import "core:c"
 import "core:fmt"
 import "core:strings"
-import lua "vendor:lua/5.4"
+import lua "../../luajit"
 
 delete_lua_table :: proc(table: LuaTable) {
 	for key, value in table {
@@ -172,7 +172,7 @@ create_lua_table :: proc(L: ^lua.State, data: LuaTable) -> i32 {
 		case c.int:
 			if value.(c.int) > 0 {
 				ref := value.(c.int)
-				lua.rawgeti(L, lua.REGISTRYINDEX, lua.Integer(ref))
+				lua.rawgeti(L, lua.REGISTRYINDEX, c.int(ref))
 			} else {
 				lua.pushnumber(L, lua.Number(value.(c.int)))
 			}
@@ -186,7 +186,7 @@ create_lua_table :: proc(L: ^lua.State, data: LuaTable) -> i32 {
 			lua.pushstring(L, str_cstring)
 		case LuaTable:
 			nested_table_ref := create_lua_table(L, value.(LuaTable))
-			lua.rawgeti(L, lua.REGISTRYINDEX, lua.Integer(nested_table_ref))
+			lua.rawgeti(L, lua.REGISTRYINDEX, c.int(nested_table_ref))
 		}
 		key_cstring := strings.clone_to_cstring(key)
 		defer delete(key_cstring)
