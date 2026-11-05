@@ -65,8 +65,9 @@ sucata.graphic.text(str, x, y, size, z,
 ## Addons
 
 ```lua
+sucata.use(require("addons.tween"))
+
 return {
-  addons = { "sucata.scene", require("addons.tween") },
   init = function() end,
   tick = function(dt) end,
   draw = function() end,
@@ -77,7 +78,7 @@ return {
 
 - Um addon é uma tabela com `order` (padrão `0`) e as fases que quiser.
 - Ordem: `order` menor primeiro, empate pela ordem de registro. O root tem `order = 0`, o scene `100`.
-- `sucata.use(addon)` registra um addon a qualquer momento.
+- `sucata.use(addon)` registra um addon, no topo do `main.lua` ou a qualquer momento. Os addons embutidos (`sucata.scene`, `sucata.time`...) se registram sozinhos no primeiro acesso.
 - Erros são isolados por addon e, no scene, por entidade (o loop continua na entidade seguinte).
 
 ## Mudanças que podem quebrar jogos

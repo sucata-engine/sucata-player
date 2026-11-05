@@ -464,12 +464,6 @@ end
 sucata._boot = function(root)
   if type(root) == "table" then
     use(root, "root")
-    local addons = root.addons
-    if type(addons) == "table" then
-      for i = 1, #addons do
-        use(addons[i])
-      end
-    end
   end
   booted = true
   rebuild()
