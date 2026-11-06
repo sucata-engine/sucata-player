@@ -3,6 +3,7 @@ package graphics
 import "../common"
 import "../filesystem"
 import "core:fmt"
+import "core:math"
 import "core:os"
 import "core:strings"
 import sg "shared:sokol/gfx"
@@ -118,6 +119,7 @@ FontKey :: struct {
 loaded_fonts := map[FontKey]^Font{}
 
 load_font :: proc(file_path: string, font_size: f32) -> ^Font {
+	baked_size := max(f32(1), math.round(font_size))
 	font_path := file_path
 	from_system := false
 	if font_path == "" {
@@ -125,7 +127,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 		from_system = true
 	}
 
-	if font, exists := loaded_fonts[FontKey{path = font_path, size = font_size}]; exists {
+	if font, exists := loaded_fonts[FontKey{path = font_path, size = baked_size}]; exists {
 		return font
 	}
 
@@ -165,7 +167,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	result := stbt.BakeFontBitmap(
 		raw_data(ttf_data),
 		0,
-		font_size,
+		baked_size,
 		bitmap,
 		bitmap_width,
 		bitmap_height,
@@ -182,7 +184,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 
 	ascent_i, descent_i, line_gap_i: i32
 	stbt.GetFontVMetrics(&font_info, &ascent_i, &descent_i, &line_gap_i)
-	v_scale := stbt.ScaleForPixelHeight(&font_info, font_size)
+	v_scale := stbt.ScaleForPixelHeight(&font_info, baked_size)
 
 	image := sg.make_image(
 		sg.Image_Desc {
@@ -194,7 +196,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	)
 	free(bitmap)
 
-	label_cstr := fmt.ctprintf("%s_%f", font_path, font_size)
+	label_cstr := fmt.ctprintf("%s_%f", font_path, baked_size)
 
 	view := sg.make_view({texture = {image = image}, label = label_cstr})
 
@@ -207,7 +209,7 @@ load_font :: proc(file_path: string, font_size: f32) -> ^Font {
 	font.descent = f32(descent_i) * v_scale
 	font.line_gap = f32(line_gap_i) * v_scale
 
-	loaded_fonts[FontKey{path = strings.clone(font_path), size = font_size}] = font
+	loaded_fonts[FontKey{path = strings.clone(font_path), size = baked_size}] = font
 
 	return font
 }
